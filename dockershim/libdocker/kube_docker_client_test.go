@@ -1,7 +1,5 @@
-// +build !linux
-
 /*
-Copyright 2016 The Kubernetes Authors.
+Copyright 2017 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,21 +14,20 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package cm
+package libdocker
 
 import (
 	"fmt"
+	"testing"
 
-	"k8s.io/kubernetes/pkg/kubelet/dockershim/libdocker"
+	"github.com/stretchr/testify/assert"
 )
 
-type unsupportedContainerManager struct {
-}
+func TestIsContainerNotFoundError(t *testing.T) {
+	// Expected error message from docker.
+	containerNotFoundError := fmt.Errorf("Error response from daemon: No such container: 96e914f31579e44fe49b239266385330a9b2125abeb9254badd9fca74580c95a")
+	otherError := fmt.Errorf("Error response from daemon: Other errors")
 
-func NewContainerManager(_ string, _ libdocker.Interface) ContainerManager {
-	return &unsupportedContainerManager{}
-}
-
-func (m *unsupportedContainerManager) Start() error {
-	return fmt.Errorf("Container Manager is unsupported in this build")
+	assert.True(t, IsContainerNotFoundError(containerNotFoundError))
+	assert.False(t, IsContainerNotFoundError(otherError))
 }
