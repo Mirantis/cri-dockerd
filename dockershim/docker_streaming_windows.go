@@ -1,7 +1,7 @@
 // +build windows
 
 /*
-Copyright 2017 The Kubernetes Authors.
+Copyright 2019 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,21 +16,22 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package cm
+package dockershim
 
 import (
-	"k8s.io/kubernetes/pkg/kubelet/dockershim/libdocker"
+	"bytes"
+	"fmt"
+	"io"
+
+	"k8s.io/kubernetes/pkg/kubelet/util/ioutils"
 )
 
-// no-op
-type containerManager struct {
-}
+func (r *streamingRuntime) portForward(podSandboxID string, port int32, stream io.ReadWriteCloser) error {
+	stderr := new(bytes.Buffer)
+	err := r.exec(podSandboxID, []string{"wincat.exe", "127.0.0.1", fmt.Sprint(port)}, stream, stream, ioutils.WriteCloserWrapper(stderr), false, nil, 0)
+	if err != nil {
+		return fmt.Errorf("%v: %s", err, stderr.String())
+	}
 
-// NewContainerManager creates a new instance of ContainerManager
-func NewContainerManager(_ string, _ libdocker.Interface) ContainerManager {
-	return &containerManager{}
-}
-
-func (m *containerManager) Start() error {
 	return nil
 }
