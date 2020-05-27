@@ -53,6 +53,28 @@ type ContainerRuntimeOptions struct {
 	// streamingConnectionIdleTimeout is the maximum time a streaming connection
 	// can be idle before the connection is automatically closed.
 	StreamingConnectionIdleTimeout metav1.Duration
+
+	// Network plugin options.
+
+	// The CIDR to use for pod IP addresses, only used in standalone mode.
+	// In cluster mode, this is obtained from the master.
+	PodCIDR string
+	// networkPluginName is the name of the network plugin to be invoked for
+	// various events in kubelet/pod lifecycle
+	NetworkPluginName string
+	// NetworkPluginMTU is the MTU to be passed to the network plugin,
+	// and overrides the default MTU for cases where it cannot be automatically
+	// computed (such as IPSEC).
+	NetworkPluginMTU int32
+	// CNIConfDir is the full path of the directory in which to search for
+	// CNI config files
+	CNIConfDir string
+	// CNIBinDir is the full path of the directory in which to search for
+	// CNI plugin binaries
+	CNIBinDir string
+	// CNICacheDir is the full path of the directory in which CNI should store
+	// cache files
+	CNICacheDir string
 }
 
 // AddFlags has the set of flags needed by cri-dockerd
@@ -65,4 +87,12 @@ func (s *ContainerRuntimeOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&s.PodSandboxImage, "pod-infra-container-image", s.PodSandboxImage, fmt.Sprintf("The image whose network/ipc namespaces containers in each pod will use"))
 	fs.StringVar(&s.DockerEndpoint, "docker-endpoint", s.DockerEndpoint, fmt.Sprintf("Use this for the docker endpoint to communicate with."))
 	fs.DurationVar(&s.ImagePullProgressDeadline.Duration, "image-pull-progress-deadline", s.ImagePullProgressDeadline.Duration, fmt.Sprintf("If no pulling progress is made before this deadline, the image pulling will be cancelled."))
+
+	// Network plugin settings for Docker.
+	fs.StringVar(&s.PodCIDR, "pod-cidr", s.PodCIDR, "The CIDR to use for pod IP addresses, only used in standalone mode.  In cluster mode, this is obtained from the master. For IPv6, the maximum number of IP's allocated is 65536")
+	fs.StringVar(&s.NetworkPluginName, "network-plugin", s.NetworkPluginName, fmt.Sprintf("<Warning: Alpha feature> The name of the network plugin to be invoked for various events in kubelet/pod lifecycle."))
+	fs.StringVar(&s.CNIConfDir, "cni-conf-dir", s.CNIConfDir, fmt.Sprintf("<Warning: Alpha feature> The full path of the directory in which to search for CNI config files"))
+	fs.StringVar(&s.CNIBinDir, "cni-bin-dir", s.CNIBinDir, fmt.Sprintf("<Warning: Alpha feature> A comma-separated list of full paths of directories in which to search for CNI plugin binaries."))
+	fs.StringVar(&s.CNICacheDir, "cni-cache-dir", s.CNICacheDir, fmt.Sprintf("<Warning: Alpha feature> The full path of the directory in which CNI should store cache files."))
+	fs.Int32Var(&s.NetworkPluginMTU, "network-plugin-mtu", s.NetworkPluginMTU, fmt.Sprintf("<Warning: Alpha feature> The MTU to be passed to the network plugin, to override the default. Set to 0 to use the default 1460 MTU."))
 }
