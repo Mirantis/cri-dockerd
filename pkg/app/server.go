@@ -23,6 +23,7 @@ import (
 	"github.com/dims/cri-dockerd/pkg/app/options"
 	"k8s.io/component-base/cli/flag"
 	"k8s.io/component-base/version/verflag"
+	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 	"k8s.io/klog"
 	"k8s.io/kubernetes/pkg/kubelet/dockershim"
 	dockerremote "k8s.io/kubernetes/pkg/kubelet/dockershim/remote"
@@ -117,6 +118,11 @@ func RunDockershim(f *options.DockerCRIFlags, stopCh <-chan struct{}) error {
 	// Initialize network plugin settings.
 	pluginSettings := dockershim.NetworkPluginSettings{
 		HairpinMode:       "none",
+		PluginName:         f.NetworkPluginName,
+		PluginConfDir:      f.CNIConfDir,
+		PluginBinDirString: f.CNIBinDir,
+		PluginCacheDir:     f.CNICacheDir,
+		MTU:                int(f.NetworkPluginMTU),
 		NonMasqueradeCIDR: f.NonMasqueradeCIDR,
 	}
 
@@ -136,11 +142,23 @@ func RunDockershim(f *options.DockerCRIFlags, stopCh <-chan struct{}) error {
 	if err != nil {
 		return err
 	}
+
+	if _, err := ds.UpdateRuntimeConfig(nil, &runtimeapi.UpdateRuntimeConfigRequest{
+		RuntimeConfig: &runtimeapi.RuntimeConfig{
+			NetworkConfig: &runtimeapi.NetworkConfig {
+				PodCidr: f.PodCIDR,
+			},
+		},
+	}) ; err != nil {
+		return err
+	}
+
 	klog.V(2).Infof("Starting the GRPC server for the docker CRI shim.")
 	server := dockerremote.NewDockerServer(f.RemoteRuntimeEndpoint, ds)
 	if err := server.Start(); err != nil {
 		return err
 	}
+
 	<-stopCh
 	return nil
 }
