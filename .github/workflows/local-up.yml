@@ -1,0 +1,185 @@
+name: Go
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+
+  build:
+    name: k8s local-up CI
+    runs-on: ubuntu-18.04
+    timeout-minutes: 240
+    steps:
+
+      - name: Set up Go 1.14
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.14
+        id: go
+
+      - name: Setup Go binary path
+        shell: bash
+        run: |
+          echo "::set-env name=GOPATH::${{ github.workspace }}"
+          echo "::add-path::${{ github.workspace }}/bin"
+
+      - name: Check out kubernetes
+        uses: actions/checkout@v2
+        with:
+          repository: kubernetes/kubernetes
+          path: src/k8s.io/kubernetes
+
+      - name: Checkout cri-dockerd
+        uses: actions/checkout@v2
+        with:
+          repository: dims/cri-dockerd
+          path: src/github.com/dims/cri-dockerd
+
+      - name: Checkout test-infra for kubetest
+        uses: actions/checkout@v2
+        with:
+          repository: kubernetes/test-infra
+          path: src/k8s.io/test-infra
+
+      - name: Build cri-dockerd
+        working-directory: src/github.com/dims/cri-dockerd
+        run: |
+          go install .
+          sudo mv $GOPATH/bin/cri-dockerd /usr/local/bin
+
+      - name: Build kubetest
+        working-directory: src/k8s.io/test-infra
+        run: |
+          set -o errexit
+          set -o nounset
+          set -o pipefail
+          set -x
+          go install k8s.io/test-infra/kubetest
+          sudo mv $GOPATH/bin/kubetest /usr/local/bin
+
+      - name: Install docker
+        shell: bash
+        run: |
+          arch=$(dpkg --print-architecture)
+
+          # Workarounds for error "Failed to fetch https://packagecloud.io/github/git-lfs/ubuntu/dists/trusty/InRelease"
+          # TODO: remove it after the issue fixed in git-lfs.
+          sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 6B05F25D762E3157
+          sudo apt-get update
+
+          # Install prereqs
+          sudo apt-get install -y \
+            conntrack iptables iproute2 ethtool socat util-linux mount ebtables udev kmod \
+            libseccomp2
+
+          # Install docker.
+          sudo apt-get install -y \
+            apt-transport-https \
+            ca-certificates \
+            curl socat \
+            gnupg-agent \
+            software-properties-common
+          curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+          sudo add-apt-repository \
+          "deb [arch=$arch] https://download.docker.com/linux/ubuntu \
+           $(lsb_release -cs) \
+           stable"
+          sudo apt-get update
+          sudo apt-cache madison docker-ce
+          sudo apt-get install docker-ce docker-ce-cli containerd.io
+
+          # Restart docker daemon.
+          sudo service docker restart
+
+      - name: Start cri-dockerd
+        working-directory: src/k8s.io/kubernetes
+        run: |
+          set -o errexit
+          set -o nounset
+          set -o pipefail
+          set -x
+          export LANG=C
+          export LC_ALL=C
+
+          # Install nsenter
+          docker run --rm -v /usr/local/bin:/target jpetazzo/nsenter
+
+          # Start dockershim first
+          logs_dir="${{ github.workspace }}/logs"
+          mkdir -p $logs_dir
+          sudo /usr/local/bin/cri-dockerd --v=10 --network-plugin="" --logtostderr >$logs_dir/cri-dockerd.log 2>&1 &
+
+          # Wait a while for dockershim starting.
+          sleep 10
+
+      - name: Start local-up-cluster
+        working-directory: src/k8s.io/kubernetes
+        shell: bash
+        run: |
+          set -o errexit
+          set -o nounset
+          set -o pipefail
+          set -x
+          make all WHAT="cmd/kubectl test/e2e/e2e.test vendor/github.com/onsi/ginkgo/ginkgo"
+          hack/install-etcd.sh
+          export PATH="$(pwd)/third_party/etcd:${PATH}"
+          mkdir -p ${{ github.workspace }}/logs
+
+          IP=$(ip addr show dev docker0 | grep -w inet | awk '{print $2}' | cut -f1 -d/)
+          sudo env PATH=$PATH \
+            GOPATH=$GOPATH \
+            ENABLE_DAEMON=true \
+            LOG_DIR=${{ github.workspace }}/logs \
+            ALLOW_PRIVILEGED=true \
+            API_HOST_IP=$IP \
+            HOSTNAME_OVERRIDE=$IP \
+            KUBELET_HOST=$IP \
+            CONTAINER_RUNTIME=remote \
+            CONTAINER_RUNTIME_ENDPOINT="unix:///var/run/dockershim.sock" \
+            hack/local-up-cluster.sh 2>&1 | tee ${{ github.workspace }}/logs/local-up-cluster.log
+
+      - name: Run kubetest
+        working-directory: src/k8s.io/kubernetes
+        shell: bash
+        run: |
+          set -o errexit
+          set -o nounset
+          set -o pipefail
+          set -x
+          export KUBECONFIG=/var/run/kubernetes/admin.kubeconfig
+          sudo env PATH=$PATH \
+            GOPATH=$GOPATH \
+            KUBECONFIG=$KUBECONFIG \
+            kubetest \
+            --dump=${{ github.workspace }}/logs \
+            --build=none --ginkgo-parallel=1 \
+            --deployment=local --provider=local \
+            --test \
+            --test_args='--ginkgo.focus=\[Conformance\] --ginkgo.skip=\[sig\-apps\]\sDaemon\sset\s\[Serial\]\sshould\srollback\swithout\sunnecessary\srestarts\s\[Conformance\]' \
+            --kubeconfig="$KUBECONFIG" \
+            --timeout=240m | tee ${{ github.workspace }}/logs/kubetest.log
+
+      - name: Cleanup processes and containers
+        if: always()
+        shell: bash
+        run: |
+          (docker rm -f $(docker ps -a -q)) || true
+          (docker rmi -f $(docker images -q -a)) || true
+          (docker system prune --all --volumes -f) || true
+          (ps -ef | grep -i -e kube- -e etcd -e dockerd | grep -v grep | awk '{print $2}' | xargs sudo kill -9) || true
+
+      - name: Dump docker logs
+        if: always()
+        run: |
+          sudo journalctl -eu docker | sudo tee ${{ github.workspace }}/logs/docker.log >/dev/null
+          ls -atrl ${{ github.workspace }}/logs
+
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v1
+        with:
+          name: logs
+          path: logs
