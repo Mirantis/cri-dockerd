@@ -27,7 +27,7 @@ import (
 	"k8s.io/klog"
 	"k8s.io/kubernetes/pkg/kubelet/dockershim"
 	dockerremote "k8s.io/kubernetes/pkg/kubelet/dockershim/remote"
-	"k8s.io/kubernetes/pkg/kubelet/server/streaming"
+	"k8s.io/kubernetes/pkg/kubelet/cri/streaming"
 	utilflag "k8s.io/kubernetes/pkg/util/flag"
 
 	"github.com/spf13/cobra"
