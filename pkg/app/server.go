@@ -28,7 +28,7 @@ import (
 	"k8s.io/kubernetes/pkg/kubelet/dockershim"
 	dockerremote "k8s.io/kubernetes/pkg/kubelet/dockershim/remote"
 	"k8s.io/kubernetes/pkg/kubelet/cri/streaming"
-	utilflag "k8s.io/kubernetes/pkg/util/flag"
+	utilflag "k8s.io/component-base/cli/flag"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -138,7 +138,7 @@ func RunDockershim(f *options.DockerCRIFlags, stopCh <-chan struct{}) error {
 
 	// Standalone dockershim will always start the local streaming server.
 	ds, err := dockershim.NewDockerService(dockerClientConfig, r.PodSandboxImage, streamingConfig, &pluginSettings,
-		f.RuntimeCgroups, r.CgroupDriver, r.DockershimRootDirectory, true /*startLocalStreamingServer*/)
+		f.RuntimeCgroups, r.CgroupDriver, r.DockershimRootDirectory)
 	if err != nil {
 		return err
 	}
