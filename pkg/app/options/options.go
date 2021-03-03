@@ -20,7 +20,7 @@ package options
 import (
 	"runtime"
 
-	"github.com/dims/cri-dockerd/pkg/app/config"
+	"github.com/evol262/cri-dockerd/pkg/app/config"
 
 	"github.com/spf13/pflag"
 )

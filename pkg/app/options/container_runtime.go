@@ -20,7 +20,7 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/dims/cri-dockerd/pkg/app/config"
+	"github.com/evol262/cri-dockerd/pkg/app/config"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 

@@ -1,4 +1,4 @@
-module github.com/dims/cri-dockerd
+module github.com/evol262/cri-dockerd
 
 go 1.14
 

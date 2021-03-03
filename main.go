@@ -22,7 +22,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/dims/cri-dockerd/pkg/app"
+	"github.com/evol262/cri-dockerd/pkg/app"
 	"k8s.io/apiserver/pkg/server"
 	"k8s.io/component-base/logs"
 )
