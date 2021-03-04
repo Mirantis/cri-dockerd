@@ -24,8 +24,8 @@ import (
 	"k8s.io/component-base/version/verflag"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 	"k8s.io/klog"
-	"k8s.io/kubernetes/pkg/kubelet/dockershim"
-	dockerremote "k8s.io/kubernetes/pkg/kubelet/dockershim/remote"
+	"github.com/evol262/cri-dockerd/dockershim"
+	dockerremote "github.com/evol262/cri-dockerd/dockershim/remote"
 	"k8s.io/kubernetes/pkg/kubelet/cri/streaming"
 	utilflag "k8s.io/component-base/cli/flag"
 
