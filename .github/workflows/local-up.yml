@@ -14,10 +14,10 @@ jobs:
     timeout-minutes: 240
     steps:
 
-      - name: Set up Go 1.14
+      - name: Set up Go 1.16
         uses: actions/setup-go@v1
         with:
-          go-version: 1.14
+          go-version: 1.16
         id: go
 
       - name: Setup Go binary path
