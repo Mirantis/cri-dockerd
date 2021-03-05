@@ -5,7 +5,7 @@ STATIC_VERSION:=$(shell ../static/gen-static-ver $(APP_DIR) $(VERSION))
 GO_BASE_IMAGE=golang
 GO_IMAGE?=$(GO_BASE_IMAGE):$(GO_VERSION)-stretch
 GEN_RPM_VER=$(shell ./gen-rpm-ver $(APP_DIR) $(VERSION))
-CRI_DOCKER_GITCOMMIT?=$(word 3,$(GEN_RPM_VER))
+CRI_DOCKER_GITCOMMIT?=$(word 2,$(GEN_RPM_VER))
 CHOWN=docker run --rm -i -v $(CURDIR):/v -w /v alpine chown
 
 DOCKERFILE=Dockerfile
@@ -32,9 +32,9 @@ RPMBUILD=docker run --privileged --rm -i \
 	-v $(CURDIR)/rpmbuild/SRPMS:/root/rpmbuild/SRPMS
 RPMBUILD_FLAGS?=-ba\
 	--define '_gitcommit $(CRI_DOCKER_GITCOMMIT)' \
-	--define '_release $(word 2,$(GEN_RPM_VER))' \
+	--define '_release $(word 1,$(GEN_RPM_VER))' \
 	--define '_version $(word 1,$(GEN_RPM_VER))' \
-	--define '_origversion $(word 4, $(GEN_RPM_VER))' \
+	--define '_origversion $(word 1, $(GEN_RPM_VER))' \
 	$(SPECS)
 RUN?=$(RPMBUILD) rpmbuild-$@/$(ARCH) $(RPMBUILD_FLAGS)
 
