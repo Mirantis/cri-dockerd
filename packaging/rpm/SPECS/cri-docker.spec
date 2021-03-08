@@ -60,10 +60,11 @@ cri-docker is a lightweight implementation of the CRI specification which talks 
 %setup -q -c -n src -a 0
 
 %build
-
 export CRI_DOCKER_GITCOMMIT=%{_gitcommit}
 mkdir -p /go/src/github.com/evol262
 ln -s /root/rpmbuild/BUILD/src/app /go/src/github.com/evol262/cri-docker
+cd /go/src/github.com/evol262/cri-docker
+go get && go build
 
 %check
 app/cri-dockerd --version
