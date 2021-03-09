@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -x
 
 APP_DIR=$1
 VERSION=$3
