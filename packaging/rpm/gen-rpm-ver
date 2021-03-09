@@ -2,7 +2,7 @@
 set -x
 
 APP_DIR=$1
-VERSION=$3
+VERSION=$2
 
 [[ $# < 2 ]] && echo 'not enough args' && exit 1
 
