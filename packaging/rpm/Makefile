@@ -66,6 +66,7 @@ centos: $(CENTOS_RELEASES) ## build all centos rpm packages
 $(FEDORA_RELEASES) $(CENTOS_RELEASES): $(SOURCES)
 	@echo "${APP_DIR}"
 	@echo "${VERSION}"
+	@echo "$(shell ./gen-rpm-ver $(APP_DIR) $(VERSION))"
 	@echo "== Building packages for $@ =="
 	$(CHOWN) -R root:root rpmbuild
 	$(BUILD)
