@@ -1,0 +1,29 @@
+description "cri-docker daemon"
+
+start on (filesystem and net-device-up IFACE!=lo and docker)
+stop on runlevel [!2345]
+
+limit nofile 524288 1048576
+
+respawn
+
+kill timeout 20
+
+script
+	CRI_DOCKERD=/usr/bin/cri-dockerd
+	exec "$CRI_DOCKERD" --v=10 --networkplugin="" --logtostderr
+end script
+
+# Don't emit "started" event until cri-docker.sock is ready.
+post-start script
+	CRI_DOCKER_SOCKET=/var/run/cri-docker.sock
+
+	if [ -n "$CRI_DOCKER_SOCKET" ]; then
+		while ! [ -e "$CRI_DOCKER_SOCKET" ]; do
+			initctl status $UPSTART_JOB | grep -qE "(stop|respawn)/" && exit 1
+			echo "Waiting for $CRI_DOCKER_SOCKET"
+			sleep 0.1
+		done
+		echo "$CRI_DOCKER_SOCKET is up"
+	fi
+end script
