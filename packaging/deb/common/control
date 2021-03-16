@@ -1,0 +1,40 @@
+Source: cri-docker
+Section: admin
+Priority: optional
+Maintainer: Docker <support@docker.com>
+Build-Depends: bash,
+               bash-completion,
+               libbtrfs-dev | btrfs-tools,
+               ca-certificates,
+               cmake,
+               dh-apparmor,
+               dh-systemd,
+               gcc,
+               git,
+               libc-dev,
+               libdevmapper-dev,
+               libltdl-dev,
+               libseccomp-dev,
+               libseccomp2,
+               libsystemd-dev,
+               libtool,
+               make,
+               pkg-config
+Standards-Version: 3.9.6
+Homepage: https://www.docker.com
+Vcs-Browser: https://github.com/docker/docker
+Vcs-Git: git://github.com/docker/docker.git
+
+Package: cri-docker
+Architecture: linux-any
+Depends: containerd.io (>= 1.2.2-3), iptables, libseccomp2 (>= 2.3.0), ${shlibs:Depends}
+Recommends: aufs-tools [amd64],
+            ca-certificates,
+            cgroupfs-mount | cgroup-lite,
+            git,
+            pigz,
+            xz-utils,
+            libltdl7,
+            ${apparmor:Recommends}
+Description: Docker: the open-source application container engine
+ cri-docker is a lightweight implementation of the CRI specification which talks to docker.
