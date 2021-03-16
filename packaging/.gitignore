@@ -1,0 +1,5 @@
+build
+debbuild
+rpmbuild
+sources
+*.tar
