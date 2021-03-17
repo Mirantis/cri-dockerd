@@ -4,7 +4,7 @@ APP_DIR:=$(realpath $(CURDIR)/../../app)
 GO_BASE_IMAGE=golang
 WINDOWS_BUILDER?=windows-engine-builder
 GOPATH=C:\go
-CRI_DOCKER_GOPATH=C:\gopath\src\github.com\evol262
+CRI_DOCKER_GOPATH=C:\gopath\src\github.com\Mirantis
 CRI_DOCKER_GITCOMMIT?=$(shell git -C $APP_DIR rev-parse --short HEAD)
 
 clean:

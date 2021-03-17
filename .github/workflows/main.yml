@@ -35,8 +35,8 @@ jobs:
       - name: Checkout cri-dockerd
         uses: actions/checkout@v2
         with:
-          repository: evol262/cri-dockerd
-          path: src/github.com/evol262/cri-dockerd
+          repository: Mirantis/cri-dockerd
+          path: src/github.com/Mirantis/cri-dockerd
 
       - name: Install docker
         shell: bash
@@ -81,7 +81,7 @@ jobs:
           sudo mv $(pwd)/_output/crictl /usr/local/bin
 
       - name: Build cri-dockerd
-        working-directory: src/github.com/evol262/cri-dockerd
+        working-directory: src/github.com/Mirantis/cri-dockerd
         run: |
           go install .
           sudo mv $GOPATH/bin/cri-dockerd /usr/local/bin
