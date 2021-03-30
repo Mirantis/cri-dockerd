@@ -1,0 +1,46 @@
+include Makefile
+
+RPMBUILD+=-v "$$SSH_AUTH_SOCK:/ssh_auth_sock" -e SSH_AUTH_SOCK=/ssh_auth_sock
+
+.PHONY: sles-%
+sles-%: ## build sles-12.3 rpm packages
+sles-%: $(SOURCES)
+	$(CHOWN) -R root:root rpmbuild
+	$(BUILD)
+	$(RUN)
+	$(CHOWN) -R $(shell id -u):$(shell id -g) rpmbuild
+
+.PHONY: rhel-7
+rhel-7: DOCKERFILE:=Dockerfile.$(ARCH)
+rhel-7: ## build rhel-7 rpm packages
+rhel-7: $(SOURCES)
+	$(CHOWN) -R root:root rpmbuild
+	$(BUILD)
+	$(RUN)
+	$(CHOWN) -R $(shell id -u):$(shell id -g) rpmbuild
+
+.PHONY: rhel-8
+rhel-8: DOCKERFILE:=Dockerfile.$(ARCH)
+rhel-8: ## build rhel-8 rpm packages
+rhel-8: $(SOURCES)
+	$(CHOWN) -R root:root rpmbuild
+	$(BUILD)
+	$(RUN)
+	$(CHOWN) -R $(shell id -u):$(shell id -g) rpmbuild
+
+.PHONY: oraclelinux-7
+oraclelinux-7: ## build oraclelinux-7 rpm packages
+oraclelinux-7: $(SOURCES)
+	$(CHOWN) -R root:root rpmbuild
+	$(BUILD)
+	$(RUN)
+	$(CHOWN) -R $(shell id -u):$(shell id -g) rpmbuild
+
+.PHONY: amazonlinux-%
+amazonlinux-%: ## build amazonlinux rpm packages
+amazonlinux-%: $(SOURCES)
+	$(CHOWN) -R root:root rpmbuild
+	$(BUILD)
+	$(RUN)
+	$(CHOWN) -R $(shell id -u):$(shell id -g) rpmbuild
+

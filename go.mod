@@ -1,4 +1,4 @@
-module github.com/evol262/cri-dockerd
+module github.com/Mirantis/cri-dockerd
 
 go 1.14
 

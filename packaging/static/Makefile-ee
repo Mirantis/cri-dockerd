@@ -1,0 +1,5 @@
+include Makefile
+
+BUILD_PLUGIN_RUN_VARS+=-e SSH_AUTH_SOCK=/ssh_auth \
+	-v "$$SSH_AUTH_SOCK":/ssh_auth:ro \
+	-e GITHUB_TOKEN

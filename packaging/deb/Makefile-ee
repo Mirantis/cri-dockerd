@@ -1,0 +1,3 @@
+include Makefile
+
+RUN_FLAGS+=-v "$$SSH_AUTH_SOCK:/ssh_auth_sock" -e SSH_AUTH_SOCK=/ssh_auth_sock
