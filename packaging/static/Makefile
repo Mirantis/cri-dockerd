@@ -22,10 +22,10 @@ static: static-linux cross-mac cross-win cross-arm ## create all static packages
 
 .PHONY: static-linux
 static-linux:
-	mkdir -p build/linux/cri-docker
+	mkdir -p build/linux/cri-dockerd
 	cd $(APP_DIR) && go get && env GOOS=linux GOARCH=amd64 go build -o cri-dockerd
-	mv $(APP_DIR)/cri-dockerd build/linux/cri-dockerd
-	tar -C build/linux -c -z -f build/linux/cri-docker-$(STATIC_VERSION).tgz cri-docker
+	mv $(APP_DIR)/cri-dockerd build/linux/cri-dockerd/cri-dockerd
+	tar -C build/linux -c -z -f build/linux/cri-dockerd-$(STATIC_VERSION).tgz cri-dockerd
 
 .PHONY: hash_files
 hash_files:
@@ -34,22 +34,22 @@ hash_files:
 
 .PHONY: cross-mac
 cross-mac:
-	mkdir -p build/mac/cri-docker
+	mkdir -p build/mac/cri-dockerd
 	cd $(APP_DIR) && go get && env GOOS=darwin GOARCH=amd64 go build -o cri-dockerd-darwin-amd64
-	mv $(APP_DIR)/cri-dockerd-darwin-amd64 build/mac/cri-dockerd
-	tar -C build/mac -c -z -f build/mac/cri-docker-$(STATIC_VERSION).tgz cri-docker
+	mv $(APP_DIR)/cri-dockerd-darwin-amd64 build/mac/cri-dockerd/cri-dockerd
+	tar -C build/mac -c -z -f build/mac/cri-dockerd-$(STATIC_VERSION).tgz cri-dockerd
 
 .PHONY: cross-win
 cross-win:
-	mkdir -p build/win/cri-docker
+	mkdir -p build/win/cri-dockerd
 	cd $(APP_DIR) && go get && env GOOS=windows GOARCH=amd64 go build -o cri-dockerd-windows-amd64
-	mv $(APP_DIR)/cri-dockerd-windows-amd64 build/win/cri-docker/cri-dockerd.exe
-	docker run --rm -v $(CURDIR)/build/win:/v -w /v alpine sh -c 'apk update && apk add zip && zip -r cri-docker-$(STATIC_VERSION).zip cri-docker'
+	mv $(APP_DIR)/cri-dockerd-windows-amd64 build/win/cri-dockerd/cri-dockerd.exe
+	docker run --rm -v $(CURDIR)/build/win:/v -w /v alpine sh -c 'apk update && apk add zip && zip -r cri-dockerd-$(STATIC_VERSION).zip cri-dockerd'
 	$(CHOWN) -R $(shell id -u):$(shell id -g) build
 
 .PHONY: cross-arm
 cross-arm: ## create tgz with linux armhf client only
-	mkdir -p build/arm/cri-docker
+	mkdir -p build/arm/cri-dockerd
 	cd $(APP_DIR) && go get && env GOOS=linux GOARCH=arm64 go build -o cri-dockerd-arm64
-	mv $(APP_DIR)/cri-dockerd-arm64 build/arm/cri-dockerd
-	tar -C build/arm -c -z -f build/arm/cri-docker-$(STATIC_VERSION).tgz cri-docker
+	mv $(APP_DIR)/cri-dockerd-arm64 build/arm/cri-dockerd/cri-dockerd
+	tar -C build/arm -c -z -f build/arm/cri-dockerd-$(STATIC_VERSION).tgz cri-dockerd
