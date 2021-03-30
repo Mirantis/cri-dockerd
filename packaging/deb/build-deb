@@ -7,8 +7,8 @@ mkdir -p /root/build-deb/app
 tar -C /root/build-deb -xzf /sources/app.tgz
 
 # link them to their canonical path
-mkdir -p /go/src/github.com/evol262
-ln -snf /root/build-deb/app /go/src/github.com/evol262/cri-docker
+mkdir -p /go/src/github.com/Mirantis
+ln -snf /root/build-deb/app /go/src/github.com/Mirantis/cri-docker
 
 EPOCH="${EPOCH:-}"
 EPOCH_SEP=""

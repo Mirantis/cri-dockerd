@@ -19,13 +19,13 @@ package app
 import (
 	"fmt"
 	"net/url"
-	"github.com/evol262/cri-dockerd/pkg/app/options"
+	"github.com/Mirantis/cri-dockerd/pkg/app/options"
 	"k8s.io/component-base/cli/flag"
 	"k8s.io/component-base/version/verflag"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 	"k8s.io/klog"
-	"github.com/evol262/cri-dockerd/dockershim"
-	dockerremote "github.com/evol262/cri-dockerd/dockershim/remote"
+	"github.com/Mirantis/cri-dockerd/dockershim"
+	dockerremote "github.com/Mirantis/cri-dockerd/dockershim/remote"
 	"k8s.io/kubernetes/pkg/kubelet/cri/streaming"
 	utilflag "k8s.io/component-base/cli/flag"
 
