@@ -18,6 +18,10 @@ rpm: ## build rpm packages
 static: ## build static packages
 	$(MAKE) VERSION=$(VERSION) APP_DIR=$(APP_DIR) -C $(PACKAGING_DIR) static
 
+.PHONY: static-linux
+static-linux: ## build static packages
+	$(MAKE) VERSION=$(VERSION) APP_DIR=$(APP_DIR) -C $(PACKAGING_DIR) static-linux
+
 .PHONY: clean
 clean: ## clean the build artifacts
 	-$(MAKE) -C $(PACKAGING_DIR) clean
