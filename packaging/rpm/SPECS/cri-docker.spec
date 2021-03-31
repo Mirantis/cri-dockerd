@@ -64,7 +64,7 @@ export CRI_DOCKER_GITCOMMIT=%{_gitcommit}
 mkdir -p /go/src/github.com/Mirantis
 ln -s /root/rpmbuild/BUILD/src/app /go/src/github.com/Mirantis/cri-docker
 cd /root/rpmbuild/BUILD/src/app
-go get && go build
+GOPROXY="https://proxy.golang.org" GO111MODULE=on go get && go build
 
 %check
 app/cri-dockerd --version
