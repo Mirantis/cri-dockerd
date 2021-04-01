@@ -44,8 +44,10 @@ cross-win:
 	mkdir -p build/win/cri-dockerd
 	cd $(APP_DIR) && go get && env GOOS=windows GOARCH=amd64 go build -o cri-dockerd-windows-amd64
 	mv $(APP_DIR)/cri-dockerd-windows-amd64 build/win/cri-dockerd/cri-dockerd.exe
-	docker run --rm -v $(CURDIR)/build/win:/v -w /v alpine sh -c 'apk update && apk add zip && zip -r cri-dockerd-$(STATIC_VERSION).zip cri-dockerd'
-	$(CHOWN) -R $(shell id -u):$(shell id -g) build
+	if ! grep -sq 'docker\|lxc' /proc/1/cgroup; then \
+	    docker run --rm -v $(CURDIR)/build/win:/v -w /v alpine sh -c 'apk update && apk add zip && zip -r cri-dockerd-$(STATIC_VERSION).zip cri-dockerd'; \
+	    $(CHOWN) -R $(shell id -u):$(shell id -g) build; \
+	fi
 
 .PHONY: cross-arm
 cross-arm: ## create tgz with linux armhf client only
