@@ -32,6 +32,13 @@ static: ## build static-compiled packages
 	done
 
 .PHONY: static-linux
-static-linux: DOCKER_BUILD_PKGS:=static-linux cross-mac cross-win cross-arm
 static-linux: ## build static-compiled packages
 	$(MAKE) -C static VERSION=$(VERSION) APP_DIR=$(APP_DIR) GO_VERSION=$(GO_VERSION) static-linux
+
+.PHONY: cross-mac
+cross-mac: ## build static-compiled packages
+	$(MAKE) -C static VERSION=$(VERSION) APP_DIR=$(APP_DIR) GO_VERSION=$(GO_VERSION) cross-mac
+
+.PHONY: cross-win
+cross-win: ## build static-compiled packages
+	$(MAKE) -C static VERSION=$(VERSION) APP_DIR=$(APP_DIR) GO_VERSION=$(GO_VERSION) cross-win

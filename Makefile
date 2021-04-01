@@ -22,6 +22,14 @@ static: ## build static packages
 static-linux: ## build static packages
 	$(MAKE) VERSION=$(VERSION) APP_DIR=$(APP_DIR) -C $(PACKAGING_DIR) static-linux
 
+.PHONY: cross-mac
+cross-mac: ## build static packages
+	$(MAKE) VERSION=$(VERSION) APP_DIR=$(APP_DIR) -C $(PACKAGING_DIR) cross-mac
+
+.PHONY: cross-win
+cross-win: ## build static packages
+	$(MAKE) VERSION=$(VERSION) APP_DIR=$(APP_DIR) -C $(PACKAGING_DIR) cross-win
+
 .PHONY: clean
 clean: ## clean the build artifacts
 	-$(MAKE) -C $(PACKAGING_DIR) clean
