@@ -63,7 +63,7 @@ if [[ "$VERSION" == *-dev ]]; then
     gitUnix="$($GIT_COMMAND log -1 --pretty='%ct')"
     gitDate="$($DATE_COMMAND --utc --date "@$gitUnix" +'%Y%m%d%H%M%S')"
     gitCommit="$($GIT_COMMAND log -1 --pretty='%h')"
-    debVersion="0.0.0-${gitDate}-${gitCommit}"
+    debVersion="${VERSION/-dev/}-${gitDate}-${gitCommit}"
     origVersion=$debVersion
 fi
 

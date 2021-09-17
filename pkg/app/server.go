@@ -18,23 +18,23 @@ package app
 
 import (
 	"fmt"
-	"net/url"
-	"github.com/Mirantis/cri-dockerd/pkg/app/options"
-	"k8s.io/component-base/cli/flag"
-	"k8s.io/component-base/version/verflag"
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
-	"k8s.io/klog"
 	"github.com/Mirantis/cri-dockerd/dockershim"
 	dockerremote "github.com/Mirantis/cri-dockerd/dockershim/remote"
-	"k8s.io/kubernetes/pkg/kubelet/cri/streaming"
+	"github.com/Mirantis/cri-dockerd/pkg/app/options"
+	"github.com/Mirantis/cri-dockerd/version"
+	"k8s.io/component-base/cli/flag"
 	utilflag "k8s.io/component-base/cli/flag"
+	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
+	"k8s.io/klog"
+	"k8s.io/kubernetes/pkg/kubelet/cri/streaming"
+	"net/url"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
 
 const (
-	componentDockerCRI = "DockerCRI"
+	componentDockerCRI = "cri-dockerd"
 )
 
 // NewDockerCRICommand creates a *cobra.Command object with default parameters
@@ -75,8 +75,13 @@ func NewDockerCRICommand(stopCh <-chan struct{}) *cobra.Command {
 				return
 			}
 
+			verflag, _ := cleanFlagSet.GetBool("version")
+			if verflag {
+				fmt.Fprintf(cmd.OutOrStderr(), "%s %s\n", version.PlatformName, version.FullVersion())
+				return
+			}
+
 			// short-circuit on verflag
-			verflag.PrintAndExitIfRequested()
 			utilflag.PrintFlags(cleanFlagSet)
 
 			if err := RunDockershim(kubeletFlags, stopCh); err != nil {
@@ -89,6 +94,7 @@ func NewDockerCRICommand(stopCh <-chan struct{}) *cobra.Command {
 	kubeletFlags.AddFlags(cleanFlagSet)
 	options.AddGlobalFlags(cleanFlagSet)
 	cleanFlagSet.BoolP("help", "h", false, fmt.Sprintf("help for %s", cmd.Name()))
+	cleanFlagSet.Bool("version", false, "prints the version of cri-dockerd")
 
 	// ugly, but necessary, because Cobra's default UsageFunc and HelpFunc pollute the flagset with global flags
 	const usageFmt = "Usage:\n  %s\n\nFlags:\n%s"
@@ -99,7 +105,6 @@ func NewDockerCRICommand(stopCh <-chan struct{}) *cobra.Command {
 	cmd.SetHelpFunc(func(cmd *cobra.Command, args []string) {
 		fmt.Fprintf(cmd.OutOrStdout(), "%s\n\n"+usageFmt, cmd.Long, cmd.UseLine(), cleanFlagSet.FlagUsagesWrapped(2))
 	})
-
 	return cmd
 }
 
@@ -116,13 +121,13 @@ func RunDockershim(f *options.DockerCRIFlags, stopCh <-chan struct{}) error {
 
 	// Initialize network plugin settings.
 	pluginSettings := dockershim.NetworkPluginSettings{
-		HairpinMode:       "none",
+		HairpinMode:        "none",
 		PluginName:         f.NetworkPluginName,
 		PluginConfDir:      f.CNIConfDir,
 		PluginBinDirString: f.CNIBinDir,
 		PluginCacheDir:     f.CNICacheDir,
 		MTU:                int(f.NetworkPluginMTU),
-		NonMasqueradeCIDR: f.NonMasqueradeCIDR,
+		NonMasqueradeCIDR:  f.NonMasqueradeCIDR,
 	}
 
 	// Initialize streaming configuration. (Not using TLS now)
@@ -144,11 +149,11 @@ func RunDockershim(f *options.DockerCRIFlags, stopCh <-chan struct{}) error {
 
 	if _, err := ds.UpdateRuntimeConfig(nil, &runtimeapi.UpdateRuntimeConfigRequest{
 		RuntimeConfig: &runtimeapi.RuntimeConfig{
-			NetworkConfig: &runtimeapi.NetworkConfig {
+			NetworkConfig: &runtimeapi.NetworkConfig{
 				PodCidr: f.PodCIDR,
 			},
 		},
-	}) ; err != nil {
+	}); err != nil {
 		return err
 	}
 

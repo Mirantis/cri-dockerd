@@ -20,7 +20,9 @@ package remote
 
 import (
 	"fmt"
+	"net"
 	"os"
+	"strings"
 
 	"google.golang.org/grpc"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
@@ -51,6 +53,18 @@ func NewDockerServer(endpoint string, s dockershim.CRIService) *DockerServer {
 	}
 }
 
+func getListener(addr string) (net.Listener, error) {
+	addrSlice := strings.SplitN(addr, "://", 2)
+	proto := addrSlice[0]
+	listenAddr := addrSlice[1]
+	switch proto {
+	case "fd":
+		return listenFd(listenAddr)
+	default:
+		return util.CreateListener(addr)
+	}
+}
+
 // Start starts the dockershim grpc server.
 func (s *DockerServer) Start() error {
 	// Start the internal service.
@@ -60,7 +74,7 @@ func (s *DockerServer) Start() error {
 	}
 
 	klog.V(2).InfoS("Start dockershim grpc server")
-	l, err := util.CreateListener(s.endpoint)
+	l, err := getListener(s.endpoint)
 	if err != nil {
 		return fmt.Errorf("failed to listen on %q: %v", s.endpoint, err)
 	}

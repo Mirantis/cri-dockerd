@@ -26,15 +26,13 @@ import (
 
 	// libs that provide registration functions
 	"k8s.io/component-base/logs"
-	"k8s.io/component-base/version/verflag"
 )
 
-// AddGlobalFlags explicitly registers flags that libraries (glog, verflag, etc.) register
+// AddGlobalFlags explicitly registers flags that libraries (glog, etc.) register
 // against the global flagsets from "flag" and "github.com/spf13/pflag".
 // We do this in order to prevent unwanted flags from leaking into the cri-dockerd's flagset.
 func AddGlobalFlags(fs *pflag.FlagSet) {
 	addGlogFlags(fs)
-	verflag.AddFlags(fs)
 	logs.AddFlags(fs)
 }
 
