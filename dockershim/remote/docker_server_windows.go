@@ -11,3 +11,6 @@ import (
 func listenFD(addr string) (net.Listener, error) {
 	return nil, errors.New("listening server on fd not supported on windows")
 }
+
+func handleNotify() {
+}
