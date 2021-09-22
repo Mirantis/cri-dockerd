@@ -91,5 +91,6 @@ func (s *DockerServer) Start() error {
 			os.Exit(1)
 		}
 	}()
+	handleNotify()
 	return nil
 }
