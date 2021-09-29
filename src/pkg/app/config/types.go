@@ -47,7 +47,7 @@ type ContainerRuntimeOptions struct {
 	// the image pulling will be cancelled. Defaults to 1m0s.
 	// +optional
 	ImagePullProgressDeadline metav1.Duration
-	// runtimeRequestTimeout is the timeout for all runtime requests except long running
+	// runtimeRequestTimeout is the timeout for all runtime requests except long-running
 	// requests - pull, logs, exec and attach.
 	RuntimeRequestTimeout metav1.Duration
 	// streamingConnectionIdleTimeout is the maximum time a streaming connection

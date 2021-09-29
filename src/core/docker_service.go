@@ -65,8 +65,6 @@ const (
 
 	// Internal docker labels used to identify whether a container is a sandbox
 	// or a regular container.
-	// TODO: This is not backward compatible with older containers. We will
-	// need to add filtering based on names.
 	containerTypeLabelKey       = "io.kubernetes.docker.type"
 	containerTypeLabelSandbox   = "podsandbox"
 	containerTypeLabelContainer = "container"
@@ -320,8 +318,6 @@ type dockerService struct {
 	containerCleanupInfos map[string]*containerCleanupInfo
 	cleanupInfosLock      sync.RWMutex
 }
-
-// TODO: handle context.
 
 // Version returns the runtime name, runtime version and runtime API version
 func (ds *dockerService) Version(_ context.Context, r *runtimeapi.VersionRequest) (*runtimeapi.VersionResponse, error) {

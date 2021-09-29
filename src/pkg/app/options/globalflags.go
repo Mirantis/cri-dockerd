@@ -30,7 +30,7 @@ import (
 
 // AddGlobalFlags explicitly registers flags that libraries (glog, etc.) register
 // against the global flagsets from "flag" and "github.com/spf13/pflag".
-// We do this in order to prevent unwanted flags from leaking into the cri-dockerd's flagset.
+// We do this in order to prevent unwanted flags from leaking into cri-dockerd's flagset.
 func AddGlobalFlags(fs *pflag.FlagSet) {
 	addGlogFlags(fs)
 	logs.AddFlags(fs)
