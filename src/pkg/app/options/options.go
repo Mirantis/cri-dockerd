@@ -25,7 +25,7 @@ import (
 	"github.com/spf13/pflag"
 )
 
-// DockerCRIFlags contains configuration flags for the cri-dockerd.
+// DockerCRIFlags contains configuration flags for cri-dockerd
 type DockerCRIFlags struct {
 	// Container-runtime-specific options.
 	config.ContainerRuntimeOptions
@@ -66,8 +66,8 @@ func (s *DockerCRIServer) AddFlags(fs *pflag.FlagSet) {
 func (f *DockerCRIFlags) AddFlags(mainfs *pflag.FlagSet) {
 	fs := pflag.NewFlagSet("", pflag.ExitOnError)
 	defer func() {
-		// Unhide deprecated flags. We want deprecated flags to show in cri-dockerd's help.
-		// We have some hidden flags, but we might as well unhide these when they are deprecated,
+		// Un-hide deprecated flags. We want deprecated flags to show in cri-dockerd's help.
+		// We have some hidden flags, but we may as well un-hide these when they are deprecated,
 		// as silently deprecating and removing (even hidden) things is unkind to people who use them.
 		fs.VisitAll(func(f *pflag.Flag) {
 			if len(f.Deprecated) > 0 {

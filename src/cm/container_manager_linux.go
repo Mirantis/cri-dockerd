@@ -73,7 +73,6 @@ type containerManager struct {
 }
 
 func (m *containerManager) Start() error {
-	// TODO: check if the required cgroups are mounted.
 	if len(m.cgroupsName) != 0 {
 		manager, err := createCgroupManager(m.cgroupsName)
 		if err != nil {

@@ -45,10 +45,10 @@ func NewDockerCRICommand(stopCh <-chan struct{}) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:  componentDockerCRI,
-		Long: `CRI that connects to Docker Daemon`,
-		// The cri-dockerd has special flag parsing requirements to enforce flag precedence rules,
+		Long: `CRI that connects to the Docker Daemon`,
+		// cri-dockerd has special flag parsing requirements to enforce flag precedence rules,
 		// so we do all our parsing manually in Run, below.
-		// DisableFlagParsing=true provides the full set of flags passed to the cri-dockerd in the
+		// DisableFlagParsing=true provides the full set of flags passed to cri-dockerd in the
 		// `args` arg to Run, without Cobra's interference.
 		DisableFlagParsing: true,
 		Run: func(cmd *cobra.Command, args []string) {
@@ -62,13 +62,13 @@ func NewDockerCRICommand(stopCh <-chan struct{}) *cobra.Command {
 			cmds := cleanFlagSet.Args()
 			if len(cmds) > 0 {
 				cmd.Usage()
-				klog.Fatalf("unknown command: %s", cmds[0])
+				klog.Fatalf("Unknown command: %s", cmds[0])
 			}
 
 			// short-circuit on help
 			help, err := cleanFlagSet.GetBool("help")
 			if err != nil {
-				klog.Fatal(`"help" flag is non-bool, programmer error, please correct`)
+				klog.Fatal(`"help" flag is non-bool`)
 			}
 			if help {
 				cmd.Help()
@@ -93,8 +93,8 @@ func NewDockerCRICommand(stopCh <-chan struct{}) *cobra.Command {
 	// keep cleanFlagSet separate, so Cobra doesn't pollute it with the global flags
 	kubeletFlags.AddFlags(cleanFlagSet)
 	options.AddGlobalFlags(cleanFlagSet)
-	cleanFlagSet.BoolP("help", "h", false, fmt.Sprintf("help for %s", cmd.Name()))
-	cleanFlagSet.Bool("version", false, "prints the version of cri-dockerd")
+	cleanFlagSet.BoolP("help", "h", false, fmt.Sprintf("Help for %s", cmd.Name()))
+	cleanFlagSet.Bool("version", false, "Prints the version of cri-dockerd")
 
 	// ugly, but necessary, because Cobra's default UsageFunc and HelpFunc pollute the flagset with global flags
 	const usageFmt = "Usage:\n  %s\n\nFlags:\n%s"
@@ -157,7 +157,7 @@ func RunCriDockerd(f *options.DockerCRIFlags, stopCh <-chan struct{}) error {
 		return err
 	}
 
-	klog.V(2).Infof("Starting the GRPC server for the docker CRI shim.")
+	klog.V(2).Infof("Starting the GRPC server for the Docker CRI interface.")
 	server := dockerremote.NewDockerServer(f.RemoteRuntimeEndpoint, ds)
 	if err := server.Start(); err != nil {
 		return err
