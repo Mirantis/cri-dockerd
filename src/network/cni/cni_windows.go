@@ -21,11 +21,11 @@ package cni
 import (
 	"context"
 	"fmt"
+	"github.com/Mirantis/cri-dockerd/network"
 	cniTypes020 "github.com/containernetworking/cni/pkg/types/020"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 	"k8s.io/klog/v2"
 	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
-	"github.com/Mirantis/cri-dockerd/network"
 	"net"
 	"time"
 )

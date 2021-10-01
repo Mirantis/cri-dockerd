@@ -31,6 +31,10 @@ import (
 	"testing"
 	"text/template"
 
+	"github.com/Mirantis/cri-dockerd/network"
+	"github.com/Mirantis/cri-dockerd/network/cni/testing"
+	"github.com/Mirantis/cri-dockerd/network/hostport"
+	networktest "github.com/Mirantis/cri-dockerd/network/testing"
 	types020 "github.com/containernetworking/cni/pkg/types/020"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -40,10 +44,6 @@ import (
 	kubeletconfig "k8s.io/kubernetes/pkg/kubelet/apis/config"
 	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
 	containertest "k8s.io/kubernetes/pkg/kubelet/container/testing"
-	"github.com/Mirantis/cri-dockerd/network"
-	"github.com/Mirantis/cri-dockerd/network/cni/testing"
-	"github.com/Mirantis/cri-dockerd/network/hostport"
-	networktest "github.com/Mirantis/cri-dockerd/network/testing"
 	"k8s.io/utils/exec"
 	fakeexec "k8s.io/utils/exec/testing"
 )

@@ -22,11 +22,11 @@ limitations under the License.
 package testing
 
 import (
+	"github.com/Mirantis/cri-dockerd/network"
 	gomock "github.com/golang/mock/gomock"
 	sets "k8s.io/apimachinery/pkg/util/sets"
 	kubeletconfig "k8s.io/kubernetes/pkg/kubelet/apis/config"
 	container "k8s.io/kubernetes/pkg/kubelet/container"
-	"github.com/Mirantis/cri-dockerd/network"
 )
 
 // Mock of NetworkPlugin interface

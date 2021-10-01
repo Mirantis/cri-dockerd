@@ -158,6 +158,7 @@ func matchImageIDOnly(inspected dockertypes.ImageInspect, image string) bool {
 		return true
 	}
 
-	klog.V(4).InfoS("The image reference does not directly refer to the given image's ID", "image", image, "inspectedImageID", inspected.ID)
+	klog.V(4).InfoS("The image reference does not directly refer to the given image's ID",
+		"image", image, "inspectedImageID", inspected.ID)
 	return false
 }

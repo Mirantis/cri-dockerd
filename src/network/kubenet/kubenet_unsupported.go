@@ -21,9 +21,9 @@ package kubenet
 import (
 	"fmt"
 
+	"github.com/Mirantis/cri-dockerd/network"
 	kubeletconfig "k8s.io/kubernetes/pkg/kubelet/apis/config"
 	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
-	"github.com/Mirantis/cri-dockerd/network"
 )
 
 type kubenetNetworkPlugin struct {

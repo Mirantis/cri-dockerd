@@ -25,6 +25,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Mirantis/cri-dockerd/network/hostport"
+	"github.com/Mirantis/cri-dockerd/network/metrics"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	utilsets "k8s.io/apimachinery/pkg/util/sets"
@@ -32,8 +34,6 @@ import (
 	"k8s.io/klog/v2"
 	kubeletconfig "k8s.io/kubernetes/pkg/kubelet/apis/config"
 	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
-	"github.com/Mirantis/cri-dockerd/network/hostport"
-	"github.com/Mirantis/cri-dockerd/network/metrics"
 	utilsysctl "k8s.io/kubernetes/pkg/util/sysctl"
 	utilexec "k8s.io/utils/exec"
 
