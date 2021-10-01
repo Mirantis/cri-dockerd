@@ -36,7 +36,7 @@ import (
 type ExecHandler interface {
 	ExecInContainer(
 		ctx context.Context,
-		client libdocker.Interface,
+		client libdocker.DockerClientInterface,
 		container *dockertypes.ContainerJSON,
 		cmd []string,
 		stdin io.Reader,
@@ -73,7 +73,7 @@ type NativeExecHandler struct{}
 // ExecInContainer executes the cmd in container using the Docker's exec API
 func (*NativeExecHandler) ExecInContainer(
 	ctx context.Context,
-	client libdocker.Interface,
+	client libdocker.DockerClientInterface,
 	container *dockertypes.ContainerJSON,
 	cmd []string,
 	stdin io.Reader,

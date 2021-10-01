@@ -32,7 +32,7 @@ import (
 	time "time"
 )
 
-// MockInterface is a mock of Interface interface
+// MockInterface is a mock of DockerClientInterface interface
 type MockInterface struct {
 	ctrl     *gomock.Controller
 	recorder *MockInterfaceMockRecorder

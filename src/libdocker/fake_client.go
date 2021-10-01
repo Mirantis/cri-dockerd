@@ -308,7 +308,7 @@ func (f *FakeDockerClient) popError(op string) error {
 	return nil
 }
 
-// ListContainers is a test-spy implementation of Interface.ListContainers.
+// ListContainers is a test-spy implementation of DockerClientInterface.ListContainers.
 // It adds an entry "list" to the internal method call record.
 func (f *FakeDockerClient) ListContainers(
 	options dockertypes.ContainerListOptions,
@@ -389,7 +389,7 @@ func toDockerContainerStatus(state string) string {
 	}
 }
 
-// InspectContainer is a test-spy implementation of Interface.InspectContainer.
+// InspectContainer is a test-spy implementation of DockerClientInterface.InspectContainer.
 // It adds an entry "inspect" to the internal method call record.
 func (f *FakeDockerClient) InspectContainer(id string) (*dockertypes.ContainerJSON, error) {
 	f.Lock()
@@ -406,7 +406,7 @@ func (f *FakeDockerClient) InspectContainer(id string) (*dockertypes.ContainerJS
 	return nil, fmt.Errorf("container %q not found", id)
 }
 
-// InspectContainerWithSize is a test-spy implementation of Interface.InspectContainerWithSize.
+// InspectContainerWithSize is a test-spy implementation of DockerClientInterface.InspectContainerWithSize.
 // It adds an entry "inspect" to the internal method call record.
 func (f *FakeDockerClient) InspectContainerWithSize(id string) (*dockertypes.ContainerJSON, error) {
 	f.Lock()
@@ -423,7 +423,7 @@ func (f *FakeDockerClient) InspectContainerWithSize(id string) (*dockertypes.Con
 	return nil, fmt.Errorf("container %q not found", id)
 }
 
-// InspectImageByRef is a test-spy implementation of Interface.InspectImageByRef.
+// InspectImageByRef is a test-spy implementation of DockerClientInterface.InspectImageByRef.
 // It adds an entry "inspect" to the internal method call record.
 func (f *FakeDockerClient) InspectImageByRef(name string) (*dockertypes.ImageInspect, error) {
 	f.Lock()
@@ -438,7 +438,7 @@ func (f *FakeDockerClient) InspectImageByRef(name string) (*dockertypes.ImageIns
 	return nil, ImageNotFoundError{name}
 }
 
-// InspectImageByID is a test-spy implementation of Interface.InspectImageByID.
+// InspectImageByID is a test-spy implementation of DockerClientInterface.InspectImageByID.
 // It adds an entry "inspect" to the internal method call record.
 func (f *FakeDockerClient) InspectImageByID(name string) (*dockertypes.ImageInspect, error) {
 	f.Lock()
@@ -476,7 +476,7 @@ func GetFakeContainerID(name string) string {
 	return strconv.FormatUint(hash.Sum64(), 16)
 }
 
-// CreateContainer is a test-spy implementation of Interface.CreateContainer.
+// CreateContainer is a test-spy implementation of DockerClientInterface.CreateContainer.
 // It adds an entry "create" to the internal method call record.
 func (f *FakeDockerClient) CreateContainer(
 	c dockertypes.ContainerCreateConfig,
@@ -511,7 +511,7 @@ func (f *FakeDockerClient) CreateContainer(
 	return &dockercontainer.ContainerCreateCreatedBody{ID: id}, nil
 }
 
-// StartContainer is a test-spy implementation of Interface.StartContainer.
+// StartContainer is a test-spy implementation of DockerClientInterface.StartContainer.
 // It adds an entry "start" to the internal method call record.
 func (f *FakeDockerClient) StartContainer(id string) error {
 	f.Lock()
@@ -558,7 +558,7 @@ func (f *FakeDockerClient) StartContainer(id string) error {
 	return nil
 }
 
-// StopContainer is a test-spy implementation of Interface.StopContainer.
+// StopContainer is a test-spy implementation of DockerClientInterface.StopContainer.
 // It adds an entry "stop" to the internal method call record.
 func (f *FakeDockerClient) StopContainer(id string, timeout time.Duration) error {
 	f.Lock()
@@ -644,7 +644,7 @@ func (f *FakeDockerClient) UpdateContainerResources(
 	return nil
 }
 
-// Logs is a test-spy implementation of Interface.Logs.
+// Logs is a test-spy implementation of DockerClientInterface.Logs.
 // It adds an entry "logs" to the internal method call record.
 func (f *FakeDockerClient) Logs(
 	id string,
@@ -665,7 +665,7 @@ func (f *FakeDockerClient) isAuthorizedForImage(image string, auth dockertypes.A
 	}
 }
 
-// PullImage is a test-spy implementation of Interface.PullImage.
+// PullImage is a test-spy implementation of DockerClientInterface.PullImage.
 // It adds an entry "pull" to the internal method call record.
 func (f *FakeDockerClient) PullImage(
 	image string,
@@ -884,7 +884,7 @@ func (f *FakeDockerClient) InjectImageHistory(
 // FakeDockerPuller is meant to be a simple wrapper around FakeDockerClient.
 // Please do not add more functionalities to it.
 type FakeDockerPuller struct {
-	client Interface
+	client DockerClientInterface
 }
 
 func (f *FakeDockerPuller) Pull(image string, _ []v1.Secret) error {

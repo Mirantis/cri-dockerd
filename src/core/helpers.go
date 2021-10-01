@@ -287,7 +287,7 @@ func getUserFromImageUser(imageUser string) (*int64, string) {
 // See #40443. Sometimes even removal may fail with "no such container" error.
 // In that case we have to create the container with a randomized name.
 func recoverFromCreationConflictIfNeeded(
-	client libdocker.Interface,
+	client libdocker.DockerClientInterface,
 	createConfig dockertypes.ContainerCreateConfig,
 	err error,
 ) (*dockercontainer.ContainerCreateCreatedBody, error) {
@@ -339,7 +339,7 @@ func transformStartContainerError(err error) error {
 }
 
 // ensureSandboxImageExists pulls the sandbox image when it's not present.
-func ensureSandboxImageExists(client libdocker.Interface, image string) error {
+func ensureSandboxImageExists(client libdocker.DockerClientInterface, image string) error {
 	_, err := client.InspectImageByRef(image)
 	if err == nil {
 		return nil

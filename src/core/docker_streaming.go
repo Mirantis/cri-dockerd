@@ -41,7 +41,7 @@ import (
 )
 
 type streamingRuntime struct {
-	client      libdocker.Interface
+	client      libdocker.DockerClientInterface
 	execHandler ExecHandler
 }
 
@@ -199,7 +199,7 @@ func (ds *dockerService) PortForward(
 }
 
 func checkContainerStatus(
-	client libdocker.Interface,
+	client libdocker.DockerClientInterface,
 	containerID string,
 ) (*dockertypes.ContainerJSON, error) {
 	container, err := client.InspectContainer(containerID)
@@ -213,7 +213,7 @@ func checkContainerStatus(
 }
 
 func attachContainer(
-	client libdocker.Interface,
+	client libdocker.DockerClientInterface,
 	containerID string,
 	stdin io.Reader,
 	stdout, stderr io.WriteCloser,

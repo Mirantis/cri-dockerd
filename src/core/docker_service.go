@@ -188,7 +188,7 @@ type ClientConfig struct {
 
 // NewDockerClientFromConfig create a docker client from given configure
 // return nil if nil configure is given.
-func NewDockerClientFromConfig(config *ClientConfig) libdocker.Interface {
+func NewDockerClientFromConfig(config *ClientConfig) libdocker.DockerClientInterface {
 	if config != nil {
 		// Create docker client.
 		client := libdocker.ConnectToDockerOrDie(
@@ -338,7 +338,7 @@ func NewDockerService(
 }
 
 type dockerService struct {
-	client           libdocker.Interface
+	client           libdocker.DockerClientInterface
 	os               kubecontainer.OSInterface
 	podSandboxImage  string
 	streamingRuntime *streamingRuntime

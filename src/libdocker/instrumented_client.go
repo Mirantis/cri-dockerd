@@ -28,14 +28,14 @@ import (
 	"github.com/Mirantis/cri-dockerd/metrics"
 )
 
-// instrumentedInterface wraps the Interface and records the operations
+// instrumentedInterface wraps the DockerClientInterface and records the operations
 // and errors metrics.
 type instrumentedInterface struct {
-	client Interface
+	client DockerClientInterface
 }
 
-// NewInstrumentedInterface creates an instrumented Interface from an existing Interface.
-func NewInstrumentedInterface(dockerClient Interface) Interface {
+// NewInstrumentedInterface creates an instrumented DockerClientInterface from an existing DockerClientInterface.
+func NewInstrumentedInterface(dockerClient DockerClientInterface) DockerClientInterface {
 	return instrumentedInterface{
 		client: dockerClient,
 	}

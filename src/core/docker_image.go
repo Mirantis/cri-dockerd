@@ -178,7 +178,7 @@ func (ds *dockerService) RemoveImage(
 }
 
 // getImageRef returns the image digest if exists, or else returns the image ID.
-func getImageRef(client libdocker.Interface, image string) (string, error) {
+func getImageRef(client libdocker.DockerClientInterface, image string) (string, error) {
 	img, err := client.InspectImageByRef(image)
 	if err != nil {
 		return "", err
