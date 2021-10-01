@@ -107,8 +107,6 @@ func (ds *dockerService) updateCreateConfig(
 	podSandboxID string, securityOptSep rune, apiVersion *semver.Version) error {
 	// Apply Linux-specific options if applicable.
 	if lc := config.GetLinux(); lc != nil {
-		// TODO: Check if the units are correct.
-		// TODO: Can we assume the defaults are sane?
 		rOpts := lc.GetResources()
 		if rOpts != nil {
 			createConfig.HostConfig.Resources = dockercontainer.Resources{

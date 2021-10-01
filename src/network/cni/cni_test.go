@@ -75,7 +75,6 @@ func installPluginUnderTest(t *testing.T, testBinDir, testConfDir, testDataDir, 
 	f, err = os.Create(pluginExec)
 	require.NoError(t, err)
 
-	// TODO: use mock instead of fake shell script plugin
 	const execScriptTempl = `#!/usr/bin/env bash
 echo -n "{ \"cniVersion\": \"{{.CNIVersion}}\", \"ip4\": { \"ip\": \"{{.PodIP}}/24\" } }"
 if [ "$CNI_COMMAND" = "VERSION" ]; then
@@ -202,7 +201,6 @@ func TestCNIPlugin(t *testing.T) {
 	}
 
 	mockLoCNI := &mock_cni.MockCNI{}
-	// TODO mock for the test plugin too
 
 	tmpDir := utiltesting.MkTmpdirOrDie("cni-test")
 	testConfDir := path.Join(tmpDir, "etc", "cni", "net.d")

@@ -279,8 +279,6 @@ func getUserFromImageUser(imageUser string) (*int64, string) {
 // the old container FOO.
 // See #40443. Sometimes even removal may fail with "no such container" error.
 // In that case we have to create the container with a randomized name.
-// TODO(random-liu): Remove this work around after docker 1.11 is deprecated.
-// TODO(#33189): Monitor the tests to see if the fix is sufficient.
 func recoverFromCreationConflictIfNeeded(client libdocker.Interface, createConfig dockertypes.ContainerCreateConfig, err error) (*dockercontainer.ContainerCreateCreatedBody, error) {
 	matches := conflictRE.FindStringSubmatch(err.Error())
 	if len(matches) != 2 {

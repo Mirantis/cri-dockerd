@@ -206,7 +206,6 @@ func (ds *dockerService) RunPodSandbox(ctx context.Context, r *runtimeapi.RunPod
 
 // StopPodSandbox stops the sandbox. If there are any running containers in the
 // sandbox, they should be force terminated.
-// TODO: This function blocks sandbox teardown on networking teardown. Is it
 // better to cut our losses assuming an out of band GC routine will cleanup
 // after us?
 func (ds *dockerService) StopPodSandbox(ctx context.Context, r *runtimeapi.StopPodSandboxRequest) (*runtimeapi.StopPodSandboxResponse, error) {
@@ -283,7 +282,6 @@ func (ds *dockerService) StopPodSandbox(ctx context.Context, r *runtimeapi.StopP
 		return resp, nil
 	}
 
-	// TODO: Stop all running containers in the sandbox.
 	return nil, utilerrors.NewAggregate(errList)
 }
 
@@ -383,7 +381,6 @@ func (ds *dockerService) getIPs(podSandboxID string, sandbox *dockertypes.Contai
 	}
 
 	ips = make([]string, 0)
-	// TODO: trusting the docker ip is not a great idea. However docker uses
 	// eth0 by default and so does CNI, so if we find a docker IP here, we
 	// conclude that the plugin must have failed setup, or forgotten its ip.
 	// This is not a sensible assumption for plugins across the board, but if
@@ -440,7 +437,6 @@ func (ds *dockerService) PodSandboxStatus(ctx context.Context, req *runtimeapi.P
 	}
 
 	var ips []string
-	// TODO: Remove this when sandbox is available on windows
 	// This is a workaround for windows, where sandbox is not in use, and pod IP is determined through containers belonging to the Pod.
 	if ips = ds.determinePodIPBySandboxID(podSandboxID); len(ips) == 0 {
 		ips = ds.getIPs(podSandboxID, r)
@@ -623,7 +619,6 @@ func (ds *dockerService) makeSandboxDockerConfig(c *runtimeapi.PodSandboxConfig,
 	// Apply a label to distinguish sandboxes from regular containers.
 	labels[containerTypeLabelKey] = containerTypeLabelSandbox
 	// Apply a container name label for infra container. This is used in summary v1.
-	// TODO(random-liu): Deprecate this label once container metrics is directly got from CRI.
 	labels[types.KubernetesContainerNameLabel] = sandboxContainerName
 
 	hc := &dockercontainer.HostConfig{
@@ -633,7 +628,6 @@ func (ds *dockerService) makeSandboxDockerConfig(c *runtimeapi.PodSandboxConfig,
 		Name: makeSandboxName(c),
 		Config: &dockercontainer.Config{
 			Hostname: c.Hostname,
-			// TODO: Handle environment variables.
 			Image:  image,
 			Labels: labels,
 		},
@@ -675,7 +669,6 @@ func networkNamespaceMode(container *dockertypes.ContainerJSON) runtimeapi.Names
 
 // pidNamespaceMode returns the PID runtimeapi.NamespaceMode for this container.
 // Supports: CONTAINER, NODE
-// TODO(verb): add support for POD PID namespace sharing
 func pidNamespaceMode(container *dockertypes.ContainerJSON) runtimeapi.NamespaceMode {
 	if container != nil && container.HostConfig != nil && string(container.HostConfig.PidMode) == namespaceModeHost {
 		return runtimeapi.NamespaceMode_NODE

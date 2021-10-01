@@ -50,7 +50,6 @@ var _ streaming.Runtime = &streamingRuntime{}
 const maxMsgSize = 1024 * 1024 * 16
 
 func (r *streamingRuntime) Exec(containerID string, cmd []string, in io.Reader, out, err io.WriteCloser, tty bool, resize <-chan remotecommand.TerminalSize) error {
-	return r.exec(context.TODO(), containerID, cmd, in, out, err, tty, resize, 0)
 }
 
 // Internal version of Exec adds a timeout.
@@ -146,7 +145,6 @@ func (ds *dockerService) PortForward(_ context.Context, req *runtimeapi.PortForw
 	if err != nil {
 		return nil, err
 	}
-	// TODO(tallclair): Verify that ports are exposed.
 	return ds.streamingServer.GetPortForward(req)
 }
 
@@ -168,7 +166,6 @@ func attachContainer(client libdocker.Interface, containerID string, stdin io.Re
 		client.ResizeContainerTTY(containerID, uint(size.Height), uint(size.Width))
 	})
 
-	// TODO(random-liu): Do we really use the *Logs* field here?
 	opts := dockertypes.ContainerAttachOptions{
 		Stream: true,
 		Stdin:  stdin != nil,

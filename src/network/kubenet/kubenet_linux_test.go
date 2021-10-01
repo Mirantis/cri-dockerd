@@ -94,7 +94,6 @@ func TestGetPodNetworkStatus(t *testing.T) {
 			expectError: true,
 			expectIP:    nil,
 		},
-		//TODO: add test cases for retrieving ip inside container network namespace
 	}
 
 	fakeCmds := make([]fakeexec.FakeCommandAction, 0)
@@ -387,4 +386,3 @@ func TestGetRangesConfig(t *testing.T) {
 	}
 }
 
-//TODO: add unit test for each implementation of network plugin interface

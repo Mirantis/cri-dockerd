@@ -99,7 +99,6 @@ type PodNetworkStatus struct {
 }
 
 // Host is an interface that plugins can use to access the kubelet.
-// TODO(#35457): get rid of this backchannel to the kubelet. The scope of
 // the back channel is restricted to host-ports/testing, and restricted
 // to kubenet. No other network plugin wrapper needs it. Other plugins
 // only require a way to access namespace information and port mapping
@@ -257,7 +256,6 @@ func getOnePodIP(execer utilexec.Interface, nsenterPath, netnsPath, interfaceNam
 }
 
 // GetPodIP gets the IP of the pod by inspecting the network info inside the pod's network namespace.
-// TODO (khenidak). The "primary ip" in dual stack world does not really exist. For now
 // we are defaulting to v4 as primary
 func GetPodIPs(execer utilexec.Interface, nsenterPath, netnsPath, interfaceName string) ([]net.IP, error) {
 	if !utilfeature.DefaultFeatureGate.Enabled(kubefeatures.IPv6DualStack) {

@@ -141,7 +141,6 @@ func (d *kubeDockerClient) CreateContainer(opts dockertypes.ContainerCreateConfi
 	ctx, cancel := d.getTimeoutContext()
 	defer cancel()
 	// we provide an explicit default shm size as to not depend on docker daemon.
-	// TODO: evaluate exposing this as a knob in the API
 	if opts.HostConfig != nil && opts.HostConfig.ShmSize <= 0 {
 		opts.HostConfig.ShmSize = defaultShmSize
 	}
@@ -331,7 +330,6 @@ func (p *progressReporter) start() {
 		ticker := time.NewTicker(defaultImagePullingProgressReportInterval)
 		defer ticker.Stop()
 		for {
-			// TODO(random-liu): Report as events.
 			select {
 			case <-ticker.C:
 				progress, timestamp := p.progress.get()
@@ -444,7 +442,6 @@ func (d *kubeDockerClient) Info() (*dockertypes.Info, error) {
 	return &resp, nil
 }
 
-// TODO(random-liu): Add unit test for exec and attach functions, just like what go-dockerclient did.
 func (d *kubeDockerClient) CreateExec(id string, opts dockertypes.ExecConfig) (*dockertypes.IDResponse, error) {
 	ctx, cancel := d.getTimeoutContext()
 	defer cancel()
