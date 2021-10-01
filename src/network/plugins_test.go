@@ -23,9 +23,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Mirantis/cri-dockerd/network/metrics"
 	"k8s.io/component-base/metrics/legacyregistry"
 	"k8s.io/component-base/metrics/testutil"
-	"github.com/Mirantis/cri-dockerd/network/metrics"
 )
 
 func TestNetworkPluginManagerMetrics(t *testing.T) {

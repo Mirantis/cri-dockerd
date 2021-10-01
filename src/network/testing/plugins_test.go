@@ -24,10 +24,10 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/Mirantis/cri-dockerd/network"
 	utilsets "k8s.io/apimachinery/pkg/util/sets"
 	kubeletconfig "k8s.io/kubernetes/pkg/kubelet/apis/config"
 	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
-	"github.com/Mirantis/cri-dockerd/network"
 	sysctltest "k8s.io/kubernetes/pkg/util/sysctl/testing"
 
 	"github.com/golang/mock/gomock"

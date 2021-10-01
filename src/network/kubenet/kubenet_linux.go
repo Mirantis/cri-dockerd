@@ -27,6 +27,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Mirantis/cri-dockerd/network"
+	"github.com/Mirantis/cri-dockerd/network/hostport"
 	"github.com/containernetworking/cni/libcni"
 	cnitypes "github.com/containernetworking/cni/pkg/types"
 	cnitypes020 "github.com/containernetworking/cni/pkg/types/020"
@@ -38,8 +40,6 @@ import (
 	"k8s.io/klog/v2"
 	kubeletconfig "k8s.io/kubernetes/pkg/kubelet/apis/config"
 	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
-	"github.com/Mirantis/cri-dockerd/network"
-	"github.com/Mirantis/cri-dockerd/network/hostport"
 	"k8s.io/kubernetes/pkg/util/bandwidth"
 	utiliptables "k8s.io/kubernetes/pkg/util/iptables"
 	utilsysctl "k8s.io/kubernetes/pkg/util/sysctl"

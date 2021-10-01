@@ -628,8 +628,8 @@ func (ds *dockerService) makeSandboxDockerConfig(c *runtimeapi.PodSandboxConfig,
 		Name: makeSandboxName(c),
 		Config: &dockercontainer.Config{
 			Hostname: c.Hostname,
-			Image:  image,
-			Labels: labels,
+			Image:    image,
+			Labels:   labels,
 		},
 		HostConfig: hc,
 	}

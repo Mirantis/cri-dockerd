@@ -21,10 +21,10 @@ package cni
 import (
 	"fmt"
 
+	"github.com/Mirantis/cri-dockerd/network"
 	"github.com/containernetworking/cni/libcni"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
-	"github.com/Mirantis/cri-dockerd/network"
 )
 
 func getLoNetwork(binDirs []string) *cniNetwork {

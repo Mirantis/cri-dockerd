@@ -29,12 +29,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	utilsets "k8s.io/apimachinery/pkg/util/sets"
-	kubeletconfig "k8s.io/kubernetes/pkg/kubelet/apis/config"
-	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
 	"github.com/Mirantis/cri-dockerd/network"
 	mockcni "github.com/Mirantis/cri-dockerd/network/cni/testing"
 	nettest "github.com/Mirantis/cri-dockerd/network/testing"
+	utilsets "k8s.io/apimachinery/pkg/util/sets"
+	kubeletconfig "k8s.io/kubernetes/pkg/kubelet/apis/config"
+	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
 	"k8s.io/kubernetes/pkg/util/bandwidth"
 	ipttest "k8s.io/kubernetes/pkg/util/iptables/testing"
 	sysctltest "k8s.io/kubernetes/pkg/util/sysctl/testing"
@@ -385,4 +385,3 @@ func TestGetRangesConfig(t *testing.T) {
 		assert.Equal(t, test.ranges, fakeKubenet.getRangesConfig())
 	}
 }
-
