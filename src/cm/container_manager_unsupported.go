@@ -28,7 +28,7 @@ type unsupportedContainerManager struct {
 }
 
 // NewContainerManager creates a new instance of ContainerManager
-func NewContainerManager(_ string, _ libdocker.Interface) ContainerManager {
+func NewContainerManager(_ string, _ libdocker.DockerClientInterface) ContainerManager {
 	return &unsupportedContainerManager{}
 }
 

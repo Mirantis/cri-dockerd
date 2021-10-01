@@ -56,7 +56,7 @@ var (
 )
 
 // NewContainerManager creates a new instance of ContainerManager
-func NewContainerManager(cgroupsName string, client libdocker.Interface) ContainerManager {
+func NewContainerManager(cgroupsName string, client libdocker.DockerClientInterface) ContainerManager {
 	return &containerManager{
 		cgroupsName: cgroupsName,
 		client:      client,
@@ -65,7 +65,7 @@ func NewContainerManager(cgroupsName string, client libdocker.Interface) Contain
 
 type containerManager struct {
 	// Docker client.
-	client libdocker.Interface
+	client libdocker.DockerClientInterface
 	// Name of the cgroups.
 	cgroupsName string
 	// Manager for the cgroups.

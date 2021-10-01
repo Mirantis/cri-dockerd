@@ -43,8 +43,8 @@ const (
 	FakeDockerEndpoint = "fake://"
 )
 
-// Interface is an abstract interface for testability.  It abstracts the interface of docker client.
-type Interface interface {
+// DockerClientInterface is an abstract interface for testability.  It abstracts the interface of docker client.
+type DockerClientInterface interface {
 	ListContainers(options dockertypes.ContainerListOptions) ([]dockertypes.Container, error)
 	InspectContainer(id string) (*dockertypes.ContainerJSON, error)
 	InspectContainerWithSize(id string) (*dockertypes.ContainerJSON, error)
@@ -98,7 +98,7 @@ func getDockerClient(dockerEndpoint string) (*dockerapi.Client, error) {
 func ConnectToDockerOrDie(
 	dockerEndpoint string,
 	requestTimeout, imagePullProgressDeadline time.Duration,
-) Interface {
+) DockerClientInterface {
 	client, err := getDockerClient(dockerEndpoint)
 	if err != nil {
 		klog.ErrorS(err, "Couldn't connect to docker")

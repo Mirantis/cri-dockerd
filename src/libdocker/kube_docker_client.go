@@ -42,7 +42,7 @@ import (
 
 // kubeDockerClient is a wrapped layer of docker client for kubelet internal use. This layer is added to:
 //	1) Redirect stream for exec and attach operations.
-//	2) Wrap the context in this layer to make the Interface cleaner.
+//	2) Wrap the context in this layer to make the DockerClientInterface cleaner.
 type kubeDockerClient struct {
 	// timeout is the timeout of short running docker operations.
 	timeout time.Duration
@@ -53,8 +53,8 @@ type kubeDockerClient struct {
 	client                    *dockerapi.Client
 }
 
-// Make sure that kubeDockerClient implemented the Interface.
-var _ Interface = &kubeDockerClient{}
+// Make sure that kubeDockerClient implemented the DockerClientInterface.
+var _ DockerClientInterface = &kubeDockerClient{}
 
 // There are 2 kinds of docker operations categorized by running time:
 // * Long running operation: The long running operation could run for arbitrary long time, and the running time
@@ -80,7 +80,7 @@ const (
 func newKubeDockerClient(
 	dockerClient *dockerapi.Client,
 	requestTimeout, imagePullProgressDeadline time.Duration,
-) Interface {
+) DockerClientInterface {
 	if requestTimeout == 0 {
 		requestTimeout = defaultTimeout
 	}
