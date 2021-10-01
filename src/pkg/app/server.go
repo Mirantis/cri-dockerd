@@ -77,7 +77,12 @@ func NewDockerCRICommand(stopCh <-chan struct{}) *cobra.Command {
 
 			verflag, _ := cleanFlagSet.GetBool("version")
 			if verflag {
-				fmt.Fprintf(cmd.OutOrStderr(), "%s %s\n", version.PlatformName, version.FullVersion())
+				fmt.Fprintf(
+					cmd.OutOrStderr(),
+					"%s %s\n",
+					version.PlatformName,
+					version.FullVersion(),
+				)
 				return
 			}
 
@@ -103,7 +108,13 @@ func NewDockerCRICommand(stopCh <-chan struct{}) *cobra.Command {
 		return nil
 	})
 	cmd.SetHelpFunc(func(cmd *cobra.Command, args []string) {
-		fmt.Fprintf(cmd.OutOrStdout(), "%s\n\n"+usageFmt, cmd.Long, cmd.UseLine(), cleanFlagSet.FlagUsagesWrapped(2))
+		fmt.Fprintf(
+			cmd.OutOrStdout(),
+			"%s\n\n"+usageFmt,
+			cmd.Long,
+			cmd.UseLine(),
+			cleanFlagSet.FlagUsagesWrapped(2),
+		)
 	})
 	return cmd
 }
@@ -141,8 +152,15 @@ func RunCriDockerd(f *options.DockerCRIFlags, stopCh <-chan struct{}) error {
 	}
 
 	// Standalone cri-dockerd will always start the local streaming server.
-	ds, err := core.NewDockerService(dockerClientConfig, r.PodSandboxImage, streamingConfig, &pluginSettings,
-		f.RuntimeCgroups, r.CgroupDriver, r.CriDockerdRootDirectory)
+	ds, err := core.NewDockerService(
+		dockerClientConfig,
+		r.PodSandboxImage,
+		streamingConfig,
+		&pluginSettings,
+		f.RuntimeCgroups,
+		r.CgroupDriver,
+		r.CriDockerdRootDirectory,
+	)
 	if err != nil {
 		return err
 	}

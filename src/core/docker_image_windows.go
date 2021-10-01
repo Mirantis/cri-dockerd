@@ -29,7 +29,10 @@ import (
 )
 
 // ImageFsInfo returns information of the filesystem that is used to store images.
-func (ds *dockerService) ImageFsInfo(_ context.Context, _ *runtimeapi.ImageFsInfoRequest) (*runtimeapi.ImageFsInfoResponse, error) {
+func (ds *dockerService) ImageFsInfo(
+	_ context.Context,
+	_ *runtimeapi.ImageFsInfoRequest,
+) (*runtimeapi.ImageFsInfoResponse, error) {
 	info, err := ds.client.Info()
 	if err != nil {
 		klog.ErrorS(err, "Failed to get docker info")

@@ -131,7 +131,11 @@ func TestParsingCreationConflictError(t *testing.T) {
 	for _, msg := range msgs {
 		matches := conflictRE.FindStringSubmatch(msg)
 		require.Len(t, matches, 2)
-		require.Equal(t, matches[1], "24666ab8c814d16f986449e504ea0159468ddf8da01897144a770f66dce0e14e")
+		require.Equal(
+			t,
+			matches[1],
+			"24666ab8c814d16f986449e504ea0159468ddf8da01897144a770f66dce0e14e",
+		)
 	}
 }
 

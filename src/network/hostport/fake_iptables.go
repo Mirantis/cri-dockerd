@@ -50,8 +50,19 @@ func NewFakeIPTables() *fakeIPTables {
 		tables: make(map[string]*fakeTable),
 		builtinChains: map[string]sets.String{
 			string(utiliptables.TableFilter): sets.NewString("INPUT", "FORWARD", "OUTPUT"),
-			string(utiliptables.TableNAT):    sets.NewString("PREROUTING", "INPUT", "OUTPUT", "POSTROUTING"),
-			string(utiliptables.TableMangle): sets.NewString("PREROUTING", "INPUT", "FORWARD", "OUTPUT", "POSTROUTING"),
+			string(utiliptables.TableNAT): sets.NewString(
+				"PREROUTING",
+				"INPUT",
+				"OUTPUT",
+				"POSTROUTING",
+			),
+			string(utiliptables.TableMangle): sets.NewString(
+				"PREROUTING",
+				"INPUT",
+				"FORWARD",
+				"OUTPUT",
+				"POSTROUTING",
+			),
 		},
 		protocol: utiliptables.ProtocolIPv4,
 	}
@@ -65,7 +76,10 @@ func (f *fakeIPTables) getTable(tableName utiliptables.Table) (*fakeTable, error
 	return table, nil
 }
 
-func (f *fakeIPTables) getChain(tableName utiliptables.Table, chainName utiliptables.Chain) (*fakeTable, *fakeChain, error) {
+func (f *fakeIPTables) getChain(
+	tableName utiliptables.Table,
+	chainName utiliptables.Chain,
+) (*fakeTable, *fakeChain, error) {
 	table, err := f.getTable(tableName)
 	if err != nil {
 		return nil, nil, err
@@ -79,7 +93,10 @@ func (f *fakeIPTables) getChain(tableName utiliptables.Table, chainName utilipta
 	return table, chain, nil
 }
 
-func (f *fakeIPTables) ensureChain(tableName utiliptables.Table, chainName utiliptables.Chain) (bool, *fakeChain) {
+func (f *fakeIPTables) ensureChain(
+	tableName utiliptables.Table,
+	chainName utiliptables.Chain,
+) (bool, *fakeChain) {
 	table, chain, err := f.getChain(tableName, chainName)
 	if err != nil {
 		// either table or table+chain don't exist yet
@@ -100,12 +117,18 @@ func (f *fakeIPTables) ensureChain(tableName utiliptables.Table, chainName utili
 	return true, chain
 }
 
-func (f *fakeIPTables) EnsureChain(tableName utiliptables.Table, chainName utiliptables.Chain) (bool, error) {
+func (f *fakeIPTables) EnsureChain(
+	tableName utiliptables.Table,
+	chainName utiliptables.Chain,
+) (bool, error) {
 	existed, _ := f.ensureChain(tableName, chainName)
 	return existed, nil
 }
 
-func (f *fakeIPTables) FlushChain(tableName utiliptables.Table, chainName utiliptables.Chain) error {
+func (f *fakeIPTables) FlushChain(
+	tableName utiliptables.Table,
+	chainName utiliptables.Chain,
+) error {
 	_, chain, err := f.getChain(tableName, chainName)
 	if err != nil {
 		return err
@@ -114,7 +137,10 @@ func (f *fakeIPTables) FlushChain(tableName utiliptables.Table, chainName utilip
 	return nil
 }
 
-func (f *fakeIPTables) DeleteChain(tableName utiliptables.Table, chainName utiliptables.Chain) error {
+func (f *fakeIPTables) DeleteChain(
+	tableName utiliptables.Table,
+	chainName utiliptables.Chain,
+) error {
 	table, _, err := f.getChain(tableName, chainName)
 	if err != nil {
 		return err
@@ -123,7 +149,10 @@ func (f *fakeIPTables) DeleteChain(tableName utiliptables.Table, chainName utili
 	return nil
 }
 
-func (f *fakeIPTables) ChainExists(tableName utiliptables.Table, chainName utiliptables.Chain) (bool, error) {
+func (f *fakeIPTables) ChainExists(
+	tableName utiliptables.Table,
+	chainName utiliptables.Chain,
+) (bool, error) {
 	_, _, err := f.getChain(tableName, chainName)
 	if err != nil {
 		return false, err
@@ -141,7 +170,12 @@ func findRule(chain *fakeChain, rule string) int {
 	return -1
 }
 
-func (f *fakeIPTables) ensureRule(position utiliptables.RulePosition, tableName utiliptables.Table, chainName utiliptables.Chain, rule string) (bool, error) {
+func (f *fakeIPTables) ensureRule(
+	position utiliptables.RulePosition,
+	tableName utiliptables.Table,
+	chainName utiliptables.Chain,
+	rule string,
+) (bool, error) {
 	_, chain, err := f.getChain(tableName, chainName)
 	if err != nil {
 		_, chain = f.ensureChain(tableName, chainName)
@@ -208,7 +242,12 @@ func normalizeRule(rule string) (string, error) {
 	return normalized, nil
 }
 
-func (f *fakeIPTables) EnsureRule(position utiliptables.RulePosition, tableName utiliptables.Table, chainName utiliptables.Chain, args ...string) (bool, error) {
+func (f *fakeIPTables) EnsureRule(
+	position utiliptables.RulePosition,
+	tableName utiliptables.Table,
+	chainName utiliptables.Chain,
+	args ...string,
+) (bool, error) {
 	ruleArgs := make([]string, 0)
 	for _, arg := range args {
 		// quote args with internal spaces (like comments)
@@ -220,7 +259,11 @@ func (f *fakeIPTables) EnsureRule(position utiliptables.RulePosition, tableName 
 	return f.ensureRule(position, tableName, chainName, strings.Join(ruleArgs, " "))
 }
 
-func (f *fakeIPTables) DeleteRule(tableName utiliptables.Table, chainName utiliptables.Chain, args ...string) error {
+func (f *fakeIPTables) DeleteRule(
+	tableName utiliptables.Table,
+	chainName utiliptables.Chain,
+	args ...string,
+) error {
 	_, chain, err := f.getChain(tableName, chainName)
 	if err == nil {
 		rule := strings.Join(args, " ")
@@ -265,7 +308,11 @@ func (f *fakeIPTables) SaveInto(tableName utiliptables.Table, buffer *bytes.Buff
 	return nil
 }
 
-func (f *fakeIPTables) restore(restoreTableName utiliptables.Table, data []byte, flush utiliptables.FlushFlag) error {
+func (f *fakeIPTables) restore(
+	restoreTableName utiliptables.Table,
+	data []byte,
+	flush utiliptables.FlushFlag,
+) error {
 	allLines := string(data)
 	buf := bytes.NewBuffer(data)
 	var tableName utiliptables.Table
@@ -300,7 +347,8 @@ func (f *fakeIPTables) restore(restoreTableName utiliptables.Table, data []byte,
 				_, _ = f.ensureChain(tableName, chainName)
 				// The --noflush option for iptables-restore doesn't work for user-defined chains, only builtin chains.
 				// We should flush user-defined chains if the chain is not to be deleted
-				if !f.isBuiltinChain(tableName, chainName) && !strings.Contains(allLines, "-X "+string(chainName)) {
+				if !f.isBuiltinChain(tableName, chainName) &&
+					!strings.Contains(allLines, "-X "+string(chainName)) {
 					if err := f.FlushChain(tableName, chainName); err != nil {
 						return err
 					}
@@ -347,19 +395,38 @@ func (f *fakeIPTables) restore(restoreTableName utiliptables.Table, data []byte,
 	return nil
 }
 
-func (f *fakeIPTables) Restore(tableName utiliptables.Table, data []byte, flush utiliptables.FlushFlag, counters utiliptables.RestoreCountersFlag) error {
+func (f *fakeIPTables) Restore(
+	tableName utiliptables.Table,
+	data []byte,
+	flush utiliptables.FlushFlag,
+	counters utiliptables.RestoreCountersFlag,
+) error {
 	return f.restore(tableName, data, flush)
 }
 
-func (f *fakeIPTables) RestoreAll(data []byte, flush utiliptables.FlushFlag, counters utiliptables.RestoreCountersFlag) error {
+func (f *fakeIPTables) RestoreAll(
+	data []byte,
+	flush utiliptables.FlushFlag,
+	counters utiliptables.RestoreCountersFlag,
+) error {
 	return f.restore("", data, flush)
 }
 
-func (f *fakeIPTables) Monitor(canary utiliptables.Chain, tables []utiliptables.Table, reloadFunc func(), interval time.Duration, stopCh <-chan struct{}) {
+func (f *fakeIPTables) Monitor(
+	canary utiliptables.Chain,
+	tables []utiliptables.Table,
+	reloadFunc func(),
+	interval time.Duration,
+	stopCh <-chan struct{},
+) {
 }
 
-func (f *fakeIPTables) isBuiltinChain(tableName utiliptables.Table, chainName utiliptables.Chain) bool {
-	if builtinChains, ok := f.builtinChains[string(tableName)]; ok && builtinChains.Has(string(chainName)) {
+func (f *fakeIPTables) isBuiltinChain(
+	tableName utiliptables.Table,
+	chainName utiliptables.Chain,
+) bool {
+	if builtinChains, ok := f.builtinChains[string(tableName)]; ok &&
+		builtinChains.Has(string(chainName)) {
 		return true
 	}
 	return false

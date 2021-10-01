@@ -133,7 +133,12 @@ func ensureKubeHostportChains(iptables utiliptables.Interface, natInterfaceName 
 	klog.V(4).InfoS("Ensuring kubelet hostport chains")
 	// Ensure kubeHostportChain
 	if _, err := iptables.EnsureChain(utiliptables.TableNAT, kubeHostportsChain); err != nil {
-		return fmt.Errorf("failed to ensure that %s chain %s exists: %v", utiliptables.TableNAT, kubeHostportsChain, err)
+		return fmt.Errorf(
+			"failed to ensure that %s chain %s exists: %v",
+			utiliptables.TableNAT,
+			kubeHostportsChain,
+			err,
+		)
 	}
 	tableChainsNeedJumpServices := []struct {
 		table utiliptables.Table
@@ -152,7 +157,13 @@ func ensureKubeHostportChains(iptables utiliptables.Interface, natInterfaceName 
 		// This ensures KUBE-SERVICES chain gets processed first.
 		// Since rules in KUBE-HOSTPORTS chain matches broader cases, allow the more specific rules to be processed first.
 		if _, err := iptables.EnsureRule(utiliptables.Append, tc.table, tc.chain, args...); err != nil {
-			return fmt.Errorf("failed to ensure that %s chain %s jumps to %s: %v", tc.table, tc.chain, kubeHostportsChain, err)
+			return fmt.Errorf(
+				"failed to ensure that %s chain %s jumps to %s: %v",
+				tc.table,
+				tc.chain,
+				kubeHostportsChain,
+				err,
+			)
 		}
 	}
 	if natInterfaceName != "" && natInterfaceName != "lo" {
@@ -161,9 +172,25 @@ func ensureKubeHostportChains(iptables utiliptables.Interface, natInterfaceName 
 		if iptables.IsIPv6() {
 			localhost = "::1/128"
 		}
-		args = []string{"-m", "comment", "--comment", "SNAT for localhost access to hostports", "-o", natInterfaceName, "-s", localhost, "-j", "MASQUERADE"}
+		args = []string{
+			"-m",
+			"comment",
+			"--comment",
+			"SNAT for localhost access to hostports",
+			"-o",
+			natInterfaceName,
+			"-s",
+			localhost,
+			"-j",
+			"MASQUERADE",
+		}
 		if _, err := iptables.EnsureRule(utiliptables.Append, utiliptables.TableNAT, utiliptables.ChainPostrouting, args...); err != nil {
-			return fmt.Errorf("failed to ensure that %s chain %s jumps to MASQUERADE: %v", utiliptables.TableNAT, utiliptables.ChainPostrouting, err)
+			return fmt.Errorf(
+				"failed to ensure that %s chain %s jumps to MASQUERADE: %v",
+				utiliptables.TableNAT,
+				utiliptables.ChainPostrouting,
+				err,
+			)
 		}
 	}
 	return nil

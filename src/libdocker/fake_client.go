@@ -94,7 +94,10 @@ const (
 func NewFakeDockerClient() *FakeDockerClient {
 	return &FakeDockerClient{
 		// Docker's API version does not include the patch number.
-		VersionInfo:  dockertypes.Version{Version: fakeDockerVersion, APIVersion: strings.TrimSuffix(MinimumDockerAPIVersion, ".0")},
+		VersionInfo: dockertypes.Version{
+			Version:    fakeDockerVersion,
+			APIVersion: strings.TrimSuffix(MinimumDockerAPIVersion, ".0"),
+		},
 		Errors:       make(map[string]error),
 		ContainerMap: make(map[string]*dockertypes.ContainerJSON),
 		Clock:        clock.RealClock{},
@@ -307,7 +310,9 @@ func (f *FakeDockerClient) popError(op string) error {
 
 // ListContainers is a test-spy implementation of Interface.ListContainers.
 // It adds an entry "list" to the internal method call record.
-func (f *FakeDockerClient) ListContainers(options dockertypes.ContainerListOptions) ([]dockertypes.Container, error) {
+func (f *FakeDockerClient) ListContainers(
+	options dockertypes.ContainerListOptions,
+) ([]dockertypes.Container, error) {
 	f.Lock()
 	defer f.Unlock()
 	f.appendCalled(CalledDetail{name: "list"})
@@ -455,7 +460,9 @@ func (f *FakeDockerClient) normalSleep(mean, stdDev, cutOffMillis int) {
 		return
 	}
 	cutoff := (time.Duration)(cutOffMillis) * time.Millisecond
-	delay := (time.Duration)(f.RandGenerator.NormFloat64()*float64(stdDev)+float64(mean)) * time.Millisecond
+	delay := (time.Duration)(
+		f.RandGenerator.NormFloat64()*float64(stdDev)+float64(mean),
+	) * time.Millisecond
 	if delay < cutoff {
 		delay = cutoff
 	}
@@ -471,7 +478,9 @@ func GetFakeContainerID(name string) string {
 
 // CreateContainer is a test-spy implementation of Interface.CreateContainer.
 // It adds an entry "create" to the internal method call record.
-func (f *FakeDockerClient) CreateContainer(c dockertypes.ContainerCreateConfig) (*dockercontainer.ContainerCreateCreatedBody, error) {
+func (f *FakeDockerClient) CreateContainer(
+	c dockertypes.ContainerCreateConfig,
+) (*dockercontainer.ContainerCreateCreatedBody, error) {
 	f.Lock()
 	defer f.Unlock()
 	f.appendCalled(CalledDetail{name: "create"})
@@ -485,7 +494,14 @@ func (f *FakeDockerClient) CreateContainer(c dockertypes.ContainerCreateConfig) 
 	timestamp := f.Clock.Now()
 	// The newest container should be in front, because we assume so in GetPodStatus()
 	f.RunningContainerList = append([]dockertypes.Container{
-		{ID: id, Names: []string{name}, Image: c.Config.Image, Created: timestamp.Unix(), State: StatusCreatedPrefix, Labels: c.Config.Labels},
+		{
+			ID:      id,
+			Names:   []string{name},
+			Image:   c.Config.Image,
+			Created: timestamp.Unix(),
+			State:   StatusCreatedPrefix,
+			Labels:  c.Config.Labels,
+		},
 	}, f.RunningContainerList...)
 	f.ContainerMap[id] = convertFakeContainer(&FakeContainer{
 		ID: id, Name: name, Config: c.Config, HostConfig: c.HostConfig, CreatedAt: timestamp})
@@ -515,7 +531,11 @@ func (f *FakeDockerClient) StartContainer(id string) error {
 			}
 		}
 		if !found {
-			return fmt.Errorf("failed to start container \"%s\": Error response from daemon: cannot join network of a non running container: %s", id, hostContainerID)
+			return fmt.Errorf(
+				"failed to start container \"%s\": Error response from daemon: cannot join network of a non running container: %s",
+				id,
+				hostContainerID,
+			)
 		}
 	}
 	timestamp := f.Clock.Now()
@@ -526,7 +546,12 @@ func (f *FakeDockerClient) StartContainer(id string) error {
 	container.State.Pid = os.Getpid()
 	container.State.StartedAt = dockerTimestampToString(timestamp)
 	r := f.RandGenerator.Uint32()
-	container.NetworkSettings.IPAddress = fmt.Sprintf("10.%d.%d.%d", byte(r>>16), byte(r>>8), byte(r))
+	container.NetworkSettings.IPAddress = fmt.Sprintf(
+		"10.%d.%d.%d",
+		byte(r>>16),
+		byte(r>>8),
+		byte(r),
+	)
 	f.ContainerMap[id] = container
 	f.updateContainerStatus(id, StatusRunningPrefix)
 	f.normalSleep(200, 50, 50)
@@ -549,7 +574,9 @@ func (f *FakeDockerClient) StopContainer(id string, timeout time.Duration) error
 	for _, container := range f.RunningContainerList {
 		if container.ID == id {
 			// The newest exited container should be in front. Because we assume so in GetPodStatus()
-			f.ExitedContainerList = append([]dockertypes.Container{container}, f.ExitedContainerList...)
+			f.ExitedContainerList = append(
+				[]dockertypes.Container{container},
+				f.ExitedContainerList...)
 			continue
 		}
 		newList = append(newList, container)
@@ -573,7 +600,10 @@ func (f *FakeDockerClient) StopContainer(id string, timeout time.Duration) error
 	return nil
 }
 
-func (f *FakeDockerClient) RemoveContainer(id string, opts dockertypes.ContainerRemoveOptions) error {
+func (f *FakeDockerClient) RemoveContainer(
+	id string,
+	opts dockertypes.ContainerRemoveOptions,
+) error {
 	f.Lock()
 	defer f.Unlock()
 	f.appendCalled(CalledDetail{name: "remove"})
@@ -584,7 +614,9 @@ func (f *FakeDockerClient) RemoveContainer(id string, opts dockertypes.Container
 	for i := range f.ExitedContainerList {
 		if f.ExitedContainerList[i].ID == id {
 			delete(f.ContainerMap, id)
-			f.ExitedContainerList = append(f.ExitedContainerList[:i], f.ExitedContainerList[i+1:]...)
+			f.ExitedContainerList = append(
+				f.ExitedContainerList[:i],
+				f.ExitedContainerList[i+1:]...)
 			f.appendContainerTrace("Removed", id)
 			return nil
 		}
@@ -594,7 +626,9 @@ func (f *FakeDockerClient) RemoveContainer(id string, opts dockertypes.Container
 		// allow removal of running containers which are not running
 		if f.RunningContainerList[i].ID == id && !f.ContainerMap[id].State.Running {
 			delete(f.ContainerMap, id)
-			f.RunningContainerList = append(f.RunningContainerList[:i], f.RunningContainerList[i+1:]...)
+			f.RunningContainerList = append(
+				f.RunningContainerList[:i],
+				f.RunningContainerList[i+1:]...)
 			f.appendContainerTrace("Removed", id)
 			return nil
 		}
@@ -603,13 +637,20 @@ func (f *FakeDockerClient) RemoveContainer(id string, opts dockertypes.Container
 	return fmt.Errorf("container not stopped")
 }
 
-func (f *FakeDockerClient) UpdateContainerResources(id string, updateConfig dockercontainer.UpdateConfig) error {
+func (f *FakeDockerClient) UpdateContainerResources(
+	id string,
+	updateConfig dockercontainer.UpdateConfig,
+) error {
 	return nil
 }
 
 // Logs is a test-spy implementation of Interface.Logs.
 // It adds an entry "logs" to the internal method call record.
-func (f *FakeDockerClient) Logs(id string, opts dockertypes.ContainerLogsOptions, sopts StreamOptions) error {
+func (f *FakeDockerClient) Logs(
+	id string,
+	opts dockertypes.ContainerLogsOptions,
+	sopts StreamOptions,
+) error {
 	f.Lock()
 	defer f.Unlock()
 	f.appendCalled(CalledDetail{name: "logs"})
@@ -626,7 +667,11 @@ func (f *FakeDockerClient) isAuthorizedForImage(image string, auth dockertypes.A
 
 // PullImage is a test-spy implementation of Interface.PullImage.
 // It adds an entry "pull" to the internal method call record.
-func (f *FakeDockerClient) PullImage(image string, auth dockertypes.AuthConfig, opts dockertypes.ImagePullOptions) error {
+func (f *FakeDockerClient) PullImage(
+	image string,
+	auth dockertypes.AuthConfig,
+	opts dockertypes.ImagePullOptions,
+) error {
 	f.Lock()
 	defer f.Unlock()
 	f.appendCalled(CalledDetail{name: "pull"})
@@ -657,7 +702,10 @@ func (f *FakeDockerClient) Info() (*dockertypes.Info, error) {
 	return &f.Information, nil
 }
 
-func (f *FakeDockerClient) CreateExec(id string, opts dockertypes.ExecConfig) (*dockertypes.IDResponse, error) {
+func (f *FakeDockerClient) CreateExec(
+	id string,
+	opts dockertypes.ExecConfig,
+) (*dockertypes.IDResponse, error) {
 	f.Lock()
 	defer f.Unlock()
 	f.execCmd = opts.Cmd
@@ -665,14 +713,22 @@ func (f *FakeDockerClient) CreateExec(id string, opts dockertypes.ExecConfig) (*
 	return &dockertypes.IDResponse{ID: "12345678"}, nil
 }
 
-func (f *FakeDockerClient) StartExec(startExec string, opts dockertypes.ExecStartCheck, sopts StreamOptions) error {
+func (f *FakeDockerClient) StartExec(
+	startExec string,
+	opts dockertypes.ExecStartCheck,
+	sopts StreamOptions,
+) error {
 	f.Lock()
 	defer f.Unlock()
 	f.appendCalled(CalledDetail{name: "start_exec"})
 	return nil
 }
 
-func (f *FakeDockerClient) AttachToContainer(id string, opts dockertypes.ContainerAttachOptions, sopts StreamOptions) error {
+func (f *FakeDockerClient) AttachToContainer(
+	id string,
+	opts dockertypes.ContainerAttachOptions,
+	sopts StreamOptions,
+) error {
 	f.Lock()
 	defer f.Unlock()
 	f.appendCalled(CalledDetail{name: "attach"})
@@ -683,7 +739,9 @@ func (f *FakeDockerClient) InspectExec(id string) (*dockertypes.ContainerExecIns
 	return f.ExecInspect, f.popError("inspect_exec")
 }
 
-func (f *FakeDockerClient) ListImages(opts dockertypes.ImageListOptions) ([]dockertypes.ImageSummary, error) {
+func (f *FakeDockerClient) ListImages(
+	opts dockertypes.ImageListOptions,
+) ([]dockertypes.ImageSummary, error) {
 	f.Lock()
 	defer f.Unlock()
 	f.appendCalled(CalledDetail{name: "list_images"})
@@ -691,7 +749,10 @@ func (f *FakeDockerClient) ListImages(opts dockertypes.ImageListOptions) ([]dock
 	return f.Images, err
 }
 
-func (f *FakeDockerClient) RemoveImage(image string, opts dockertypes.ImageRemoveOptions) ([]dockertypes.ImageDeleteResponseItem, error) {
+func (f *FakeDockerClient) RemoveImage(
+	image string,
+	opts dockertypes.ImageRemoveOptions,
+) ([]dockertypes.ImageDeleteResponseItem, error) {
 	f.Lock()
 	defer f.Unlock()
 	f.appendCalled(CalledDetail{name: "remove_image", arguments: []interface{}{image, opts}})
@@ -716,7 +777,10 @@ func (f *FakeDockerClient) InjectImages(images []dockertypes.ImageSummary) {
 	}
 }
 
-func (f *FakeDockerClient) MakeImagesPrivate(images []dockertypes.ImageSummary, auth dockertypes.AuthConfig) {
+func (f *FakeDockerClient) MakeImagesPrivate(
+	images []dockertypes.ImageSummary,
+	auth dockertypes.AuthConfig,
+) {
 	f.Lock()
 	defer f.Unlock()
 	for _, i := range images {
@@ -809,7 +873,9 @@ func (f *FakeDockerClient) ImageHistory(id string) ([]dockerimagetypes.HistoryRe
 	return history, nil
 }
 
-func (f *FakeDockerClient) InjectImageHistory(data map[string][]dockerimagetypes.HistoryResponseItem) {
+func (f *FakeDockerClient) InjectImageHistory(
+	data map[string][]dockerimagetypes.HistoryResponseItem,
+) {
 	f.Lock()
 	defer f.Unlock()
 	f.ImageHistoryMap = data

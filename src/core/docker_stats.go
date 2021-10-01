@@ -25,7 +25,10 @@ import (
 )
 
 // ContainerStats returns stats for a container stats request based on container id.
-func (ds *dockerService) ContainerStats(_ context.Context, r *runtimeapi.ContainerStatsRequest) (*runtimeapi.ContainerStatsResponse, error) {
+func (ds *dockerService) ContainerStats(
+	_ context.Context,
+	r *runtimeapi.ContainerStatsRequest,
+) (*runtimeapi.ContainerStatsResponse, error) {
 	stats, err := ds.getContainerStats(r.ContainerId)
 	if err != nil {
 		return nil, err
@@ -34,7 +37,10 @@ func (ds *dockerService) ContainerStats(_ context.Context, r *runtimeapi.Contain
 }
 
 // ListContainerStats returns stats for a list container stats request based on a filter.
-func (ds *dockerService) ListContainerStats(ctx context.Context, r *runtimeapi.ListContainerStatsRequest) (*runtimeapi.ListContainerStatsResponse, error) {
+func (ds *dockerService) ListContainerStats(
+	ctx context.Context,
+	r *runtimeapi.ListContainerStatsRequest,
+) (*runtimeapi.ListContainerStatsResponse, error) {
 	containerStatsFilter := r.GetFilter()
 	filter := &runtimeapi.ContainerFilter{}
 

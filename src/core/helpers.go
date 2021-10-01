@@ -48,7 +48,9 @@ const (
 )
 
 var (
-	conflictRE = regexp.MustCompile(`Conflict. (?:.)+ is already in use by container \"?([0-9a-z]+)\"?`)
+	conflictRE = regexp.MustCompile(
+		`Conflict. (?:.)+ is already in use by container \"?([0-9a-z]+)\"?`,
+	)
 
 	// this is hacky, but extremely common.
 	// if a container starts but the executable file is not found, runc gives a message that matches
@@ -159,7 +161,9 @@ func generateMountBindings(mounts []*runtimeapi.Mount) []string {
 	return result
 }
 
-func makePortsAndBindings(pm []*runtimeapi.PortMapping) (dockernat.PortSet, map[dockernat.Port][]dockernat.PortBinding) {
+func makePortsAndBindings(
+	pm []*runtimeapi.PortMapping,
+) (dockernat.PortSet, map[dockernat.Port][]dockernat.PortBinding) {
 	exposedPorts := dockernat.PortSet{}
 	portBindings := map[dockernat.Port][]dockernat.PortBinding{}
 	for _, port := range pm {
@@ -207,7 +211,10 @@ func makePortsAndBindings(pm []*runtimeapi.PortMapping) (dockernat.PortSet, map[
 }
 
 // getApparmorSecurityOpts gets apparmor options from container config.
-func getApparmorSecurityOpts(sc *runtimeapi.LinuxContainerSecurityContext, separator rune) ([]string, error) {
+func getApparmorSecurityOpts(
+	sc *runtimeapi.LinuxContainerSecurityContext,
+	separator rune,
+) ([]string, error) {
 	if sc == nil || sc.ApparmorProfile == "" {
 		return nil, nil
 	}
@@ -279,14 +286,22 @@ func getUserFromImageUser(imageUser string) (*int64, string) {
 // the old container FOO.
 // See #40443. Sometimes even removal may fail with "no such container" error.
 // In that case we have to create the container with a randomized name.
-func recoverFromCreationConflictIfNeeded(client libdocker.Interface, createConfig dockertypes.ContainerCreateConfig, err error) (*dockercontainer.ContainerCreateCreatedBody, error) {
+func recoverFromCreationConflictIfNeeded(
+	client libdocker.Interface,
+	createConfig dockertypes.ContainerCreateConfig,
+	err error,
+) (*dockercontainer.ContainerCreateCreatedBody, error) {
 	matches := conflictRE.FindStringSubmatch(err.Error())
 	if len(matches) != 2 {
 		return nil, err
 	}
 
 	id := matches[1]
-	klog.InfoS("Unable to create pod sandbox due to conflict. Attempting to remove sandbox", "containerID", id)
+	klog.InfoS(
+		"Unable to create pod sandbox due to conflict. Attempting to remove sandbox",
+		"containerID",
+		id,
+	)
 	rmErr := client.RemoveContainer(id, dockertypes.ContainerRemoveOptions{RemoveVolumes: true})
 	if rmErr == nil {
 		klog.V(2).InfoS("Successfully removed conflicting container", "containerID", id)
@@ -300,7 +315,13 @@ func recoverFromCreationConflictIfNeeded(client libdocker.Interface, createConfi
 
 	// randomize the name to avoid conflict.
 	createConfig.Name = randomizeName(createConfig.Name)
-	klog.V(2).InfoS("Create the container with the randomized name", "containerName", createConfig.Name)
+	klog.V(
+		2,
+	).InfoS(
+		"Create the container with the randomized name",
+		"containerName",
+		createConfig.Name,
+	)
 	return client.CreateContainer(createConfig)
 }
 

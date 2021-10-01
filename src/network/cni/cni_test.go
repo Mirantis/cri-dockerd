@@ -49,7 +49,11 @@ import (
 )
 
 // Returns .in file path, .out file path, and .env file path
-func installPluginUnderTest(t *testing.T, testBinDir, testConfDir, testDataDir, binName string, confName, podIP string) (string, string, string) {
+func installPluginUnderTest(
+	t *testing.T,
+	testBinDir, testConfDir, testDataDir, binName string,
+	confName, podIP string,
+) (string, string, string) {
 	for _, dir := range []string{testBinDir, testConfDir, testDataDir} {
 		err := os.MkdirAll(dir, 0777)
 		if err != nil {
@@ -64,7 +68,12 @@ func installPluginUnderTest(t *testing.T, testBinDir, testConfDir, testDataDir, 
 	if err != nil {
 		t.Fatalf("Failed to install plugin %s: %v", confFile, err)
 	}
-	networkConfig := fmt.Sprintf(`{ "cniVersion": "%s", "name": "%s", "type": "%s", "capabilities": {"portMappings": true, "bandwidth": true, "ipRanges": true}  }`, cniVersion, confName, binName)
+	networkConfig := fmt.Sprintf(
+		`{ "cniVersion": "%s", "name": "%s", "type": "%s", "capabilities": {"portMappings": true, "bandwidth": true, "ipRanges": true}  }`,
+		cniVersion,
+		confName,
+		binName,
+	)
 	_, err = f.WriteString(networkConfig)
 	if err != nil {
 		t.Fatalf("Failed to write network config file (%v)", err)
@@ -133,7 +142,11 @@ type FakeNetworkHost struct {
 	pods       []*containertest.FakePod
 }
 
-func NewFakeHost(kubeClient clientset.Interface, pods []*containertest.FakePod, ports map[string][]*hostport.PortMapping) *FakeNetworkHost {
+func NewFakeHost(
+	kubeClient clientset.Interface,
+	pods []*containertest.FakePod,
+	ports map[string][]*hostport.PortMapping,
+) *FakeNetworkHost {
 	host := &FakeNetworkHost{
 		networktest.FakePortMappingGetter{PortMaps: ports},
 		kubeClient,
@@ -171,7 +184,10 @@ func TestCNIPlugin(t *testing.T) {
 	binName := fmt.Sprintf("test_vendor%d", rand.Intn(1000))
 
 	podIP := "10.0.0.2"
-	podIPOutput := fmt.Sprintf("4: eth0    inet %s/24 scope global dynamic eth0\\       valid_lft forever preferred_lft forever", podIP)
+	podIPOutput := fmt.Sprintf(
+		"4: eth0    inet %s/24 scope global dynamic eth0\\       valid_lft forever preferred_lft forever",
+		podIP,
+	)
 	fakeCmds := []fakeexec.FakeCommandAction{
 		func(cmd string, args ...string) exec.Cmd {
 			return fakeexec.InitFakeCmd(&fakeexec.FakeCmd{
@@ -208,7 +224,15 @@ func TestCNIPlugin(t *testing.T) {
 	testDataDir := path.Join(tmpDir, "output")
 	testCacheDir := path.Join(tmpDir, "var", "lib", "cni", "cache")
 	defer tearDownPlugin(tmpDir)
-	inputFile, outputFile, outputEnv := installPluginUnderTest(t, testBinDir, testConfDir, testDataDir, binName, netName, podIP)
+	inputFile, outputFile, outputEnv := installPluginUnderTest(
+		t,
+		testBinDir,
+		testConfDir,
+		testDataDir,
+		binName,
+		netName,
+		podIP,
+	)
 
 	containerID := kubecontainer.ContainerID{Type: "test", ID: "test_infra_container"}
 	pods := []*containertest.FakePod{{
@@ -235,8 +259,23 @@ func TestCNIPlugin(t *testing.T) {
 	cniPlugin.execer = fexec
 	cniPlugin.loNetwork.CNIConfig = mockLoCNI
 
-	mockLoCNI.On("AddNetworkList", mock.AnythingOfType("*context.timerCtx"), cniPlugin.loNetwork.NetworkConfig, mock.AnythingOfType("*libcni.RuntimeConf")).Return(&types020.Result{IP4: &types020.IPConfig{IP: net.IPNet{IP: []byte{127, 0, 0, 1}}}}, nil)
-	mockLoCNI.On("DelNetworkList", mock.AnythingOfType("*context.timerCtx"), cniPlugin.loNetwork.NetworkConfig, mock.AnythingOfType("*libcni.RuntimeConf")).Return(nil)
+	mockLoCNI.On(
+		"AddNetworkList",
+		mock.AnythingOfType("*context.timerCtx"),
+		cniPlugin.loNetwork.NetworkConfig,
+		mock.AnythingOfType("*libcni.RuntimeConf"),
+	).Return(
+		&types020.Result{IP4: &types020.IPConfig{IP: net.IPNet{IP: []byte{127, 0, 0, 1}}}},
+		nil,
+	)
+	mockLoCNI.On(
+		"DelNetworkList",
+		mock.AnythingOfType("*context.timerCtx"),
+		cniPlugin.loNetwork.NetworkConfig,
+		mock.AnythingOfType("*libcni.RuntimeConf"),
+	).Return(
+		nil,
+	)
 
 	// Check that status returns an error
 	if err := cniPlugin.Status(); err == nil {
@@ -263,7 +302,14 @@ func TestCNIPlugin(t *testing.T) {
 	}
 	fakeHost := NewFakeHost(nil, pods, ports)
 
-	plug, err := network.InitNetworkPlugin(plugins, "cni", fakeHost, kubeletconfig.HairpinNone, "10.0.0.0/8", network.UseDefaultMTU)
+	plug, err := network.InitNetworkPlugin(
+		plugins,
+		"cni",
+		fakeHost,
+		kubeletconfig.HairpinNone,
+		"10.0.0.0/8",
+		network.UseDefaultMTU,
+	)
 	if err != nil {
 		t.Fatalf("Failed to select the desired plugin: %v", err)
 	}
@@ -285,7 +331,11 @@ func TestCNIPlugin(t *testing.T) {
 
 	expectedOutput := "ADD /proc/12345/ns/net podNamespace podName test_infra_container"
 	if string(output) != expectedOutput {
-		t.Errorf("Mismatch in expected output for setup hook. Expected '%s', got '%s'", expectedOutput, string(output))
+		t.Errorf(
+			"Mismatch in expected output for setup hook. Expected '%s', got '%s'",
+			expectedOutput,
+			string(output),
+		)
 	}
 
 	// Verify the correct network configuration was passed
@@ -299,21 +349,34 @@ func TestCNIPlugin(t *testing.T) {
 	inputBytes, inerr := ioutil.ReadFile(inputFile)
 	parseerr := json.Unmarshal(inputBytes, &inputConfig)
 	if inerr != nil || parseerr != nil {
-		t.Errorf("failed to parse reported cni input config %s: (%v %v)", inputFile, inerr, parseerr)
+		t.Errorf(
+			"failed to parse reported cni input config %s: (%v %v)",
+			inputFile,
+			inerr,
+			parseerr,
+		)
 	}
 	expectedMappings := []map[string]interface{}{
 		// hah, golang always unmarshals unstructured json numbers as float64
 		{"hostPort": 8008.0, "containerPort": 80.0, "protocol": "udp", "hostIP": "0.0.0.0"},
 	}
 	if !reflect.DeepEqual(inputConfig.RuntimeConfig.PortMappings, expectedMappings) {
-		t.Errorf("mismatch in expected port mappings. expected %v got %v", expectedMappings, inputConfig.RuntimeConfig.PortMappings)
+		t.Errorf(
+			"mismatch in expected port mappings. expected %v got %v",
+			expectedMappings,
+			inputConfig.RuntimeConfig.PortMappings,
+		)
 	}
 	expectedBandwidth := map[string]interface{}{
 		"ingressRate": 1000000.0, "egressRate": 1000000.0,
 		"ingressBurst": 2147483647.0, "egressBurst": 2147483647.0,
 	}
 	if !reflect.DeepEqual(inputConfig.RuntimeConfig.Bandwidth, expectedBandwidth) {
-		t.Errorf("mismatch in expected bandwidth. expected %v got %v", expectedBandwidth, inputConfig.RuntimeConfig.Bandwidth)
+		t.Errorf(
+			"mismatch in expected bandwidth. expected %v got %v",
+			expectedBandwidth,
+			inputConfig.RuntimeConfig.Bandwidth,
+		)
 	}
 
 	expectedIPRange := [][]map[string]interface{}{
@@ -323,7 +386,11 @@ func TestCNIPlugin(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(inputConfig.RuntimeConfig.IPRanges, expectedIPRange) {
-		t.Errorf("mismatch in expected ipRange. expected %v got %v", expectedIPRange, inputConfig.RuntimeConfig.IPRanges)
+		t.Errorf(
+			"mismatch in expected ipRange. expected %v got %v",
+			expectedIPRange,
+			inputConfig.RuntimeConfig.IPRanges,
+		)
 	}
 
 	// Get its IP address
@@ -344,7 +411,11 @@ func TestCNIPlugin(t *testing.T) {
 	require.NoError(t, err)
 	expectedOutput = "DEL /proc/12345/ns/net podNamespace podName test_infra_container"
 	if string(output) != expectedOutput {
-		t.Errorf("Mismatch in expected output for setup hook. Expected '%s', got '%s'", expectedOutput, string(output))
+		t.Errorf(
+			"Mismatch in expected output for setup hook. Expected '%s', got '%s'",
+			expectedOutput,
+			string(output),
+		)
 	}
 
 	mockLoCNI.AssertExpectations(t)

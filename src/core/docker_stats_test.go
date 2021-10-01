@@ -59,8 +59,13 @@ func TestContainerStats(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			ds, fakeDocker, _ := newTestDockerService()
 			fakeDocker.SetFakeContainers([]*libdocker.FakeContainer{test.container})
-			fakeDocker.InjectContainerStats(map[string]*dockertypes.StatsJSON{test.container.ID: test.containerStats})
-			ds.ContainerStats(getTestCTX(), &runtimeapi.ContainerStatsRequest{ContainerId: test.containerID})
+			fakeDocker.InjectContainerStats(
+				map[string]*dockertypes.StatsJSON{test.container.ID: test.containerStats},
+			)
+			ds.ContainerStats(
+				getTestCTX(),
+				&runtimeapi.ContainerStatsRequest{ContainerId: test.containerID},
+			)
 			err := fakeDocker.AssertCallDetails(test.calledDetails...)
 			assert.NoError(t, err)
 		})

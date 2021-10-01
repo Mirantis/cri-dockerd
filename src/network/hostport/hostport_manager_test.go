@@ -526,11 +526,20 @@ func TestHostportManager(t *testing.T) {
 
 func TestGetHostportChain(t *testing.T) {
 	m := make(map[string]int)
-	chain := getHostportChain("testrdma-2", &PortMapping{HostPort: 57119, Protocol: "TCP", ContainerPort: 57119})
+	chain := getHostportChain(
+		"testrdma-2",
+		&PortMapping{HostPort: 57119, Protocol: "TCP", ContainerPort: 57119},
+	)
 	m[string(chain)] = 1
-	chain = getHostportChain("testrdma-2", &PortMapping{HostPort: 55429, Protocol: "TCP", ContainerPort: 55429})
+	chain = getHostportChain(
+		"testrdma-2",
+		&PortMapping{HostPort: 55429, Protocol: "TCP", ContainerPort: 55429},
+	)
 	m[string(chain)] = 1
-	chain = getHostportChain("testrdma-2", &PortMapping{HostPort: 56833, Protocol: "TCP", ContainerPort: 56833})
+	chain = getHostportChain(
+		"testrdma-2",
+		&PortMapping{HostPort: 56833, Protocol: "TCP", ContainerPort: 56833},
+	)
 	m[string(chain)] = 1
 	if len(m) != 3 {
 		t.Fatal(m)
@@ -648,7 +657,11 @@ func TestHostportManagerIPv6(t *testing.T) {
 	}
 
 	// Check port opened
-	expectedPorts := []hostport{{IPv6, "", 8080, "tcp"}, {IPv6, "", 8081, "udp"}, {IPv6, "", 8443, "tcp"}}
+	expectedPorts := []hostport{
+		{IPv6, "", 8080, "tcp"},
+		{IPv6, "", 8081, "udp"},
+		{IPv6, "", 8443, "tcp"},
+	}
 	openedPorts := make(map[hostport]bool)
 	for hp, port := range portOpener.mem {
 		if !port.closed {
@@ -720,7 +733,11 @@ func TestHostportManagerIPv6(t *testing.T) {
 			remainingChains[strings.TrimSpace(line)] = true
 		}
 	}
-	expectDeletedChains := []string{"KUBE-HP-4YVONL46AKYWSKS3", "KUBE-HP-7THKRFSEH4GIIXK7", "KUBE-HP-5N7UH5JAXCVP5UJR"}
+	expectDeletedChains := []string{
+		"KUBE-HP-4YVONL46AKYWSKS3",
+		"KUBE-HP-7THKRFSEH4GIIXK7",
+		"KUBE-HP-5N7UH5JAXCVP5UJR",
+	}
 	for _, chain := range expectDeletedChains {
 		_, ok := remainingChains[chain]
 		assert.EqualValues(t, false, ok)

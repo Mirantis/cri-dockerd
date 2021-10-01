@@ -38,10 +38,21 @@ import (
 
 // A helper to create a basic config.
 func makeSandboxConfig(name, namespace, uid string, attempt uint32) *runtimeapi.PodSandboxConfig {
-	return makeSandboxConfigWithLabelsAndAnnotations(name, namespace, uid, attempt, map[string]string{}, map[string]string{})
+	return makeSandboxConfigWithLabelsAndAnnotations(
+		name,
+		namespace,
+		uid,
+		attempt,
+		map[string]string{},
+		map[string]string{},
+	)
 }
 
-func makeSandboxConfigWithLabelsAndAnnotations(name, namespace, uid string, attempt uint32, labels, annotations map[string]string) *runtimeapi.PodSandboxConfig {
+func makeSandboxConfigWithLabelsAndAnnotations(
+	name, namespace, uid string,
+	attempt uint32,
+	labels, annotations map[string]string,
+) *runtimeapi.PodSandboxConfig {
 	return &runtimeapi.PodSandboxConfig{
 		Metadata: &runtimeapi.PodSandboxMetadata{
 			Name:      name,
@@ -73,7 +84,10 @@ func TestListSandboxes(t *testing.T) {
 	state := runtimeapi.PodSandboxState_SANDBOX_READY
 	var createdAt int64 = fakeClock.Now().UnixNano()
 	for i := range configs {
-		runResp, err := ds.RunPodSandbox(getTestCTX(), &runtimeapi.RunPodSandboxRequest{Config: configs[i]})
+		runResp, err := ds.RunPodSandbox(
+			getTestCTX(),
+			&runtimeapi.RunPodSandboxRequest{Config: configs[i]},
+		)
 		require.NoError(t, err)
 		// Prepend to the expected list because ListPodSandbox returns
 		// the most recent sandbox first.
@@ -108,7 +122,10 @@ func TestSandboxStatus(t *testing.T) {
 		State:     state,
 		CreatedAt: ct,
 		Metadata:  config.Metadata,
-		Network:   &runtimeapi.PodSandboxNetworkStatus{Ip: podIP, AdditionalIps: []*runtimeapi.PodIP{}},
+		Network: &runtimeapi.PodSandboxNetworkStatus{
+			Ip:            podIP,
+			AdditionalIps: []*runtimeapi.PodIP{},
+		},
 		Linux: &runtimeapi.LinuxPodSandboxStatus{
 			Namespaces: &runtimeapi.Namespace{
 				Options: &runtimeapi.NamespaceOption{
@@ -134,7 +151,10 @@ func TestSandboxStatus(t *testing.T) {
 	assert.Equal(t, c.Config.Labels[types.KubernetesContainerNameLabel], sandboxContainerName)
 
 	expected.Id = id // ID is only known after the creation.
-	statusResp, err := ds.PodSandboxStatus(getTestCTX(), &runtimeapi.PodSandboxStatusRequest{PodSandboxId: id})
+	statusResp, err := ds.PodSandboxStatus(
+		getTestCTX(),
+		&runtimeapi.PodSandboxStatusRequest{PodSandboxId: id},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, expected, statusResp.Status)
 
@@ -145,14 +165,23 @@ func TestSandboxStatus(t *testing.T) {
 	// IP not valid after sandbox stop
 	expected.Network.Ip = ""
 	expected.Network.AdditionalIps = []*runtimeapi.PodIP{}
-	statusResp, err = ds.PodSandboxStatus(getTestCTX(), &runtimeapi.PodSandboxStatusRequest{PodSandboxId: id})
+	statusResp, err = ds.PodSandboxStatus(
+		getTestCTX(),
+		&runtimeapi.PodSandboxStatusRequest{PodSandboxId: id},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, expected, statusResp.Status)
 
 	// Remove the container.
-	_, err = ds.RemovePodSandbox(getTestCTX(), &runtimeapi.RemovePodSandboxRequest{PodSandboxId: id})
+	_, err = ds.RemovePodSandbox(
+		getTestCTX(),
+		&runtimeapi.RemovePodSandboxRequest{PodSandboxId: id},
+	)
 	require.NoError(t, err)
-	statusResp, err = ds.PodSandboxStatus(getTestCTX(), &runtimeapi.PodSandboxStatusRequest{PodSandboxId: id})
+	statusResp, err = ds.PodSandboxStatus(
+		getTestCTX(),
+		&runtimeapi.PodSandboxStatusRequest{PodSandboxId: id},
+	)
 	assert.Error(t, err, fmt.Sprintf("status of sandbox: %+v", statusResp))
 }
 
@@ -165,8 +194,18 @@ func TestSandboxHasLeastPrivilegesConfig(t *testing.T) {
 	// test the default
 	createConfig, err := ds.makeSandboxDockerConfig(config, defaultSandboxImage)
 	assert.NoError(t, err)
-	assert.Equal(t, len(createConfig.HostConfig.SecurityOpt), 1, "sandbox should use runtime/default")
-	assert.Equal(t, "no-new-privileges", createConfig.HostConfig.SecurityOpt[0], "no-new-privileges not set")
+	assert.Equal(
+		t,
+		len(createConfig.HostConfig.SecurityOpt),
+		1,
+		"sandbox should use runtime/default",
+	)
+	assert.Equal(
+		t,
+		"no-new-privileges",
+		createConfig.HostConfig.SecurityOpt[0],
+		"no-new-privileges not set",
+	)
 }
 
 // TestSandboxStatusAfterRestart tests that retrieving sandbox status returns
@@ -183,7 +222,10 @@ func TestSandboxStatusAfterRestart(t *testing.T) {
 		State:     state,
 		CreatedAt: ct,
 		Metadata:  config.Metadata,
-		Network:   &runtimeapi.PodSandboxNetworkStatus{Ip: podIP, AdditionalIps: []*runtimeapi.PodIP{}},
+		Network: &runtimeapi.PodSandboxNetworkStatus{
+			Ip:            podIP,
+			AdditionalIps: []*runtimeapi.PodIP{},
+		},
 		Linux: &runtimeapi.LinuxPodSandboxStatus{
 			Namespaces: &runtimeapi.Namespace{
 				Options: &runtimeapi.NamespaceOption{
@@ -210,7 +252,10 @@ func TestSandboxStatusAfterRestart(t *testing.T) {
 	// Check status without RunPodSandbox() having set up networking
 	expected.Id = createResp.ID // ID is only known after the creation.
 
-	statusResp, err := ds.PodSandboxStatus(getTestCTX(), &runtimeapi.PodSandboxStatusRequest{PodSandboxId: createResp.ID})
+	statusResp, err := ds.PodSandboxStatus(
+		getTestCTX(),
+		&runtimeapi.PodSandboxStatusRequest{PodSandboxId: createResp.ID},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, expected, statusResp.Status)
 }
@@ -230,7 +275,10 @@ func TestNetworkPluginInvocation(t *testing.T) {
 		map[string]string{"label": name},
 		map[string]string{"annotation": ns},
 	)
-	cID := kubecontainer.ContainerID{Type: runtimeName, ID: libdocker.GetFakeContainerID(fmt.Sprintf("/%v", makeSandboxName(c)))}
+	cID := kubecontainer.ContainerID{
+		Type: runtimeName,
+		ID:   libdocker.GetFakeContainerID(fmt.Sprintf("/%v", makeSandboxName(c))),
+	}
 
 	mockPlugin.EXPECT().Name().Return("mockNetworkPlugin").AnyTimes()
 	setup := mockPlugin.EXPECT().SetUpPod(ns, name, cID)
@@ -238,7 +286,10 @@ func TestNetworkPluginInvocation(t *testing.T) {
 
 	_, err := ds.RunPodSandbox(getTestCTX(), &runtimeapi.RunPodSandboxRequest{Config: c})
 	require.NoError(t, err)
-	_, err = ds.StopPodSandbox(getTestCTX(), &runtimeapi.StopPodSandboxRequest{PodSandboxId: cID.ID})
+	_, err = ds.StopPodSandbox(
+		getTestCTX(),
+		&runtimeapi.StopPodSandboxRequest{PodSandboxId: cID.ID},
+	)
 	require.NoError(t, err)
 }
 
@@ -264,13 +315,19 @@ func TestHostNetworkPluginInvocation(t *testing.T) {
 			},
 		},
 	}
-	cID := kubecontainer.ContainerID{Type: runtimeName, ID: libdocker.GetFakeContainerID(fmt.Sprintf("/%v", makeSandboxName(c)))}
+	cID := kubecontainer.ContainerID{
+		Type: runtimeName,
+		ID:   libdocker.GetFakeContainerID(fmt.Sprintf("/%v", makeSandboxName(c))),
+	}
 
 	// No calls to network plugin are expected
 	_, err := ds.RunPodSandbox(getTestCTX(), &runtimeapi.RunPodSandboxRequest{Config: c})
 	require.NoError(t, err)
 
-	_, err = ds.StopPodSandbox(getTestCTX(), &runtimeapi.StopPodSandboxRequest{PodSandboxId: cID.ID})
+	_, err = ds.StopPodSandbox(
+		getTestCTX(),
+		&runtimeapi.StopPodSandboxRequest{PodSandboxId: cID.ID},
+	)
 	require.NoError(t, err)
 }
 
@@ -289,20 +346,33 @@ func TestSetUpPodFailure(t *testing.T) {
 		map[string]string{"label": name},
 		map[string]string{"annotation": ns},
 	)
-	cID := kubecontainer.ContainerID{Type: runtimeName, ID: libdocker.GetFakeContainerID(fmt.Sprintf("/%v", makeSandboxName(c)))}
+	cID := kubecontainer.ContainerID{
+		Type: runtimeName,
+		ID:   libdocker.GetFakeContainerID(fmt.Sprintf("/%v", makeSandboxName(c))),
+	}
 	mockPlugin.EXPECT().Name().Return("mockNetworkPlugin").AnyTimes()
 	mockPlugin.EXPECT().SetUpPod(ns, name, cID).Return(errors.New("setup pod error")).AnyTimes()
 	// If SetUpPod() fails, we expect TearDownPod() to immediately follow
 	mockPlugin.EXPECT().TearDownPod(ns, name, cID)
 	// Assume network plugin doesn't return error, cri-dockerd should still be able to return not ready correctly.
-	mockPlugin.EXPECT().GetPodNetworkStatus(ns, name, cID).Return(&network.PodNetworkStatus{IP: net.IP("127.0.0.01")}, nil).AnyTimes()
+	mockPlugin.EXPECT().GetPodNetworkStatus(
+		ns,
+		name,
+		cID,
+	).Return(
+		&network.PodNetworkStatus{IP: net.IP("127.0.0.01")},
+		nil,
+	).AnyTimes()
 
 	t.Logf("RunPodSandbox should return error")
 	_, err := ds.RunPodSandbox(getTestCTX(), &runtimeapi.RunPodSandboxRequest{Config: c})
 	assert.Error(t, err)
 
 	t.Logf("PodSandboxStatus should be not ready")
-	statusResp, err := ds.PodSandboxStatus(getTestCTX(), &runtimeapi.PodSandboxStatusRequest{PodSandboxId: cID.ID})
+	statusResp, err := ds.PodSandboxStatus(
+		getTestCTX(),
+		&runtimeapi.PodSandboxStatusRequest{PodSandboxId: cID.ID},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, runtimeapi.PodSandboxState_SANDBOX_NOTREADY, statusResp.Status.State)
 

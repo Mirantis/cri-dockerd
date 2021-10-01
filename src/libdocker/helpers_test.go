@@ -188,7 +188,12 @@ func TestMatchImageTagOrSHA(t *testing.T) {
 		},
 	} {
 		match := matchImageTagOrSHA(testCase.Inspected, testCase.Image)
-		assert.Equal(t, testCase.Output, match, testCase.Image+fmt.Sprintf(" is not a match (%d)", i))
+		assert.Equal(
+			t,
+			testCase.Output,
+			match,
+			testCase.Image+fmt.Sprintf(" is not a match (%d)", i),
+		)
 	}
 }
 
@@ -266,7 +271,12 @@ func TestMatchImageIDOnly(t *testing.T) {
 		},
 	} {
 		match := matchImageIDOnly(testCase.Inspected, testCase.Image)
-		assert.Equal(t, testCase.Output, match, fmt.Sprintf("%s is not a match (%d)", testCase.Image, i))
+		assert.Equal(
+			t,
+			testCase.Output,
+			match,
+			fmt.Sprintf("%s is not a match (%d)", testCase.Image, i),
+		)
 	}
 
 }

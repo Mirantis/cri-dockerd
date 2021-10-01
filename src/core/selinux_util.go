@@ -58,7 +58,11 @@ func selinuxLabelLevel(separator rune) string {
 
 // addSELinuxOptions adds SELinux options to config using the given
 // separator.
-func addSELinuxOptions(config []string, selinuxOpts *runtimeapi.SELinuxOption, separator rune) []string {
+func addSELinuxOptions(
+	config []string,
+	selinuxOpts *runtimeapi.SELinuxOption,
+	separator rune,
+) []string {
 	// Note, strictly speaking, we are actually mutating the values of these
 	// keys, rather than formatting name and value into a string.  Docker re-
 	// uses the same option name multiple times (it's just 'label') with

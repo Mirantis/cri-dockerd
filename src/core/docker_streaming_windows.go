@@ -27,7 +27,11 @@ import (
 	"k8s.io/kubernetes/pkg/kubelet/util/ioutils"
 )
 
-func (r *streamingRuntime) portForward(podSandboxID string, port int32, stream io.ReadWriteCloser) error {
+func (r *streamingRuntime) portForward(
+	podSandboxID string,
+	port int32,
+	stream io.ReadWriteCloser,
+) error {
 	stderr := new(bytes.Buffer)
 	if err != nil {
 		return fmt.Errorf("%v: %s", err, stderr.String())

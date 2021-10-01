@@ -49,12 +49,18 @@ type mockCheckpointManager struct {
 	checkpoint map[string]*PodSandboxCheckpoint
 }
 
-func (ckm *mockCheckpointManager) CreateCheckpoint(checkpointKey string, checkpoint checkpointmanager.Checkpoint) error {
+func (ckm *mockCheckpointManager) CreateCheckpoint(
+	checkpointKey string,
+	checkpoint checkpointmanager.Checkpoint,
+) error {
 	ckm.checkpoint[checkpointKey] = checkpoint.(*PodSandboxCheckpoint)
 	return nil
 }
 
-func (ckm *mockCheckpointManager) GetCheckpoint(checkpointKey string, checkpoint checkpointmanager.Checkpoint) error {
+func (ckm *mockCheckpointManager) GetCheckpoint(
+	checkpointKey string,
+	checkpoint checkpointmanager.Checkpoint,
+) error {
 	*(checkpoint.(*PodSandboxCheckpoint)) = *(ckm.checkpoint[checkpointKey])
 	return nil
 }
@@ -81,7 +87,14 @@ func newMockCheckpointManager() checkpointmanager.CheckpointManager {
 
 func newTestDockerService() (*dockerService, *libdocker.FakeDockerClient, *clock.FakeClock) {
 	fakeClock := clock.NewFakeClock(time.Time{})
-	c := libdocker.NewFakeDockerClient().WithClock(fakeClock).WithVersion("1.11.2", "1.23").WithRandSource(rand.NewSource(0))
+	c := libdocker.NewFakeDockerClient().WithClock(
+		fakeClock,
+	).WithVersion(
+		"1.11.2",
+		"1.23",
+	).WithRandSource(
+		rand.NewSource(0),
+	)
 	pm := network.NewPluginManager(&network.NoopNetworkPlugin{})
 	ckm := newMockCheckpointManager()
 	return &dockerService{

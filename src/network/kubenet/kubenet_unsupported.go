@@ -34,7 +34,12 @@ func NewPlugin(networkPluginDirs []string, cacheDir string) network.NetworkPlugi
 	return &kubenetNetworkPlugin{}
 }
 
-func (plugin *kubenetNetworkPlugin) Init(host network.Host, hairpinMode kubeletconfig.HairpinMode, nonMasqueradeCIDR string, mtu int) error {
+func (plugin *kubenetNetworkPlugin) Init(
+	host network.Host,
+	hairpinMode kubeletconfig.HairpinMode,
+	nonMasqueradeCIDR string,
+	mtu int,
+) error {
 	return fmt.Errorf("Kubenet is not supported in this build")
 }
 
@@ -42,14 +47,27 @@ func (plugin *kubenetNetworkPlugin) Name() string {
 	return "kubenet"
 }
 
-func (plugin *kubenetNetworkPlugin) SetUpPod(namespace string, name string, id kubecontainer.ContainerID, annotations, options map[string]string) error {
+func (plugin *kubenetNetworkPlugin) SetUpPod(
+	namespace string,
+	name string,
+	id kubecontainer.ContainerID,
+	annotations, options map[string]string,
+) error {
 	return fmt.Errorf("Kubenet is not supported in this build")
 }
 
-func (plugin *kubenetNetworkPlugin) TearDownPod(namespace string, name string, id kubecontainer.ContainerID) error {
+func (plugin *kubenetNetworkPlugin) TearDownPod(
+	namespace string,
+	name string,
+	id kubecontainer.ContainerID,
+) error {
 	return fmt.Errorf("Kubenet is not supported in this build")
 }
 
-func (plugin *kubenetNetworkPlugin) GetPodNetworkStatus(namespace string, name string, id kubecontainer.ContainerID) (*network.PodNetworkStatus, error) {
+func (plugin *kubenetNetworkPlugin) GetPodNetworkStatus(
+	namespace string,
+	name string,
+	id kubecontainer.ContainerID,
+) (*network.PodNetworkStatus, error) {
 	return nil, fmt.Errorf("Kubenet is not supported in this build")
 }

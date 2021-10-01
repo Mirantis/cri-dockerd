@@ -35,7 +35,10 @@ import (
 // This file implements methods in ImageManagerService.
 
 // ListImages lists existing images.
-func (ds *dockerService) ListImages(_ context.Context, r *runtimeapi.ListImagesRequest) (*runtimeapi.ListImagesResponse, error) {
+func (ds *dockerService) ListImages(
+	_ context.Context,
+	r *runtimeapi.ListImagesRequest,
+) (*runtimeapi.ListImagesResponse, error) {
 	filter := r.GetFilter()
 	opts := dockertypes.ImageListOptions{}
 	if filter != nil {
@@ -54,7 +57,15 @@ func (ds *dockerService) ListImages(_ context.Context, r *runtimeapi.ListImagesR
 	for _, i := range images {
 		apiImage, err := imageToRuntimeAPIImage(&i)
 		if err != nil {
-			klog.V(5).InfoS("Failed to convert docker API image to runtime API image", "image", i, "err", err)
+			klog.V(
+				5,
+			).InfoS(
+				"Failed to convert docker API image to runtime API image",
+				"image",
+				i,
+				"err",
+				err,
+			)
 			continue
 		}
 		result = append(result, apiImage)
@@ -63,7 +74,10 @@ func (ds *dockerService) ListImages(_ context.Context, r *runtimeapi.ListImagesR
 }
 
 // ImageStatus returns the status of the image, returns nil if the image doesn't present.
-func (ds *dockerService) ImageStatus(_ context.Context, r *runtimeapi.ImageStatusRequest) (*runtimeapi.ImageStatusResponse, error) {
+func (ds *dockerService) ImageStatus(
+	_ context.Context,
+	r *runtimeapi.ImageStatusRequest,
+) (*runtimeapi.ImageStatusResponse, error) {
 	image := r.GetImage()
 
 	imageInspect, err := ds.client.InspectImageByRef(image.Image)
@@ -93,7 +107,10 @@ func (ds *dockerService) ImageStatus(_ context.Context, r *runtimeapi.ImageStatu
 }
 
 // PullImage pulls an image with authentication config.
-func (ds *dockerService) PullImage(_ context.Context, r *runtimeapi.PullImageRequest) (*runtimeapi.PullImageResponse, error) {
+func (ds *dockerService) PullImage(
+	_ context.Context,
+	r *runtimeapi.PullImageRequest,
+) (*runtimeapi.PullImageResponse, error) {
 	image := r.GetImage()
 	auth := r.GetAuth()
 	authConfig := dockertypes.AuthConfig{}
@@ -122,7 +139,10 @@ func (ds *dockerService) PullImage(_ context.Context, r *runtimeapi.PullImageReq
 }
 
 // RemoveImage removes the image.
-func (ds *dockerService) RemoveImage(_ context.Context, r *runtimeapi.RemoveImageRequest) (*runtimeapi.RemoveImageResponse, error) {
+func (ds *dockerService) RemoveImage(
+	_ context.Context,
+	r *runtimeapi.RemoveImageRequest,
+) (*runtimeapi.RemoveImageResponse, error) {
 	image := r.GetImage()
 	// If the image has multiple tags, we need to remove all the tags
 	// of kubelet, but we should still clarify this in CRI.
@@ -148,7 +168,8 @@ func (ds *dockerService) RemoveImage(_ context.Context, r *runtimeapi.RemoveImag
 	images = append(images, image.Image)
 
 	for _, image := range images {
-		if _, err := ds.client.RemoveImage(image, dockertypes.ImageRemoveOptions{PruneChildren: true}); err != nil && !libdocker.IsImageNotFoundError(err) {
+		if _, err := ds.client.RemoveImage(image, dockertypes.ImageRemoveOptions{PruneChildren: true}); err != nil &&
+			!libdocker.IsImageNotFoundError(err) {
 			return nil, err
 		}
 	}

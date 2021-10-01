@@ -25,7 +25,9 @@ func listenFD(addr string) (net.Listener, error) {
 	}
 
 	if len(listeners) == 0 {
-		return nil, errors.New("no sockets found via socket activation: make sure the service was started by systemd")
+		return nil, errors.New(
+			"no sockets found via socket activation: make sure the service was started by systemd",
+		)
 	}
 
 	// default to first fd

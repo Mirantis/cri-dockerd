@@ -100,7 +100,15 @@ func matchImageTagOrSHA(inspected dockertypes.ImageInspect, image string) bool {
 		for _, repoDigest := range inspected.RepoDigests {
 			named, err := dockerref.ParseNormalizedNamed(repoDigest)
 			if err != nil {
-				klog.V(4).InfoS("Couldn't parse image RepoDigest reference", "digest", repoDigest, "err", err)
+				klog.V(
+					4,
+				).InfoS(
+					"Couldn't parse image RepoDigest reference",
+					"digest",
+					repoDigest,
+					"err",
+					err,
+				)
 				continue
 			}
 			if d, isDigested := named.(dockerref.Digested); isDigested {
@@ -117,11 +125,20 @@ func matchImageTagOrSHA(inspected dockertypes.ImageInspect, image string) bool {
 			klog.V(4).InfoS("Couldn't parse image ID reference", "imageID", id, "err", err)
 			return false
 		}
-		if digest.Digest().Algorithm().String() == id.Algorithm().String() && digest.Digest().Hex() == id.Hex() {
+		if digest.Digest().Algorithm().String() == id.Algorithm().String() &&
+			digest.Digest().Hex() == id.Hex() {
 			return true
 		}
 	}
-	klog.V(4).InfoS("Inspected image ID does not match image", "inspectedImageID", inspected.ID, "image", image)
+	klog.V(
+		4,
+	).InfoS(
+		"Inspected image ID does not match image",
+		"inspectedImageID",
+		inspected.ID,
+		"image",
+		image,
+	)
 	return false
 }
 
@@ -154,7 +171,8 @@ func matchImageIDOnly(inspected dockertypes.ImageInspect, image string) bool {
 		return false
 	}
 
-	if digest.Digest().Algorithm().String() == id.Algorithm().String() && digest.Digest().Hex() == id.Hex() {
+	if digest.Digest().Algorithm().String() == id.Algorithm().String() &&
+		digest.Digest().Hex() == id.Hex() {
 		return true
 	}
 

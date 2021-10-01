@@ -45,7 +45,11 @@ import (
 // test it fulfills the NetworkPlugin interface
 var _ network.NetworkPlugin = &kubenetNetworkPlugin{}
 
-func newFakeKubenetPlugin(initMap map[kubecontainer.ContainerID]utilsets.String, execer exec.Interface, host network.Host) *kubenetNetworkPlugin {
+func newFakeKubenetPlugin(
+	initMap map[kubecontainer.ContainerID]utilsets.String,
+	execer exec.Interface,
+	host network.Host,
+) *kubenetNetworkPlugin {
 	return &kubenetNetworkPlugin{
 		podIPs: initMap,
 		execer: execer,
@@ -178,7 +182,14 @@ func TestTeardownCallsShaper(t *testing.T) {
 	kubenet.iptables = ipttest.NewFake()
 	kubenet.bandwidthShaper = fshaper
 
-	mockcni.On("DelNetwork", mock.AnythingOfType("*context.timerCtx"), mock.AnythingOfType("*libcni.NetworkConfig"), mock.AnythingOfType("*libcni.RuntimeConf")).Return(nil)
+	mockcni.On(
+		"DelNetwork",
+		mock.AnythingOfType("*context.timerCtx"),
+		mock.AnythingOfType("*libcni.NetworkConfig"),
+		mock.AnythingOfType("*libcni.RuntimeConf"),
+	).Return(
+		nil,
+	)
 
 	details := make(map[string]interface{})
 	details[network.NET_PLUGIN_EVENT_POD_CIDR_CHANGE_DETAIL_CIDR] = "10.0.0.1/24"
@@ -190,7 +201,12 @@ func TestTeardownCallsShaper(t *testing.T) {
 	if err := kubenet.TearDownPod("namespace", "name", existingContainerID); err != nil {
 		t.Fatalf("Unexpected error in TearDownPod: %v", err)
 	}
-	assert.Equal(t, []string{"10.0.0.1/32"}, fshaper.ResetCIDRs, "shaper.Reset should have been called")
+	assert.Equal(
+		t,
+		[]string{"10.0.0.1/32"},
+		fshaper.ResetCIDRs,
+		"shaper.Reset should have been called",
+	)
 
 	mockcni.AssertExpectations(t)
 }
@@ -232,7 +248,12 @@ func TestInit_MTU(t *testing.T) {
 		t.Fatalf("Unexpected error in Init: %v", err)
 	}
 	assert.Equal(t, 1234, kubenet.mtu, "kubenet.mtu should have been set")
-	assert.Equal(t, 1, sysctl.Settings["net/bridge/bridge-nf-call-iptables"], "net/bridge/bridge-nf-call-iptables sysctl should have been set")
+	assert.Equal(
+		t,
+		1,
+		sysctl.Settings["net/bridge/bridge-nf-call-iptables"],
+		"net/bridge/bridge-nf-call-iptables sysctl should have been set",
+	)
 }
 
 // TestInvocationWithoutRuntime invokes the plugin without a runtime.
@@ -289,23 +310,41 @@ func TestTearDownWithoutRuntime(t *testing.T) {
 		kubenet.iptables = ipttest.NewFake()
 
 		details := make(map[string]interface{})
-		details[network.NET_PLUGIN_EVENT_POD_CIDR_CHANGE_DETAIL_CIDR] = strings.Join(tc.podCIDR, ",")
+		details[network.NET_PLUGIN_EVENT_POD_CIDR_CHANGE_DETAIL_CIDR] = strings.Join(
+			tc.podCIDR,
+			",",
+		)
 		kubenet.Event(network.NET_PLUGIN_EVENT_POD_CIDR_CHANGE, details)
 
 		if len(kubenet.podCIDRs) != len(tc.podCIDR) {
-			t.Errorf("generated podCidr: %q, expecting: %q are not of the same length", kubenet.podCIDRs, tc.podCIDR)
+			t.Errorf(
+				"generated podCidr: %q, expecting: %q are not of the same length",
+				kubenet.podCIDRs,
+				tc.podCIDR,
+			)
 			continue
 		}
 		for idx := range tc.podCIDR {
 			if kubenet.podCIDRs[idx].String() != tc.expectedPodCIDR[idx] {
-				t.Errorf("generated podCidr: %q, expecting: %q", kubenet.podCIDRs[idx].String(), tc.expectedPodCIDR[idx])
+				t.Errorf(
+					"generated podCidr: %q, expecting: %q",
+					kubenet.podCIDRs[idx].String(),
+					tc.expectedPodCIDR[idx],
+				)
 			}
 		}
 
 		existingContainerID := kubecontainer.BuildContainerID("docker", "123")
 		kubenet.podIPs[existingContainerID] = utilsets.NewString(tc.ip)
 
-		mockcni.On("DelNetwork", mock.AnythingOfType("*context.timerCtx"), mock.AnythingOfType("*libcni.NetworkConfig"), mock.AnythingOfType("*libcni.RuntimeConf")).Return(nil)
+		mockcni.On(
+			"DelNetwork",
+			mock.AnythingOfType("*context.timerCtx"),
+			mock.AnythingOfType("*libcni.NetworkConfig"),
+			mock.AnythingOfType("*libcni.RuntimeConf"),
+		).Return(
+			nil,
+		)
 
 		if err := kubenet.TearDownPod("namespace", "name", existingContainerID); err != nil {
 			t.Fatalf("Unexpected error in TearDownPod: %v", err)

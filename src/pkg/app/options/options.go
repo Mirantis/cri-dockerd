@@ -78,5 +78,10 @@ func (f *DockerCRIFlags) AddFlags(mainfs *pflag.FlagSet) {
 	}()
 
 	f.ContainerRuntimeOptions.AddFlags(fs)
-	fs.StringVar(&f.RemoteRuntimeEndpoint, "container-runtime-endpoint", f.RemoteRuntimeEndpoint, "The endpoint of remote runtime service. Currently unix socket and tcp endpoints are supported on Linux, while npipe and tcp endpoints are supported on windows.  Examples:'unix:///var/run/cri-dockerd.sock', 'npipe:////./pipe/cri-dockerd'")
+	fs.StringVar(
+		&f.RemoteRuntimeEndpoint,
+		"container-runtime-endpoint",
+		f.RemoteRuntimeEndpoint,
+		"The endpoint of remote runtime service. Currently unix socket and tcp endpoints are supported on Linux, while npipe and tcp endpoints are supported on windows.  Examples:'unix:///var/run/cri-dockerd.sock', 'npipe:////./pipe/cri-dockerd'",
+	)
 }
