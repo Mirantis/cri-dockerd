@@ -192,7 +192,11 @@ func getDefaultCNINetwork(confDir string, binDirs []string) (*cniNetwork, error)
 			}
 		}
 		if len(confList.Plugins) == 0 {
-			klog.InfoS("CNI config list has no networks, skipping", "configList", string(confList.Bytes[:maxStringLengthInLog(len(confList.Bytes))]))
+			klog.InfoS(
+				"CNI config list has no networks, skipping",
+				"configList",
+				string(confList.Bytes[:maxStringLengthInLog(len(confList.Bytes))]),
+			)
 			continue
 		}
 
@@ -200,7 +204,13 @@ func getDefaultCNINetwork(confDir string, binDirs []string) (*cniNetwork, error)
 		// all plugins of this config exist on disk
 		caps, err := cniConfig.ValidateNetworkList(context.TODO(), confList)
 		if err != nil {
-			klog.InfoS("Error validating CNI config list", "configList", string(confList.Bytes[:maxStringLengthInLog(len(confList.Bytes))]), "err", err)
+			klog.InfoS(
+				"Error validating CNI config list",
+				"configList",
+				string(confList.Bytes[:maxStringLengthInLog(len(confList.Bytes))]),
+				"err",
+				err,
+			)
 			continue
 		}
 
@@ -216,7 +226,12 @@ func getDefaultCNINetwork(confDir string, binDirs []string) (*cniNetwork, error)
 	return nil, fmt.Errorf("no valid networks found in %s", confDir)
 }
 
-func (plugin *cniNetworkPlugin) Init(host network.Host, hairpinMode kubeletconfig.HairpinMode, nonMasqueradeCIDR string, mtu int) error {
+func (plugin *cniNetworkPlugin) Init(
+	host network.Host,
+	hairpinMode kubeletconfig.HairpinMode,
+	nonMasqueradeCIDR string,
+	mtu int,
+) error {
 	err := plugin.platformInit()
 	if err != nil {
 		return err
@@ -258,7 +273,8 @@ func (plugin *cniNetworkPlugin) checkInitialized() error {
 		return fmt.Errorf("cni config uninitialized")
 	}
 
-	if utilslice.ContainsString(plugin.getDefaultNetwork().Capabilities, ipRangesCapability, nil) && plugin.podCidr == "" {
+	if utilslice.ContainsString(plugin.getDefaultNetwork().Capabilities, ipRangesCapability, nil) &&
+		plugin.podCidr == "" {
 		return fmt.Errorf("cni config needs ipRanges but no PodCIDR set")
 	}
 
@@ -277,7 +293,11 @@ func (plugin *cniNetworkPlugin) Event(name string, details map[string]interface{
 
 	podCIDR, ok := details[network.NET_PLUGIN_EVENT_POD_CIDR_CHANGE_DETAIL_CIDR].(string)
 	if !ok {
-		klog.InfoS("The event didn't contain pod CIDR", "event", network.NET_PLUGIN_EVENT_POD_CIDR_CHANGE)
+		klog.InfoS(
+			"The event didn't contain pod CIDR",
+			"event",
+			network.NET_PLUGIN_EVENT_POD_CIDR_CHANGE,
+		)
 		return
 	}
 
@@ -298,7 +318,12 @@ func (plugin *cniNetworkPlugin) Status() error {
 	return plugin.checkInitialized()
 }
 
-func (plugin *cniNetworkPlugin) SetUpPod(namespace string, name string, id kubecontainer.ContainerID, annotations, options map[string]string) error {
+func (plugin *cniNetworkPlugin) SetUpPod(
+	namespace string,
+	name string,
+	id kubecontainer.ContainerID,
+	annotations, options map[string]string,
+) error {
 	if err := plugin.checkInitialized(); err != nil {
 		return err
 	}
@@ -308,7 +333,10 @@ func (plugin *cniNetworkPlugin) SetUpPod(namespace string, name string, id kubec
 	}
 
 	// Todo get the timeout from parent ctx
-	cniTimeoutCtx, cancelFunc := context.WithTimeout(context.Background(), network.CNITimeoutSec*time.Second)
+	cniTimeoutCtx, cancelFunc := context.WithTimeout(
+		context.Background(),
+		network.CNITimeoutSec*time.Second,
+	)
 	defer cancelFunc()
 	// Windows doesn't have loNetwork. It comes only with Linux
 	if plugin.loNetwork != nil {
@@ -317,11 +345,24 @@ func (plugin *cniNetworkPlugin) SetUpPod(namespace string, name string, id kubec
 		}
 	}
 
-	_, err = plugin.addToNetwork(cniTimeoutCtx, plugin.getDefaultNetwork(), name, namespace, id, netnsPath, annotations, options)
+	_, err = plugin.addToNetwork(
+		cniTimeoutCtx,
+		plugin.getDefaultNetwork(),
+		name,
+		namespace,
+		id,
+		netnsPath,
+		annotations,
+		options,
+	)
 	return err
 }
 
-func (plugin *cniNetworkPlugin) TearDownPod(namespace string, name string, id kubecontainer.ContainerID) error {
+func (plugin *cniNetworkPlugin) TearDownPod(
+	namespace string,
+	name string,
+	id kubecontainer.ContainerID,
+) error {
 	if err := plugin.checkInitialized(); err != nil {
 		return err
 	}
@@ -333,7 +374,10 @@ func (plugin *cniNetworkPlugin) TearDownPod(namespace string, name string, id ku
 	}
 
 	// Todo get the timeout from parent ctx
-	cniTimeoutCtx, cancelFunc := context.WithTimeout(context.Background(), network.CNITimeoutSec*time.Second)
+	cniTimeoutCtx, cancelFunc := context.WithTimeout(
+		context.Background(),
+		network.CNITimeoutSec*time.Second,
+	)
 	defer cancelFunc()
 	// Windows doesn't have loNetwork. It comes only with Linux
 	if plugin.loNetwork != nil {
@@ -343,47 +387,169 @@ func (plugin *cniNetworkPlugin) TearDownPod(namespace string, name string, id ku
 		}
 	}
 
-	return plugin.deleteFromNetwork(cniTimeoutCtx, plugin.getDefaultNetwork(), name, namespace, id, netnsPath, nil)
+	return plugin.deleteFromNetwork(
+		cniTimeoutCtx,
+		plugin.getDefaultNetwork(),
+		name,
+		namespace,
+		id,
+		netnsPath,
+		nil,
+	)
 }
 
-func (plugin *cniNetworkPlugin) addToNetwork(ctx context.Context, network *cniNetwork, podName string, podNamespace string, podSandboxID kubecontainer.ContainerID, podNetnsPath string, annotations, options map[string]string) (cnitypes.Result, error) {
-	rt, err := plugin.buildCNIRuntimeConf(podName, podNamespace, podSandboxID, podNetnsPath, annotations, options)
+func (plugin *cniNetworkPlugin) addToNetwork(
+	ctx context.Context,
+	network *cniNetwork,
+	podName string,
+	podNamespace string,
+	podSandboxID kubecontainer.ContainerID,
+	podNetnsPath string,
+	annotations, options map[string]string,
+) (cnitypes.Result, error) {
+	rt, err := plugin.buildCNIRuntimeConf(
+		podName,
+		podNamespace,
+		podSandboxID,
+		podNetnsPath,
+		annotations,
+		options,
+	)
 	if err != nil {
 		klog.ErrorS(err, "Error adding network when building cni runtime conf")
 		return nil, err
 	}
 
 	netConf, cniNet := network.NetworkConfig, network.CNIConfig
-	klog.V(4).InfoS("Adding pod to network", "pod", klog.KRef(podNamespace, podName), "podSandboxID", podSandboxID, "podNetnsPath", podNetnsPath, "networkType", netConf.Plugins[0].Network.Type, "networkName", netConf.Name)
+	klog.V(
+		4,
+	).InfoS(
+		"Adding pod to network",
+		"pod",
+		klog.KRef(podNamespace, podName),
+		"podSandboxID",
+		podSandboxID,
+		"podNetnsPath",
+		podNetnsPath,
+		"networkType",
+		netConf.Plugins[0].Network.Type,
+		"networkName",
+		netConf.Name,
+	)
 	res, err := cniNet.AddNetworkList(ctx, netConf, rt)
 	if err != nil {
-		klog.ErrorS(err, "Error adding pod to network", "pod", klog.KRef(podNamespace, podName), "podSandboxID", podSandboxID, "podNetnsPath", podNetnsPath, "networkType", netConf.Plugins[0].Network.Type, "networkName", netConf.Name)
+		klog.ErrorS(
+			err,
+			"Error adding pod to network",
+			"pod",
+			klog.KRef(podNamespace, podName),
+			"podSandboxID",
+			podSandboxID,
+			"podNetnsPath",
+			podNetnsPath,
+			"networkType",
+			netConf.Plugins[0].Network.Type,
+			"networkName",
+			netConf.Name,
+		)
 		return nil, err
 	}
-	klog.V(4).InfoS("Added pod to network", "pod", klog.KRef(podNamespace, podName), "podSandboxID", podSandboxID, "networkName", netConf.Name, "response", res)
+	klog.V(
+		4,
+	).InfoS(
+		"Added pod to network",
+		"pod",
+		klog.KRef(podNamespace, podName),
+		"podSandboxID",
+		podSandboxID,
+		"networkName",
+		netConf.Name,
+		"response",
+		res,
+	)
 	return res, nil
 }
 
-func (plugin *cniNetworkPlugin) deleteFromNetwork(ctx context.Context, network *cniNetwork, podName string, podNamespace string, podSandboxID kubecontainer.ContainerID, podNetnsPath string, annotations map[string]string) error {
-	rt, err := plugin.buildCNIRuntimeConf(podName, podNamespace, podSandboxID, podNetnsPath, annotations, nil)
+func (plugin *cniNetworkPlugin) deleteFromNetwork(
+	ctx context.Context,
+	network *cniNetwork,
+	podName string,
+	podNamespace string,
+	podSandboxID kubecontainer.ContainerID,
+	podNetnsPath string,
+	annotations map[string]string,
+) error {
+	rt, err := plugin.buildCNIRuntimeConf(
+		podName,
+		podNamespace,
+		podSandboxID,
+		podNetnsPath,
+		annotations,
+		nil,
+	)
 	if err != nil {
 		klog.ErrorS(err, "Error deleting network when building cni runtime conf")
 		return err
 	}
 	netConf, cniNet := network.NetworkConfig, network.CNIConfig
-	klog.V(4).InfoS("Deleting pod from network", "pod", klog.KRef(podNamespace, podName), "podSandboxID", podSandboxID, "podNetnsPath", podNetnsPath, "networkType", netConf.Plugins[0].Network.Type, "networkName", netConf.Name)
+	klog.V(
+		4,
+	).InfoS(
+		"Deleting pod from network",
+		"pod",
+		klog.KRef(podNamespace, podName),
+		"podSandboxID",
+		podSandboxID,
+		"podNetnsPath",
+		podNetnsPath,
+		"networkType",
+		netConf.Plugins[0].Network.Type,
+		"networkName",
+		netConf.Name,
+	)
 	err = cniNet.DelNetworkList(ctx, netConf, rt)
 	// The pod may not get deleted successfully at the first time.
 	// Ignore "no such file or directory" error in case the network has already been deleted in previous attempts.
 	if err != nil && !strings.Contains(err.Error(), "no such file or directory") {
-		klog.ErrorS(err, "Error deleting pod from network", "pod", klog.KRef(podNamespace, podName), "podSandboxID", podSandboxID, "podNetnsPath", podNetnsPath, "networkType", netConf.Plugins[0].Network.Type, "networkName", netConf.Name)
+		klog.ErrorS(
+			err,
+			"Error deleting pod from network",
+			"pod",
+			klog.KRef(podNamespace, podName),
+			"podSandboxID",
+			podSandboxID,
+			"podNetnsPath",
+			podNetnsPath,
+			"networkType",
+			netConf.Plugins[0].Network.Type,
+			"networkName",
+			netConf.Name,
+		)
 		return err
 	}
-	klog.V(4).InfoS("Deleted pod from network", "pod", klog.KRef(podNamespace, podName), "podSandboxID", podSandboxID, "networkType", netConf.Plugins[0].Network.Type, "networkName", netConf.Name)
+	klog.V(
+		4,
+	).InfoS(
+		"Deleted pod from network",
+		"pod",
+		klog.KRef(podNamespace, podName),
+		"podSandboxID",
+		podSandboxID,
+		"networkType",
+		netConf.Plugins[0].Network.Type,
+		"networkName",
+		netConf.Name,
+	)
 	return nil
 }
 
-func (plugin *cniNetworkPlugin) buildCNIRuntimeConf(podName string, podNs string, podSandboxID kubecontainer.ContainerID, podNetnsPath string, annotations, options map[string]string) (*libcni.RuntimeConf, error) {
+func (plugin *cniNetworkPlugin) buildCNIRuntimeConf(
+	podName string,
+	podNs string,
+	podSandboxID kubecontainer.ContainerID,
+	podNetnsPath string,
+	annotations, options map[string]string,
+) (*libcni.RuntimeConf, error) {
 	rt := &libcni.RuntimeConf{
 		ContainerID: podSandboxID.ID,
 		NetNS:       podNetnsPath,

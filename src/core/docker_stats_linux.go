@@ -41,7 +41,10 @@ func (ds *dockerService) getContainerStats(containerID string) (*runtimeapi.Cont
 		return nil, err
 	}
 
-	statusResp, err := ds.ContainerStatus(context.Background(), &runtimeapi.ContainerStatusRequest{ContainerId: containerID})
+	statusResp, err := ds.ContainerStatus(
+		context.Background(),
+		&runtimeapi.ContainerStatusRequest{ContainerId: containerID},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -57,12 +60,16 @@ func (ds *dockerService) getContainerStats(containerID string) (*runtimeapi.Cont
 			Annotations: status.Annotations,
 		},
 		Cpu: &runtimeapi.CpuUsage{
-			Timestamp:            timestamp,
-			UsageCoreNanoSeconds: &runtimeapi.UInt64Value{Value: dockerStats.CPUStats.CPUUsage.TotalUsage},
+			Timestamp: timestamp,
+			UsageCoreNanoSeconds: &runtimeapi.UInt64Value{
+				Value: dockerStats.CPUStats.CPUUsage.TotalUsage,
+			},
 		},
 		Memory: &runtimeapi.MemoryUsage{
-			Timestamp:       timestamp,
-			WorkingSetBytes: &runtimeapi.UInt64Value{Value: dockerStats.MemoryStats.PrivateWorkingSet},
+			Timestamp: timestamp,
+			WorkingSetBytes: &runtimeapi.UInt64Value{
+				Value: dockerStats.MemoryStats.PrivateWorkingSet,
+			},
 		},
 		WritableLayer: &runtimeapi.FilesystemUsage{
 			Timestamp: timestamp,

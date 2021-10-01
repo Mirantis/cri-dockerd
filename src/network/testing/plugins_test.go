@@ -36,7 +36,14 @@ import (
 
 func TestSelectDefaultPlugin(t *testing.T) {
 	all_plugins := []network.NetworkPlugin{}
-	plug, err := network.InitNetworkPlugin(all_plugins, "", NewFakeHost(nil), kubeletconfig.HairpinNone, "10.0.0.0/8", network.UseDefaultMTU)
+	plug, err := network.InitNetworkPlugin(
+		all_plugins,
+		"",
+		NewFakeHost(nil),
+		kubeletconfig.HairpinNone,
+		"10.0.0.0/8",
+		network.UseDefaultMTU,
+	)
 	if err != nil {
 		t.Fatalf("Unexpected error in selecting default plugin: %v", err)
 	}
@@ -44,7 +51,11 @@ func TestSelectDefaultPlugin(t *testing.T) {
 		t.Fatalf("Failed to select the default plugin.")
 	}
 	if plug.Name() != network.DefaultPluginName {
-		t.Errorf("Failed to select the default plugin. Expected %s. Got %s", network.DefaultPluginName, plug.Name())
+		t.Errorf(
+			"Failed to select the default plugin. Expected %s. Got %s",
+			network.DefaultPluginName,
+			plug.Name(),
+		)
 	}
 }
 
@@ -71,7 +82,12 @@ func TestInit(t *testing.T) {
 		// Verify the sysctl specified is set
 		assert.Equal(t, 1, sysctl.Settings[tt.setting], tt.setting+" sysctl should have been set")
 		// Verify iptables is always set
-		assert.Equal(t, 1, sysctl.Settings["net/bridge/bridge-nf-call-iptables"], "net/bridge/bridge-nf-call-iptables sysctl should have been set")
+		assert.Equal(
+			t,
+			1,
+			sysctl.Settings["net/bridge/bridge-nf-call-iptables"],
+			"net/bridge/bridge-nf-call-iptables sysctl should have been set",
+		)
 		// Verify ip6tables is only set if it existed
 		assert.Len(t, sysctl.Settings, tt.expectedLen, "length wrong for "+tt.setting)
 	}
@@ -96,7 +112,16 @@ func TestPluginManager(t *testing.T) {
 		containerID := kubecontainer.ContainerID{ID: podName}
 
 		fnp.EXPECT().SetUpPod("", podName, containerID).Return(nil).Times(4)
-		fnp.EXPECT().GetPodNetworkStatus("", podName, containerID).Return(&network.PodNetworkStatus{IP: net.ParseIP("1.2.3.4")}, nil).Times(4)
+		fnp.EXPECT().GetPodNetworkStatus(
+			"",
+			podName,
+			containerID,
+		).Return(
+			&network.PodNetworkStatus{IP: net.ParseIP("1.2.3.4")},
+			nil,
+		).Times(
+			4,
+		)
 		fnp.EXPECT().TearDownPod("", podName, containerID).Return(nil).Times(4)
 
 		for x := 0; x < 4; x++ {
@@ -140,13 +165,20 @@ type hookableFakeNetworkPlugin struct {
 	setupHook hookableFakeNetworkPluginSetupHook
 }
 
-func newHookableFakeNetworkPlugin(setupHook hookableFakeNetworkPluginSetupHook) *hookableFakeNetworkPlugin {
+func newHookableFakeNetworkPlugin(
+	setupHook hookableFakeNetworkPluginSetupHook,
+) *hookableFakeNetworkPlugin {
 	return &hookableFakeNetworkPlugin{
 		setupHook: setupHook,
 	}
 }
 
-func (p *hookableFakeNetworkPlugin) Init(host network.Host, hairpinMode kubeletconfig.HairpinMode, nonMasqueradeCIDR string, mtu int) error {
+func (p *hookableFakeNetworkPlugin) Init(
+	host network.Host,
+	hairpinMode kubeletconfig.HairpinMode,
+	nonMasqueradeCIDR string,
+	mtu int,
+) error {
 	return nil
 }
 
@@ -161,7 +193,12 @@ func (p *hookableFakeNetworkPlugin) Capabilities() utilsets.Int {
 	return utilsets.NewInt()
 }
 
-func (p *hookableFakeNetworkPlugin) SetUpPod(namespace string, name string, id kubecontainer.ContainerID, annotations, options map[string]string) error {
+func (p *hookableFakeNetworkPlugin) SetUpPod(
+	namespace string,
+	name string,
+	id kubecontainer.ContainerID,
+	annotations, options map[string]string,
+) error {
 	if p.setupHook != nil {
 		p.setupHook(namespace, name, id)
 	}
@@ -172,7 +209,11 @@ func (p *hookableFakeNetworkPlugin) TearDownPod(string, string, kubecontainer.Co
 	return nil
 }
 
-func (p *hookableFakeNetworkPlugin) GetPodNetworkStatus(string, string, kubecontainer.ContainerID) (*network.PodNetworkStatus, error) {
+func (p *hookableFakeNetworkPlugin) GetPodNetworkStatus(
+	string,
+	string,
+	kubecontainer.ContainerID,
+) (*network.PodNetworkStatus, error) {
 	return &network.PodNetworkStatus{IP: net.ParseIP("10.1.2.3")}, nil
 }
 
@@ -191,12 +232,14 @@ func TestMultiPodParallelNetworkOps(t *testing.T) {
 	// has its own locks which don't allow the parallel network operation
 	// to proceed.
 	didWait := false
-	fakePlugin := newHookableFakeNetworkPlugin(func(podNamespace, podName string, id kubecontainer.ContainerID) {
-		if podName == "waiter" {
-			podWg.Wait()
-			didWait = true
-		}
-	})
+	fakePlugin := newHookableFakeNetworkPlugin(
+		func(podNamespace, podName string, id kubecontainer.ContainerID) {
+			if podName == "waiter" {
+				podWg.Wait()
+				didWait = true
+			}
+		},
+	)
 	pm := network.NewPluginManager(fakePlugin)
 
 	opsWg := sync.WaitGroup{}

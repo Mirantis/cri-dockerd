@@ -116,7 +116,15 @@ func createCgroupManager(name string) (cgroups.Manager, error) {
 	if err != nil || memoryLimit < minDockerMemoryLimit {
 		memoryLimit = minDockerMemoryLimit
 	}
-	klog.V(2).InfoS("Configure resource-only container with memory limit", "containerName", name, "memoryLimit", memoryLimit)
+	klog.V(
+		2,
+	).InfoS(
+		"Configure resource-only container with memory limit",
+		"containerName",
+		name,
+		"memoryLimit",
+		memoryLimit,
+	)
 
 	cg := &configs.Cgroup{
 		Parent: "/",

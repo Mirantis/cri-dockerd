@@ -56,7 +56,9 @@ func (m *MockInterface) EXPECT() *MockInterfaceMockRecorder {
 }
 
 // ListContainers mocks base method
-func (m *MockInterface) ListContainers(options types.ContainerListOptions) ([]types.Container, error) {
+func (m *MockInterface) ListContainers(
+	options types.ContainerListOptions,
+) ([]types.Container, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListContainers", options)
 	ret0, _ := ret[0].([]types.Container)
@@ -67,7 +69,12 @@ func (m *MockInterface) ListContainers(options types.ContainerListOptions) ([]ty
 // ListContainers indicates an expected call of ListContainers
 func (mr *MockInterfaceMockRecorder) ListContainers(options interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListContainers", reflect.TypeOf((*MockInterface)(nil).ListContainers), options)
+	return mr.mock.ctrl.RecordCallWithMethodType(
+		mr.mock,
+		"ListContainers",
+		reflect.TypeOf((*MockInterface)(nil).ListContainers),
+		options,
+	)
 }
 
 // InspectContainer mocks base method
@@ -82,7 +89,12 @@ func (m *MockInterface) InspectContainer(id string) (*types.ContainerJSON, error
 // InspectContainer indicates an expected call of InspectContainer
 func (mr *MockInterfaceMockRecorder) InspectContainer(id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InspectContainer", reflect.TypeOf((*MockInterface)(nil).InspectContainer), id)
+	return mr.mock.ctrl.RecordCallWithMethodType(
+		mr.mock,
+		"InspectContainer",
+		reflect.TypeOf((*MockInterface)(nil).InspectContainer),
+		id,
+	)
 }
 
 // InspectContainerWithSize mocks base method
@@ -97,11 +109,18 @@ func (m *MockInterface) InspectContainerWithSize(id string) (*types.ContainerJSO
 // InspectContainerWithSize indicates an expected call of InspectContainerWithSize
 func (mr *MockInterfaceMockRecorder) InspectContainerWithSize(id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InspectContainerWithSize", reflect.TypeOf((*MockInterface)(nil).InspectContainerWithSize), id)
+	return mr.mock.ctrl.RecordCallWithMethodType(
+		mr.mock,
+		"InspectContainerWithSize",
+		reflect.TypeOf((*MockInterface)(nil).InspectContainerWithSize),
+		id,
+	)
 }
 
 // CreateContainer mocks base method
-func (m *MockInterface) CreateContainer(arg0 types.ContainerCreateConfig) (*container.ContainerCreateCreatedBody, error) {
+func (m *MockInterface) CreateContainer(
+	arg0 types.ContainerCreateConfig,
+) (*container.ContainerCreateCreatedBody, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateContainer", arg0)
 	ret0, _ := ret[0].(*container.ContainerCreateCreatedBody)
@@ -112,7 +131,12 @@ func (m *MockInterface) CreateContainer(arg0 types.ContainerCreateConfig) (*cont
 // CreateContainer indicates an expected call of CreateContainer
 func (mr *MockInterfaceMockRecorder) CreateContainer(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateContainer", reflect.TypeOf((*MockInterface)(nil).CreateContainer), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(
+		mr.mock,
+		"CreateContainer",
+		reflect.TypeOf((*MockInterface)(nil).CreateContainer),
+		arg0,
+	)
 }
 
 // StartContainer mocks base method
@@ -126,7 +150,12 @@ func (m *MockInterface) StartContainer(id string) error {
 // StartContainer indicates an expected call of StartContainer
 func (mr *MockInterfaceMockRecorder) StartContainer(id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StartContainer", reflect.TypeOf((*MockInterface)(nil).StartContainer), id)
+	return mr.mock.ctrl.RecordCallWithMethodType(
+		mr.mock,
+		"StartContainer",
+		reflect.TypeOf((*MockInterface)(nil).StartContainer),
+		id,
+	)
 }
 
 // StopContainer mocks base method
@@ -140,11 +169,20 @@ func (m *MockInterface) StopContainer(id string, timeout time.Duration) error {
 // StopContainer indicates an expected call of StopContainer
 func (mr *MockInterfaceMockRecorder) StopContainer(id, timeout interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StopContainer", reflect.TypeOf((*MockInterface)(nil).StopContainer), id, timeout)
+	return mr.mock.ctrl.RecordCallWithMethodType(
+		mr.mock,
+		"StopContainer",
+		reflect.TypeOf((*MockInterface)(nil).StopContainer),
+		id,
+		timeout,
+	)
 }
 
 // UpdateContainerResources mocks base method
-func (m *MockInterface) UpdateContainerResources(id string, updateConfig container.UpdateConfig) error {
+func (m *MockInterface) UpdateContainerResources(
+	id string,
+	updateConfig container.UpdateConfig,
+) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateContainerResources", id, updateConfig)
 	ret0, _ := ret[0].(error)
@@ -152,9 +190,17 @@ func (m *MockInterface) UpdateContainerResources(id string, updateConfig contain
 }
 
 // UpdateContainerResources indicates an expected call of UpdateContainerResources
-func (mr *MockInterfaceMockRecorder) UpdateContainerResources(id, updateConfig interface{}) *gomock.Call {
+func (mr *MockInterfaceMockRecorder) UpdateContainerResources(
+	id, updateConfig interface{},
+) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateContainerResources", reflect.TypeOf((*MockInterface)(nil).UpdateContainerResources), id, updateConfig)
+	return mr.mock.ctrl.RecordCallWithMethodType(
+		mr.mock,
+		"UpdateContainerResources",
+		reflect.TypeOf((*MockInterface)(nil).UpdateContainerResources),
+		id,
+		updateConfig,
+	)
 }
 
 // RemoveContainer mocks base method
@@ -168,7 +214,13 @@ func (m *MockInterface) RemoveContainer(id string, opts types.ContainerRemoveOpt
 // RemoveContainer indicates an expected call of RemoveContainer
 func (mr *MockInterfaceMockRecorder) RemoveContainer(id, opts interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveContainer", reflect.TypeOf((*MockInterface)(nil).RemoveContainer), id, opts)
+	return mr.mock.ctrl.RecordCallWithMethodType(
+		mr.mock,
+		"RemoveContainer",
+		reflect.TypeOf((*MockInterface)(nil).RemoveContainer),
+		id,
+		opts,
+	)
 }
 
 // InspectImageByRef mocks base method
@@ -183,7 +235,12 @@ func (m *MockInterface) InspectImageByRef(imageRef string) (*types.ImageInspect,
 // InspectImageByRef indicates an expected call of InspectImageByRef
 func (mr *MockInterfaceMockRecorder) InspectImageByRef(imageRef interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InspectImageByRef", reflect.TypeOf((*MockInterface)(nil).InspectImageByRef), imageRef)
+	return mr.mock.ctrl.RecordCallWithMethodType(
+		mr.mock,
+		"InspectImageByRef",
+		reflect.TypeOf((*MockInterface)(nil).InspectImageByRef),
+		imageRef,
+	)
 }
 
 // InspectImageByID mocks base method
@@ -198,7 +255,12 @@ func (m *MockInterface) InspectImageByID(imageID string) (*types.ImageInspect, e
 // InspectImageByID indicates an expected call of InspectImageByID
 func (mr *MockInterfaceMockRecorder) InspectImageByID(imageID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InspectImageByID", reflect.TypeOf((*MockInterface)(nil).InspectImageByID), imageID)
+	return mr.mock.ctrl.RecordCallWithMethodType(
+		mr.mock,
+		"InspectImageByID",
+		reflect.TypeOf((*MockInterface)(nil).InspectImageByID),
+		imageID,
+	)
 }
 
 // ListImages mocks base method
@@ -213,11 +275,20 @@ func (m *MockInterface) ListImages(opts types.ImageListOptions) ([]types.ImageSu
 // ListImages indicates an expected call of ListImages
 func (mr *MockInterfaceMockRecorder) ListImages(opts interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListImages", reflect.TypeOf((*MockInterface)(nil).ListImages), opts)
+	return mr.mock.ctrl.RecordCallWithMethodType(
+		mr.mock,
+		"ListImages",
+		reflect.TypeOf((*MockInterface)(nil).ListImages),
+		opts,
+	)
 }
 
 // PullImage mocks base method
-func (m *MockInterface) PullImage(image string, auth types.AuthConfig, opts types.ImagePullOptions) error {
+func (m *MockInterface) PullImage(
+	image string,
+	auth types.AuthConfig,
+	opts types.ImagePullOptions,
+) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "PullImage", image, auth, opts)
 	ret0, _ := ret[0].(error)
@@ -227,11 +298,21 @@ func (m *MockInterface) PullImage(image string, auth types.AuthConfig, opts type
 // PullImage indicates an expected call of PullImage
 func (mr *MockInterfaceMockRecorder) PullImage(image, auth, opts interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PullImage", reflect.TypeOf((*MockInterface)(nil).PullImage), image, auth, opts)
+	return mr.mock.ctrl.RecordCallWithMethodType(
+		mr.mock,
+		"PullImage",
+		reflect.TypeOf((*MockInterface)(nil).PullImage),
+		image,
+		auth,
+		opts,
+	)
 }
 
 // RemoveImage mocks base method
-func (m *MockInterface) RemoveImage(image string, opts types.ImageRemoveOptions) ([]types.ImageDeleteResponseItem, error) {
+func (m *MockInterface) RemoveImage(
+	image string,
+	opts types.ImageRemoveOptions,
+) ([]types.ImageDeleteResponseItem, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RemoveImage", image, opts)
 	ret0, _ := ret[0].([]types.ImageDeleteResponseItem)
@@ -242,7 +323,13 @@ func (m *MockInterface) RemoveImage(image string, opts types.ImageRemoveOptions)
 // RemoveImage indicates an expected call of RemoveImage
 func (mr *MockInterfaceMockRecorder) RemoveImage(image, opts interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveImage", reflect.TypeOf((*MockInterface)(nil).RemoveImage), image, opts)
+	return mr.mock.ctrl.RecordCallWithMethodType(
+		mr.mock,
+		"RemoveImage",
+		reflect.TypeOf((*MockInterface)(nil).RemoveImage),
+		image,
+		opts,
+	)
 }
 
 // ImageHistory mocks base method
@@ -257,11 +344,20 @@ func (m *MockInterface) ImageHistory(id string) ([]image.HistoryResponseItem, er
 // ImageHistory indicates an expected call of ImageHistory
 func (mr *MockInterfaceMockRecorder) ImageHistory(id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ImageHistory", reflect.TypeOf((*MockInterface)(nil).ImageHistory), id)
+	return mr.mock.ctrl.RecordCallWithMethodType(
+		mr.mock,
+		"ImageHistory",
+		reflect.TypeOf((*MockInterface)(nil).ImageHistory),
+		id,
+	)
 }
 
 // Logs mocks base method
-func (m *MockInterface) Logs(arg0 string, arg1 types.ContainerLogsOptions, arg2 libdocker.StreamOptions) error {
+func (m *MockInterface) Logs(
+	arg0 string,
+	arg1 types.ContainerLogsOptions,
+	arg2 libdocker.StreamOptions,
+) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Logs", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)
@@ -271,7 +367,14 @@ func (m *MockInterface) Logs(arg0 string, arg1 types.ContainerLogsOptions, arg2 
 // Logs indicates an expected call of Logs
 func (mr *MockInterfaceMockRecorder) Logs(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Logs", reflect.TypeOf((*MockInterface)(nil).Logs), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(
+		mr.mock,
+		"Logs",
+		reflect.TypeOf((*MockInterface)(nil).Logs),
+		arg0,
+		arg1,
+		arg2,
+	)
 }
 
 // Version mocks base method
@@ -286,7 +389,11 @@ func (m *MockInterface) Version() (*types.Version, error) {
 // Version indicates an expected call of Version
 func (mr *MockInterfaceMockRecorder) Version() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Version", reflect.TypeOf((*MockInterface)(nil).Version))
+	return mr.mock.ctrl.RecordCallWithMethodType(
+		mr.mock,
+		"Version",
+		reflect.TypeOf((*MockInterface)(nil).Version),
+	)
 }
 
 // Info mocks base method
@@ -301,7 +408,11 @@ func (m *MockInterface) Info() (*types.Info, error) {
 // Info indicates an expected call of Info
 func (mr *MockInterfaceMockRecorder) Info() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Info", reflect.TypeOf((*MockInterface)(nil).Info))
+	return mr.mock.ctrl.RecordCallWithMethodType(
+		mr.mock,
+		"Info",
+		reflect.TypeOf((*MockInterface)(nil).Info),
+	)
 }
 
 // CreateExec mocks base method
@@ -316,11 +427,21 @@ func (m *MockInterface) CreateExec(arg0 string, arg1 types.ExecConfig) (*types.I
 // CreateExec indicates an expected call of CreateExec
 func (mr *MockInterfaceMockRecorder) CreateExec(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateExec", reflect.TypeOf((*MockInterface)(nil).CreateExec), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(
+		mr.mock,
+		"CreateExec",
+		reflect.TypeOf((*MockInterface)(nil).CreateExec),
+		arg0,
+		arg1,
+	)
 }
 
 // StartExec mocks base method
-func (m *MockInterface) StartExec(arg0 string, arg1 types.ExecStartCheck, arg2 libdocker.StreamOptions) error {
+func (m *MockInterface) StartExec(
+	arg0 string,
+	arg1 types.ExecStartCheck,
+	arg2 libdocker.StreamOptions,
+) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "StartExec", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)
@@ -330,7 +451,14 @@ func (m *MockInterface) StartExec(arg0 string, arg1 types.ExecStartCheck, arg2 l
 // StartExec indicates an expected call of StartExec
 func (mr *MockInterfaceMockRecorder) StartExec(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StartExec", reflect.TypeOf((*MockInterface)(nil).StartExec), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(
+		mr.mock,
+		"StartExec",
+		reflect.TypeOf((*MockInterface)(nil).StartExec),
+		arg0,
+		arg1,
+		arg2,
+	)
 }
 
 // InspectExec mocks base method
@@ -345,11 +473,20 @@ func (m *MockInterface) InspectExec(id string) (*types.ContainerExecInspect, err
 // InspectExec indicates an expected call of InspectExec
 func (mr *MockInterfaceMockRecorder) InspectExec(id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InspectExec", reflect.TypeOf((*MockInterface)(nil).InspectExec), id)
+	return mr.mock.ctrl.RecordCallWithMethodType(
+		mr.mock,
+		"InspectExec",
+		reflect.TypeOf((*MockInterface)(nil).InspectExec),
+		id,
+	)
 }
 
 // AttachToContainer mocks base method
-func (m *MockInterface) AttachToContainer(arg0 string, arg1 types.ContainerAttachOptions, arg2 libdocker.StreamOptions) error {
+func (m *MockInterface) AttachToContainer(
+	arg0 string,
+	arg1 types.ContainerAttachOptions,
+	arg2 libdocker.StreamOptions,
+) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AttachToContainer", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)
@@ -359,7 +496,14 @@ func (m *MockInterface) AttachToContainer(arg0 string, arg1 types.ContainerAttac
 // AttachToContainer indicates an expected call of AttachToContainer
 func (mr *MockInterfaceMockRecorder) AttachToContainer(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AttachToContainer", reflect.TypeOf((*MockInterface)(nil).AttachToContainer), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(
+		mr.mock,
+		"AttachToContainer",
+		reflect.TypeOf((*MockInterface)(nil).AttachToContainer),
+		arg0,
+		arg1,
+		arg2,
+	)
 }
 
 // ResizeContainerTTY mocks base method
@@ -371,9 +515,18 @@ func (m *MockInterface) ResizeContainerTTY(id string, height, width uint) error 
 }
 
 // ResizeContainerTTY indicates an expected call of ResizeContainerTTY
-func (mr *MockInterfaceMockRecorder) ResizeContainerTTY(id, height, width interface{}) *gomock.Call {
+func (mr *MockInterfaceMockRecorder) ResizeContainerTTY(
+	id, height, width interface{},
+) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResizeContainerTTY", reflect.TypeOf((*MockInterface)(nil).ResizeContainerTTY), id, height, width)
+	return mr.mock.ctrl.RecordCallWithMethodType(
+		mr.mock,
+		"ResizeContainerTTY",
+		reflect.TypeOf((*MockInterface)(nil).ResizeContainerTTY),
+		id,
+		height,
+		width,
+	)
 }
 
 // ResizeExecTTY mocks base method
@@ -387,7 +540,14 @@ func (m *MockInterface) ResizeExecTTY(id string, height, width uint) error {
 // ResizeExecTTY indicates an expected call of ResizeExecTTY
 func (mr *MockInterfaceMockRecorder) ResizeExecTTY(id, height, width interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResizeExecTTY", reflect.TypeOf((*MockInterface)(nil).ResizeExecTTY), id, height, width)
+	return mr.mock.ctrl.RecordCallWithMethodType(
+		mr.mock,
+		"ResizeExecTTY",
+		reflect.TypeOf((*MockInterface)(nil).ResizeExecTTY),
+		id,
+		height,
+		width,
+	)
 }
 
 // GetContainerStats mocks base method
@@ -402,5 +562,10 @@ func (m *MockInterface) GetContainerStats(id string) (*types.StatsJSON, error) {
 // GetContainerStats indicates an expected call of GetContainerStats
 func (mr *MockInterfaceMockRecorder) GetContainerStats(id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetContainerStats", reflect.TypeOf((*MockInterface)(nil).GetContainerStats), id)
+	return mr.mock.ctrl.RecordCallWithMethodType(
+		mr.mock,
+		"GetContainerStats",
+		reflect.TypeOf((*MockInterface)(nil).GetContainerStats),
+		id,
+	)
 }

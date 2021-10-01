@@ -39,21 +39,40 @@ func (plugin *cniNetworkPlugin) platformInit() error {
 }
 
 // GetPodNetworkStatus : Assuming addToNetwork is idempotent, we can call this API as many times as required to get the IPAddress
-func (plugin *cniNetworkPlugin) GetPodNetworkStatus(namespace string, name string, id kubecontainer.ContainerID) (*network.PodNetworkStatus, error) {
+func (plugin *cniNetworkPlugin) GetPodNetworkStatus(
+	namespace string,
+	name string,
+	id kubecontainer.ContainerID,
+) (*network.PodNetworkStatus, error) {
 	netnsPath, err := plugin.host.GetNetNS(id.ID)
 	if err != nil {
 		return nil, fmt.Errorf("CNI failed to retrieve network namespace path: %v", err)
 	}
 
 	if plugin.getDefaultNetwork() == nil {
-		return nil, fmt.Errorf("CNI network not yet initialized, skipping pod network status for container %q", id)
+		return nil, fmt.Errorf(
+			"CNI network not yet initialized, skipping pod network status for container %q",
+			id,
+		)
 	}
 
 	// Because the default remote runtime request timeout is 4 min,so set slightly less than 240 seconds
 	// Todo get the timeout from parent ctx
-	cniTimeoutCtx, cancelFunc := context.WithTimeout(context.Background(), network.CNITimeoutSec*time.Second)
+	cniTimeoutCtx, cancelFunc := context.WithTimeout(
+		context.Background(),
+		network.CNITimeoutSec*time.Second,
+	)
 	defer cancelFunc()
-	result, err := plugin.addToNetwork(cniTimeoutCtx, plugin.getDefaultNetwork(), name, namespace, id, netnsPath, nil, nil)
+	result, err := plugin.addToNetwork(
+		cniTimeoutCtx,
+		plugin.getDefaultNetwork(),
+		name,
+		namespace,
+		id,
+		netnsPath,
+		nil,
+		nil,
+	)
 	klog.V(5).Infof("GetPodNetworkStatus result %+v", result)
 	if err != nil {
 		klog.Errorf("error while adding to cni network: %s", err)

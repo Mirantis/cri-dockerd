@@ -48,7 +48,9 @@ type Interface interface {
 	ListContainers(options dockertypes.ContainerListOptions) ([]dockertypes.Container, error)
 	InspectContainer(id string) (*dockertypes.ContainerJSON, error)
 	InspectContainerWithSize(id string) (*dockertypes.ContainerJSON, error)
-	CreateContainer(dockertypes.ContainerCreateConfig) (*dockercontainer.ContainerCreateCreatedBody, error)
+	CreateContainer(
+		dockertypes.ContainerCreateConfig,
+	) (*dockercontainer.ContainerCreateCreatedBody, error)
 	StartContainer(id string) error
 	StopContainer(id string, timeout time.Duration) error
 	UpdateContainerResources(id string, updateConfig dockercontainer.UpdateConfig) error
@@ -57,7 +59,10 @@ type Interface interface {
 	InspectImageByID(imageID string) (*dockertypes.ImageInspect, error)
 	ListImages(opts dockertypes.ImageListOptions) ([]dockertypes.ImageSummary, error)
 	PullImage(image string, auth dockertypes.AuthConfig, opts dockertypes.ImagePullOptions) error
-	RemoveImage(image string, opts dockertypes.ImageRemoveOptions) ([]dockertypes.ImageDeleteResponseItem, error)
+	RemoveImage(
+		image string,
+		opts dockertypes.ImageRemoveOptions,
+	) ([]dockertypes.ImageDeleteResponseItem, error)
 	ImageHistory(id string) ([]dockerimagetypes.HistoryResponseItem, error)
 	Logs(string, dockertypes.ContainerLogsOptions, StreamOptions) error
 	Version() (*dockertypes.Version, error)
@@ -76,7 +81,10 @@ type Interface interface {
 func getDockerClient(dockerEndpoint string) (*dockerapi.Client, error) {
 	if len(dockerEndpoint) > 0 {
 		klog.InfoS("Connecting to docker on the dockerEndpoint", "endpoint", dockerEndpoint)
-		return dockerapi.NewClientWithOpts(dockerapi.WithHost(dockerEndpoint), dockerapi.WithVersion(""))
+		return dockerapi.NewClientWithOpts(
+			dockerapi.WithHost(dockerEndpoint),
+			dockerapi.WithVersion(""),
+		)
 	}
 	return dockerapi.NewClientWithOpts(dockerapi.FromEnv)
 }
@@ -87,7 +95,10 @@ func getDockerClient(dockerEndpoint string) (*dockerapi.Client, error) {
 // is the timeout for docker requests. If timeout is exceeded, the request
 // will be cancelled and throw out an error. If requestTimeout is 0, a default
 // value will be applied.
-func ConnectToDockerOrDie(dockerEndpoint string, requestTimeout, imagePullProgressDeadline time.Duration) Interface {
+func ConnectToDockerOrDie(
+	dockerEndpoint string,
+	requestTimeout, imagePullProgressDeadline time.Duration,
+) Interface {
 	client, err := getDockerClient(dockerEndpoint)
 	if err != nil {
 		klog.ErrorS(err, "Couldn't connect to docker")

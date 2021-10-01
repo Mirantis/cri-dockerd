@@ -66,7 +66,9 @@ func TestExecInContainer(t *testing.T) {
 		returnStartExec:    nil,
 		returnInspectExec1: nil,
 		returnInspectExec2: nil,
-		expectError:        fmt.Errorf("failed to exec in container - Exec setup failed - error in CreateExec()"),
+		expectError: fmt.Errorf(
+			"failed to exec in container - Exec setup failed - error in CreateExec()",
+		),
 	}, {
 		description:        "StartExec returns an error",
 		timeout:            time.Minute,
@@ -116,7 +118,13 @@ func TestExecInContainer(t *testing.T) {
 		mockClient.EXPECT().CreateExec(gomock.Any(), gomock.Any()).Return(
 			tc.returnCreateExec1,
 			tc.returnCreateExec2)
-		mockClient.EXPECT().StartExec(gomock.Any(), gomock.Any(), gomock.Any()).Return(tc.returnStartExec)
+		mockClient.EXPECT().StartExec(
+			gomock.Any(),
+			gomock.Any(),
+			gomock.Any(),
+		).Return(
+			tc.returnStartExec,
+		)
 		mockClient.EXPECT().InspectExec(gomock.Any()).Return(
 			tc.returnInspectExec1,
 			tc.returnInspectExec2)
@@ -125,7 +133,18 @@ func TestExecInContainer(t *testing.T) {
 		// runtime connection timeout used by cri-dockerd
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 		defer cancel()
-		err := eh.ExecInContainer(ctx, mockClient, container, cmd, stdin, stdout, stderr, false, resize, tc.timeout)
+		err := eh.ExecInContainer(
+			ctx,
+			mockClient,
+			container,
+			cmd,
+			stdin,
+			stdout,
+			stderr,
+			false,
+			resize,
+			tc.timeout,
+		)
 		assert.Equal(t, tc.expectError, err)
 	}
 }

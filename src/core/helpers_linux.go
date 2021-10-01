@@ -61,7 +61,8 @@ func getSeccompDockerOpts(seccompProfile string) ([]dockerOpt, error) {
 		return defaultSeccompOpt, nil
 	}
 
-	if seccompProfile == v1.SeccompProfileRuntimeDefault || seccompProfile == v1.DeprecatedSeccompProfileDockerDefault {
+	if seccompProfile == v1.SeccompProfileRuntimeDefault ||
+		seccompProfile == v1.DeprecatedSeccompProfileDockerDefault {
 		// return nil so docker will load the default seccomp profile
 		return nil, nil
 	}
@@ -73,7 +74,10 @@ func getSeccompDockerOpts(seccompProfile string) ([]dockerOpt, error) {
 	// get the full path of seccomp profile when prefixed with 'localhost/'.
 	fname := strings.TrimPrefix(seccompProfile, v1.SeccompLocalhostProfileNamePrefix)
 	if !filepath.IsAbs(fname) {
-		return nil, fmt.Errorf("seccomp profile path must be absolute, but got relative path %q", fname)
+		return nil, fmt.Errorf(
+			"seccomp profile path must be absolute, but got relative path %q",
+			fname,
+		)
 	}
 	file, err := ioutil.ReadFile(filepath.FromSlash(fname))
 	if err != nil {
@@ -124,7 +128,11 @@ func (ds *dockerService) updateCreateConfig(
 
 		// Apply security context.
 		if err := applyContainerSecurityContext(lc, podSandboxID, createConfig.Config, createConfig.HostConfig, securityOptSep); err != nil {
-			return fmt.Errorf("failed to apply container security context for container %q: %v", config.Metadata.Name, err)
+			return fmt.Errorf(
+				"failed to apply container security context for container %q: %v",
+				config.Metadata.Name,
+				err,
+			)
 		}
 	}
 
@@ -133,7 +141,11 @@ func (ds *dockerService) updateCreateConfig(
 		// Apply Cgroup options.
 		cgroupParent, err := ds.GenerateExpectedCgroupParent(lc.CgroupParent)
 		if err != nil {
-			return fmt.Errorf("failed to generate cgroup parent in expected syntax for container %q: %v", config.Metadata.Name, err)
+			return fmt.Errorf(
+				"failed to generate cgroup parent in expected syntax for container %q: %v",
+				config.Metadata.Name,
+				err,
+			)
 		}
 		createConfig.HostConfig.CgroupParent = cgroupParent
 	}

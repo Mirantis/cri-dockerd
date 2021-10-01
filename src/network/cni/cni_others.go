@@ -59,22 +59,37 @@ func (plugin *cniNetworkPlugin) platformInit() error {
 }
 
 // Also fix the runtime's call to Status function to be done only in the case that the IP is lost, no need to do periodic calls
-func (plugin *cniNetworkPlugin) GetPodNetworkStatus(namespace string, name string, id kubecontainer.ContainerID) (*network.PodNetworkStatus, error) {
+func (plugin *cniNetworkPlugin) GetPodNetworkStatus(
+	namespace string,
+	name string,
+	id kubecontainer.ContainerID,
+) (*network.PodNetworkStatus, error) {
 	netnsPath, err := plugin.host.GetNetNS(id.ID)
 	if err != nil {
 		return nil, fmt.Errorf("CNI failed to retrieve network namespace path: %v", err)
 	}
 	if netnsPath == "" {
-		return nil, fmt.Errorf("cannot find the network namespace, skipping pod network status for container %q", id)
+		return nil, fmt.Errorf(
+			"cannot find the network namespace, skipping pod network status for container %q",
+			id,
+		)
 	}
 
-	ips, err := network.GetPodIPs(plugin.execer, plugin.nsenterPath, netnsPath, network.DefaultInterfaceName)
+	ips, err := network.GetPodIPs(
+		plugin.execer,
+		plugin.nsenterPath,
+		netnsPath,
+		network.DefaultInterfaceName,
+	)
 	if err != nil {
 		return nil, err
 	}
 
 	if len(ips) == 0 {
-		return nil, fmt.Errorf("cannot find pod IPs in the network namespace, skipping pod network status for container %q", id)
+		return nil, fmt.Errorf(
+			"cannot find pod IPs in the network namespace, skipping pod network status for container %q",
+			id,
+		)
 	}
 
 	return &network.PodNetworkStatus{

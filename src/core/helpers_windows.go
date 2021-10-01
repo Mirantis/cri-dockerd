@@ -36,7 +36,10 @@ func DefaultMemorySwap() int64 {
 	return 0
 }
 
-func (ds *core.dockerService) getSecurityOpts(seccompProfile string, separator rune) ([]string, error) {
+func (ds *core.dockerService) getSecurityOpts(
+	seccompProfile string,
+	separator rune,
+) ([]string, error) {
 	if seccompProfile != "" {
 		klog.InfoS("seccomp annotations are not supported on windows")
 	}
@@ -75,14 +78,22 @@ func (ds *core.dockerService) updateCreateConfig(
 		}
 
 		// Apply security context.
-		applyWindowsContainerSecurityContext(wc.GetSecurityContext(), createConfig.Config, createConfig.HostConfig)
+		applyWindowsContainerSecurityContext(
+			wc.GetSecurityContext(),
+			createConfig.Config,
+			createConfig.HostConfig,
+		)
 	}
 
 	return nil
 }
 
 // applyWindowsContainerSecurityContext updates docker container options according to security context.
-func applyWindowsContainerSecurityContext(wsc *runtimeapi.WindowsContainerSecurityContext, config *dockercontainer.Config, hc *dockercontainer.HostConfig) {
+func applyWindowsContainerSecurityContext(
+	wsc *runtimeapi.WindowsContainerSecurityContext,
+	config *dockercontainer.Config,
+	hc *dockercontainer.HostConfig,
+) {
 	if wsc == nil {
 		return
 	}

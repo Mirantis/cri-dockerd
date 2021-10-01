@@ -42,7 +42,11 @@ var (
 	ethtoolOutputRegex = regexp.MustCompile(`peer_ifindex: (\d+)`)
 )
 
-func findPairInterfaceOfContainerInterface(e exec.Interface, containerInterfaceName, containerDesc string, nsenterArgs []string) (string, error) {
+func findPairInterfaceOfContainerInterface(
+	e exec.Interface,
+	containerInterfaceName, containerDesc string,
+	nsenterArgs []string,
+) (string, error) {
 	nsenterPath, err := e.LookPath("nsenter")
 	if err != nil {
 		return "", err
@@ -52,15 +56,32 @@ func findPairInterfaceOfContainerInterface(e exec.Interface, containerInterfaceN
 		return "", err
 	}
 
-	nsenterArgs = append(nsenterArgs, "-F", "--", ethtoolPath, "--statistics", containerInterfaceName)
+	nsenterArgs = append(
+		nsenterArgs,
+		"-F",
+		"--",
+		ethtoolPath,
+		"--statistics",
+		containerInterfaceName,
+	)
 	output, err := e.Command(nsenterPath, nsenterArgs...).CombinedOutput()
 	if err != nil {
-		return "", fmt.Errorf("unable to query interface %s of container %s: %v: %s", containerInterfaceName, containerDesc, err, string(output))
+		return "", fmt.Errorf(
+			"unable to query interface %s of container %s: %v: %s",
+			containerInterfaceName,
+			containerDesc,
+			err,
+			string(output),
+		)
 	}
 	// look for peer_ifindex
 	match := ethtoolOutputRegex.FindSubmatch(output)
 	if match == nil {
-		return "", fmt.Errorf("no peer_ifindex in interface statistics for %s of container %s", containerInterfaceName, containerDesc)
+		return "", fmt.Errorf(
+			"no peer_ifindex in interface statistics for %s of container %s",
+			containerInterfaceName,
+			containerDesc,
+		)
 	}
 	peerIfIndex, err := strconv.Atoi(string(match[1]))
 	if err != nil { // seems impossible (\d+ not numeric)

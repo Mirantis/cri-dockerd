@@ -70,7 +70,48 @@ func (k *dummyRegistryKey) Close() error {
 
 func TestApplyGMSAConfig(t *testing.T) {
 	dummyCredSpec := "test cred spec contents"
-	randomBytes := []byte{0x19, 0x0, 0x25, 0x45, 0x18, 0x52, 0x9e, 0x2a, 0x3d, 0xed, 0xb8, 0x5c, 0xde, 0xc0, 0x3c, 0xe2, 0x70, 0x55, 0x96, 0x47, 0x45, 0x9a, 0xb5, 0x31, 0xf0, 0x7a, 0xf5, 0xeb, 0x1c, 0x54, 0x95, 0xfd, 0xa7, 0x9, 0x43, 0x5c, 0xe8, 0x2a, 0xb8, 0x9c}
+	randomBytes := []byte{
+		0x19,
+		0x0,
+		0x25,
+		0x45,
+		0x18,
+		0x52,
+		0x9e,
+		0x2a,
+		0x3d,
+		0xed,
+		0xb8,
+		0x5c,
+		0xde,
+		0xc0,
+		0x3c,
+		0xe2,
+		0x70,
+		0x55,
+		0x96,
+		0x47,
+		0x45,
+		0x9a,
+		0xb5,
+		0x31,
+		0xf0,
+		0x7a,
+		0xf5,
+		0xeb,
+		0x1c,
+		0x54,
+		0x95,
+		0xfd,
+		0xa7,
+		0x9,
+		0x43,
+		0x5c,
+		0xe8,
+		0x2a,
+		0xb8,
+		0x9c,
+	}
 	expectedHex := "1900254518529e2a3dedb85cdec03ce270559647459ab531f07af5eb1c5495fda709435ce82ab89c"
 	expectedValueName := "k8s-cred-spec-" + expectedHex
 
@@ -101,7 +142,11 @@ func TestApplyGMSAConfig(t *testing.T) {
 
 		// the create config's security opt should have been populated
 		if assert.NotNil(t, createConfig.HostConfig) {
-			assert.Equal(t, createConfig.HostConfig.SecurityOpt, []string{"credentialspec=registry://" + expectedValueName})
+			assert.Equal(
+				t,
+				createConfig.HostConfig.SecurityOpt,
+				[]string{"credentialspec=registry://" + expectedValueName},
+			)
 		}
 
 		// and the name of that value should have been saved to the cleanup info
@@ -116,7 +161,8 @@ func TestApplyGMSAConfig(t *testing.T) {
 
 		assert.NoError(t, err)
 
-		if assert.NotNil(t, createConfig.HostConfig) && assert.Equal(t, 1, len(createConfig.HostConfig.SecurityOpt)) {
+		if assert.NotNil(t, createConfig.HostConfig) &&
+			assert.Equal(t, 1, len(createConfig.HostConfig.SecurityOpt)) {
 			secOpt := createConfig.HostConfig.SecurityOpt[0]
 
 			expectedPrefix := "credentialspec=registry://k8s-cred-spec-"
@@ -133,15 +179,27 @@ func TestApplyGMSAConfig(t *testing.T) {
 	t.Run("when there's an error generating the random value name", func(t *testing.T) {
 		defer setRandomReader([]byte{})()
 
-		err := applyGMSAConfig(containerConfigWithGMSAAnnotation, &dockertypes.ContainerCreateConfig{}, &containerCleanupInfo{})
+		err := applyGMSAConfig(
+			containerConfigWithGMSAAnnotation,
+			&dockertypes.ContainerCreateConfig{},
+			&containerCleanupInfo{},
+		)
 
 		require.Error(t, err)
-		assert.Contains(t, err.Error(), "error when generating gMSA registry value name: unable to generate random string")
+		assert.Contains(
+			t,
+			err.Error(),
+			"error when generating gMSA registry value name: unable to generate random string",
+		)
 	})
 	t.Run("if there's an error opening the registry key", func(t *testing.T) {
 		defer setRegistryCreateKeyFunc(t, &dummyRegistryKey{}, fmt.Errorf("dummy error"))()
 
-		err := applyGMSAConfig(containerConfigWithGMSAAnnotation, &dockertypes.ContainerCreateConfig{}, &containerCleanupInfo{})
+		err := applyGMSAConfig(
+			containerConfigWithGMSAAnnotation,
+			&dockertypes.ContainerCreateConfig{},
+			&containerCleanupInfo{},
+		)
 
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "unable to open registry key")
@@ -151,7 +209,11 @@ func TestApplyGMSAConfig(t *testing.T) {
 		key.setStringValueError = fmt.Errorf("dummy error")
 		defer setRegistryCreateKeyFunc(t, key)()
 
-		err := applyGMSAConfig(containerConfigWithGMSAAnnotation, &dockertypes.ContainerCreateConfig{}, &containerCleanupInfo{})
+		err := applyGMSAConfig(
+			containerConfigWithGMSAAnnotation,
+			&dockertypes.ContainerCreateConfig{},
+			&containerCleanupInfo{},
+		)
 
 		if assert.Error(t, err) {
 			assert.Contains(t, err.Error(), "unable to write into registry value")

@@ -93,14 +93,25 @@ type DockerService interface {
 	http.Handler
 
 	// GetContainerLogs gets logs for a specific container.
-	GetContainerLogs(context.Context, *v1.Pod, kubecontainer.ContainerID, *v1.PodLogOptions, io.Writer, io.Writer) error
+	GetContainerLogs(
+		context.Context,
+		*v1.Pod,
+		kubecontainer.ContainerID,
+		*v1.PodLogOptions,
+		io.Writer,
+		io.Writer,
+	) error
 
 	// IsCRISupportedLogDriver checks whether the logging driver used by docker is
 	// supported by native CRI integration.
 	IsCRISupportedLogDriver() (bool, error)
 
 	// Get the last few lines of the logs for a specific container.
-	GetContainerLogTail(uid kubetypes.UID, name, namespace string, containerID kubecontainer.ContainerID) (string, error)
+	GetContainerLogTail(
+		uid kubetypes.UID,
+		name, namespace string,
+		containerID kubecontainer.ContainerID,
+	) (string, error)
 }
 
 // NetworkPluginSettings is the subset of kubelet runtime args we pass
@@ -148,7 +159,9 @@ type portMappingGetter struct {
 	ds *dockerService
 }
 
-func (p *portMappingGetter) GetPodPortMappings(containerID string) ([]*hostport.PortMapping, error) {
+func (p *portMappingGetter) GetPodPortMappings(
+	containerID string,
+) ([]*hostport.PortMapping, error) {
 	return p.ds.GetPodPortMappings(containerID)
 }
 
@@ -191,14 +204,23 @@ func NewDockerClientFromConfig(config *ClientConfig) libdocker.Interface {
 
 // NewDockerService creates a new `DockerService` struct.
 // NOTE: Anything passed to DockerService should be eventually handled in another way when we switch to running the shim as a different process.
-func NewDockerService(config *ClientConfig, podSandboxImage string, streamingConfig *streaming.Config, pluginSettings *NetworkPluginSettings,
-	cgroupsName string, kubeCgroupDriver string, criDockerdRootDir string) (DockerService, error) {
+func NewDockerService(
+	config *ClientConfig,
+	podSandboxImage string,
+	streamingConfig *streaming.Config,
+	pluginSettings *NetworkPluginSettings,
+	cgroupsName string,
+	kubeCgroupDriver string,
+	criDockerdRootDir string,
+) (DockerService, error) {
 
 	client := NewDockerClientFromConfig(config)
 
 	c := libdocker.NewInstrumentedInterface(client)
 
-	checkpointManager, err := checkpointmanager.NewCheckpointManager(filepath.Join(criDockerdRootDir, sandboxCheckpointDir))
+	checkpointManager, err := checkpointmanager.NewCheckpointManager(
+		filepath.Join(criDockerdRootDir, sandboxCheckpointDir),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -241,18 +263,40 @@ func NewDockerService(config *ClientConfig, podSandboxImage string, streamingCon
 
 	// cri-dockerd currently only supports CNI plugins.
 	pluginSettings.PluginBinDirs = cni.SplitDirs(pluginSettings.PluginBinDirString)
-	cniPlugins := cni.ProbeNetworkPlugins(pluginSettings.PluginConfDir, pluginSettings.PluginCacheDir, pluginSettings.PluginBinDirs)
-	cniPlugins = append(cniPlugins, kubenet.NewPlugin(pluginSettings.PluginBinDirs, pluginSettings.PluginCacheDir))
+	cniPlugins := cni.ProbeNetworkPlugins(
+		pluginSettings.PluginConfDir,
+		pluginSettings.PluginCacheDir,
+		pluginSettings.PluginBinDirs,
+	)
+	cniPlugins = append(
+		cniPlugins,
+		kubenet.NewPlugin(pluginSettings.PluginBinDirs, pluginSettings.PluginCacheDir),
+	)
 	netHost := &dockerNetworkHost{
 		&namespaceGetter{ds},
 		&portMappingGetter{ds},
 	}
-	plug, err := network.InitNetworkPlugin(cniPlugins, pluginSettings.PluginName, netHost, pluginSettings.HairpinMode, pluginSettings.NonMasqueradeCIDR, pluginSettings.MTU)
+	plug, err := network.InitNetworkPlugin(
+		cniPlugins,
+		pluginSettings.PluginName,
+		netHost,
+		pluginSettings.HairpinMode,
+		pluginSettings.NonMasqueradeCIDR,
+		pluginSettings.MTU,
+	)
 	if err != nil {
-		return nil, fmt.Errorf("didn't find compatible CNI plugin with given settings %+v: %v", pluginSettings, err)
+		return nil, fmt.Errorf(
+			"didn't find compatible CNI plugin with given settings %+v: %v",
+			pluginSettings,
+			err,
+		)
 	}
 	ds.network = network.NewPluginManager(plug)
-	klog.InfoS("Docker cri networking managed by the network plugin", "networkPluginName", plug.Name())
+	klog.InfoS(
+		"Docker cri networking managed by the network plugin",
+		"networkPluginName",
+		plug.Name(),
+	)
 
 	// skipping cgroup driver checks for Windows
 	if runtime.GOOS == "linux" {
@@ -270,7 +314,11 @@ func NewDockerService(config *ClientConfig, podSandboxImage string, streamingCon
 			cgroupDriver = dockerInfo.CgroupDriver
 		}
 		if len(kubeCgroupDriver) != 0 && kubeCgroupDriver != cgroupDriver {
-			return nil, fmt.Errorf("misconfiguration: kubelet cgroup driver: %q is different from docker cgroup driver: %q", kubeCgroupDriver, cgroupDriver)
+			return nil, fmt.Errorf(
+				"misconfiguration: kubelet cgroup driver: %q is different from docker cgroup driver: %q",
+				kubeCgroupDriver,
+				cgroupDriver,
+			)
 		}
 		klog.InfoS("Setting cgroupDriver", "cgroupDriver", cgroupDriver)
 		ds.cgroupDriver = cgroupDriver
@@ -320,7 +368,10 @@ type dockerService struct {
 }
 
 // Version returns the runtime name, runtime version and runtime API version
-func (ds *dockerService) Version(_ context.Context, r *runtimeapi.VersionRequest) (*runtimeapi.VersionResponse, error) {
+func (ds *dockerService) Version(
+	_ context.Context,
+	r *runtimeapi.VersionRequest,
+) (*runtimeapi.VersionResponse, error) {
 	v, err := ds.getDockerVersion()
 	if err != nil {
 		return nil, err
@@ -346,7 +397,10 @@ func (ds *dockerService) getDockerVersion() (*dockertypes.Version, error) {
 }
 
 // UpdateRuntimeConfig updates the runtime config. Currently only handles podCIDR updates.
-func (ds *dockerService) UpdateRuntimeConfig(_ context.Context, r *runtimeapi.UpdateRuntimeConfigRequest) (*runtimeapi.UpdateRuntimeConfigResponse, error) {
+func (ds *dockerService) UpdateRuntimeConfig(
+	_ context.Context,
+	r *runtimeapi.UpdateRuntimeConfigRequest,
+) (*runtimeapi.UpdateRuntimeConfigResponse, error) {
 	runtimeConfig := r.GetRuntimeConfig()
 	if runtimeConfig == nil {
 		return &runtimeapi.UpdateRuntimeConfigResponse{}, nil
@@ -384,7 +438,12 @@ func (ds *dockerService) GetPodPortMappings(podSandboxID string) ([]*hostport.Po
 		}
 		errRem := ds.checkpointManager.RemoveCheckpoint(podSandboxID)
 		if errRem != nil {
-			klog.ErrorS(errRem, "Failed to delete corrupt checkpoint for sandbox", "podSandboxID", podSandboxID)
+			klog.ErrorS(
+				errRem,
+				"Failed to delete corrupt checkpoint for sandbox",
+				"podSandboxID",
+				podSandboxID,
+			)
 		}
 		return nil, err
 	}
@@ -427,7 +486,10 @@ func (ds *dockerService) initCleanup() {
 }
 
 // Status returns the status of the runtime.
-func (ds *dockerService) Status(_ context.Context, r *runtimeapi.StatusRequest) (*runtimeapi.StatusResponse, error) {
+func (ds *dockerService) Status(
+	_ context.Context,
+	r *runtimeapi.StatusRequest,
+) (*runtimeapi.StatusResponse, error) {
 	runtimeReady := &runtimeapi.RuntimeCondition{
 		Type:   runtimeapi.RuntimeReady,
 		Status: true,
@@ -553,12 +615,17 @@ func effectiveHairpinMode(s *NetworkPluginSettings) error {
 	//   to set the hairpin flag on the veth's of containers. Currently the
 	//   docker runtime is the only one that understands this.
 	// - It's set to "none".
-	if s.HairpinMode == kubeletconfig.PromiscuousBridge || s.HairpinMode == kubeletconfig.HairpinVeth {
+	if s.HairpinMode == kubeletconfig.PromiscuousBridge ||
+		s.HairpinMode == kubeletconfig.HairpinVeth {
 		if s.HairpinMode == kubeletconfig.PromiscuousBridge && s.PluginName != "kubenet" {
 			// This is not a valid combination, since promiscuous-bridge only works on kubenet. Users might be using the
 			// default values (from before the hairpin-mode flag existed) and we
 			// should keep the old behavior.
-			klog.InfoS("Hairpin mode is set but kubenet is not enabled, falling back to HairpinVeth", "hairpinMode", s.HairpinMode)
+			klog.InfoS(
+				"Hairpin mode is set but kubenet is not enabled, falling back to HairpinVeth",
+				"hairpinMode",
+				s.HairpinMode,
+			)
 			s.HairpinMode = kubeletconfig.HairpinVeth
 			return nil
 		}

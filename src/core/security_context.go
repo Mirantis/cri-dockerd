@@ -29,7 +29,13 @@ import (
 )
 
 // applySandboxSecurityContext updates docker sandbox options according to security context.
-func applySandboxSecurityContext(lc *runtimeapi.LinuxPodSandboxConfig, config *dockercontainer.Config, hc *dockercontainer.HostConfig, network *knetwork.PluginManager, separator rune) error {
+func applySandboxSecurityContext(
+	lc *runtimeapi.LinuxPodSandboxConfig,
+	config *dockercontainer.Config,
+	hc *dockercontainer.HostConfig,
+	network *knetwork.PluginManager,
+	separator rune,
+) error {
 	if lc == nil {
 		return nil
 	}
@@ -60,7 +66,13 @@ func applySandboxSecurityContext(lc *runtimeapi.LinuxPodSandboxConfig, config *d
 }
 
 // applyContainerSecurityContext updates docker container options according to security context.
-func applyContainerSecurityContext(lc *runtimeapi.LinuxContainerConfig, podSandboxID string, config *dockercontainer.Config, hc *dockercontainer.HostConfig, separator rune) error {
+func applyContainerSecurityContext(
+	lc *runtimeapi.LinuxContainerConfig,
+	podSandboxID string,
+	config *dockercontainer.Config,
+	hc *dockercontainer.HostConfig,
+	separator rune,
+) error {
 	if lc == nil {
 		return nil
 	}
@@ -77,7 +89,10 @@ func applyContainerSecurityContext(lc *runtimeapi.LinuxContainerConfig, podSandb
 }
 
 // modifyContainerConfig applies container security context config to dockercontainer.Config.
-func modifyContainerConfig(sc *runtimeapi.LinuxContainerSecurityContext, config *dockercontainer.Config) error {
+func modifyContainerConfig(
+	sc *runtimeapi.LinuxContainerSecurityContext,
+	config *dockercontainer.Config,
+) error {
 	if sc == nil {
 		return nil
 	}
@@ -102,7 +117,11 @@ func modifyContainerConfig(sc *runtimeapi.LinuxContainerSecurityContext, config 
 }
 
 // modifyHostConfig applies security context config to dockercontainer.HostConfig.
-func modifyHostConfig(sc *runtimeapi.LinuxContainerSecurityContext, hostConfig *dockercontainer.HostConfig, separator rune) error {
+func modifyHostConfig(
+	sc *runtimeapi.LinuxContainerSecurityContext,
+	hostConfig *dockercontainer.HostConfig,
+	separator rune,
+) error {
 	if sc == nil {
 		return nil
 	}
@@ -147,7 +166,11 @@ func modifyHostConfig(sc *runtimeapi.LinuxContainerSecurityContext, hostConfig *
 }
 
 // modifySandboxNamespaceOptions apply namespace options for sandbox
-func modifySandboxNamespaceOptions(nsOpts *runtimeapi.NamespaceOption, hostConfig *dockercontainer.HostConfig, network *knetwork.PluginManager) {
+func modifySandboxNamespaceOptions(
+	nsOpts *runtimeapi.NamespaceOption,
+	hostConfig *dockercontainer.HostConfig,
+	network *knetwork.PluginManager,
+) {
 	// The sandbox's PID namespace is the one that's shared, so CONTAINER and POD are equivalent for it
 	if nsOpts.GetPid() == runtimeapi.NamespaceMode_NODE {
 		hostConfig.PidMode = namespaceModeHost
@@ -156,20 +179,30 @@ func modifySandboxNamespaceOptions(nsOpts *runtimeapi.NamespaceOption, hostConfi
 }
 
 // modifyContainerNamespaceOptions apply namespace options for container
-func modifyContainerNamespaceOptions(nsOpts *runtimeapi.NamespaceOption, podSandboxID string, hostConfig *dockercontainer.HostConfig) {
+func modifyContainerNamespaceOptions(
+	nsOpts *runtimeapi.NamespaceOption,
+	podSandboxID string,
+	hostConfig *dockercontainer.HostConfig,
+) {
 	switch nsOpts.GetPid() {
 	case runtimeapi.NamespaceMode_NODE:
 		hostConfig.PidMode = namespaceModeHost
 	case runtimeapi.NamespaceMode_POD:
 		hostConfig.PidMode = dockercontainer.PidMode(fmt.Sprintf("container:%v", podSandboxID))
 	case runtimeapi.NamespaceMode_TARGET:
-		hostConfig.PidMode = dockercontainer.PidMode(fmt.Sprintf("container:%v", nsOpts.GetTargetId()))
+		hostConfig.PidMode = dockercontainer.PidMode(
+			fmt.Sprintf("container:%v", nsOpts.GetTargetId()),
+		)
 	}
 	modifyHostOptionsForContainer(nsOpts, podSandboxID, hostConfig)
 }
 
 // modifyHostOptionsForSandbox applies NetworkMode/UTSMode to sandbox's dockercontainer.HostConfig.
-func modifyHostOptionsForSandbox(nsOpts *runtimeapi.NamespaceOption, network *knetwork.PluginManager, hc *dockercontainer.HostConfig) {
+func modifyHostOptionsForSandbox(
+	nsOpts *runtimeapi.NamespaceOption,
+	network *knetwork.PluginManager,
+	hc *dockercontainer.HostConfig,
+) {
 	if nsOpts.GetIpc() == runtimeapi.NamespaceMode_NODE {
 		hc.IpcMode = namespaceModeHost
 	}
@@ -194,7 +227,11 @@ func modifyHostOptionsForSandbox(nsOpts *runtimeapi.NamespaceOption, network *kn
 }
 
 // modifyHostOptionsForContainer applies NetworkMode/UTSMode to container's dockercontainer.HostConfig.
-func modifyHostOptionsForContainer(nsOpts *runtimeapi.NamespaceOption, podSandboxID string, hc *dockercontainer.HostConfig) {
+func modifyHostOptionsForContainer(
+	nsOpts *runtimeapi.NamespaceOption,
+	podSandboxID string,
+	hc *dockercontainer.HostConfig,
+) {
 	sandboxNSMode := fmt.Sprintf("container:%v", podSandboxID)
 	hc.NetworkMode = dockercontainer.NetworkMode(sandboxNSMode)
 	hc.IpcMode = dockercontainer.IpcMode(sandboxNSMode)

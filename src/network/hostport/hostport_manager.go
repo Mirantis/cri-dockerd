@@ -69,12 +69,18 @@ func NewHostportManager(iptables utiliptables.Interface) HostPortManager {
 	}
 	h.conntrackFound = conntrack.Exists(h.execer)
 	if !h.conntrackFound {
-		klog.InfoS("The binary conntrack is not installed, this can cause failures in network connection cleanup.")
+		klog.InfoS(
+			"The binary conntrack is not installed, this can cause failures in network connection cleanup.",
+		)
 	}
 	return h
 }
 
-func (hm *hostportManager) Add(id string, podPortMapping *PodPortMapping, natInterfaceName string) (err error) {
+func (hm *hostportManager) Add(
+	id string,
+	podPortMapping *PodPortMapping,
+	natInterfaceName string,
+) (err error) {
 	if podPortMapping == nil || podPortMapping.HostNetwork {
 		return nil
 	}
@@ -153,10 +159,22 @@ func (hm *hostportManager) Add(id string, podPortMapping *PodPortMapping, natInt
 		// DNAT to the podIP:containerPort
 		hostPortBinding := net.JoinHostPort(podIP, strconv.Itoa(int(pm.ContainerPort)))
 		if pm.HostIP == "" || pm.HostIP == "0.0.0.0" || pm.HostIP == "::" {
-			writeLine(natRules, "-A", string(chain),
-				"-m", "comment", "--comment", fmt.Sprintf(`"%s hostport %d"`, podFullName, pm.HostPort),
-				"-m", protocol, "-p", protocol,
-				"-j", "DNAT", fmt.Sprintf("--to-destination=%s", hostPortBinding))
+			writeLine(
+				natRules,
+				"-A",
+				string(chain),
+				"-m",
+				"comment",
+				"--comment",
+				fmt.Sprintf(`"%s hostport %d"`, podFullName, pm.HostPort),
+				"-m",
+				protocol,
+				"-p",
+				protocol,
+				"-j",
+				"DNAT",
+				fmt.Sprintf("--to-destination=%s", hostPortBinding),
+			)
 		} else {
 			writeLine(natRules, "-A", string(chain),
 				"-m", "comment", "--comment", fmt.Sprintf(`"%s hostport %d"`, podFullName, pm.HostPort),
@@ -189,7 +207,13 @@ func (hm *hostportManager) Add(id string, podPortMapping *PodPortMapping, natInt
 	// create a new conntrack entry without any DNAT. That will result in blackhole of the traffic even after correct
 	// iptables rules have been added back.
 	if hm.execer != nil && hm.conntrackFound {
-		klog.InfoS("Starting to delete udp conntrack entries", "conntrackEntries", conntrackPortsToRemove, "isIPv6", isIPv6)
+		klog.InfoS(
+			"Starting to delete udp conntrack entries",
+			"conntrackEntries",
+			conntrackPortsToRemove,
+			"isIPv6",
+			isIPv6,
+		)
 		for _, port := range conntrackPortsToRemove {
 			err = conntrack.ClearEntriesForPort(hm.execer, port, isIPv6, v1.ProtocolUDP)
 			if err != nil {
@@ -279,7 +303,9 @@ func (hm *hostportManager) syncIPTables(lines []byte) error {
 // openHostports opens all given hostports using the given hostportOpener
 // If encounter any error, clean up and return the error
 // If all ports are opened successfully, return the hostport and socket mapping
-func (hm *hostportManager) openHostports(podPortMapping *PodPortMapping) (map[hostport]closeable, error) {
+func (hm *hostportManager) openHostports(
+	podPortMapping *PodPortMapping,
+) (map[hostport]closeable, error) {
 	var retErr error
 	ports := make(map[hostport]closeable)
 	for _, pm := range podPortMapping.PortMappings {
@@ -300,7 +326,12 @@ func (hm *hostportManager) openHostports(podPortMapping *PodPortMapping) (map[ho
 		hp := portMappingToHostport(pm, hm.getIPFamily())
 		socket, err := hm.portOpener(&hp)
 		if err != nil {
-			retErr = fmt.Errorf("cannot open hostport %d for pod %s: %v", pm.HostPort, getPodFullName(podPortMapping), err)
+			retErr = fmt.Errorf(
+				"cannot open hostport %d for pod %s: %v",
+				pm.HostPort,
+				getPodFullName(podPortMapping),
+				err,
+			)
 			break
 		}
 		ports[hp] = socket
@@ -310,7 +341,14 @@ func (hm *hostportManager) openHostports(podPortMapping *PodPortMapping) (map[ho
 	if retErr != nil {
 		for hp, socket := range ports {
 			if err := socket.Close(); err != nil {
-				klog.ErrorS(err, "Cannot clean up hostport for the pod", "podFullName", getPodFullName(podPortMapping), "port", hp.port)
+				klog.ErrorS(
+					err,
+					"Cannot clean up hostport for the pod",
+					"podFullName",
+					getPodFullName(podPortMapping),
+					"port",
+					hp.port,
+				)
 			}
 		}
 		return nil, retErr
@@ -326,7 +364,10 @@ func (hm *hostportManager) closeHostports(hostportMappings []*PortMapping) error
 		if socket, ok := hm.hostPortMap[hp]; ok {
 			klog.V(2).InfoS("Closing host port", "port", hp.String())
 			if err := socket.Close(); err != nil {
-				errList = append(errList, fmt.Errorf("failed to close host port %s: %v", hp.String(), err))
+				errList = append(
+					errList,
+					fmt.Errorf("failed to close host port %s: %v", hp.String(), err),
+				)
 				continue
 			}
 			delete(hm.hostPortMap, hp)
@@ -353,7 +394,9 @@ func (hm *hostportManager) getIPFamily() ipFamily {
 // WARNING: Please do not change this function. Otherwise, HostportManager may not be able to
 // identify existing iptables chains.
 func getHostportChain(id string, pm *PortMapping) utiliptables.Chain {
-	hash := sha256.Sum256([]byte(id + strconv.Itoa(int(pm.HostPort)) + string(pm.Protocol) + pm.HostIP))
+	hash := sha256.Sum256(
+		[]byte(id + strconv.Itoa(int(pm.HostPort)) + string(pm.Protocol) + pm.HostIP),
+	)
 	encoded := base32.StdEncoding.EncodeToString(hash[:])
 	return utiliptables.Chain(kubeHostportChainPrefix + encoded[:16])
 }
@@ -376,7 +419,9 @@ func gatherHostportMappings(podPortMapping *PodPortMapping, isIPv6 bool) []*Port
 
 // getExistingHostportIPTablesRules retrieves raw data from iptables-save, parse it,
 // return all the hostport related chains and rules
-func getExistingHostportIPTablesRules(iptables utiliptables.Interface) (map[utiliptables.Chain]string, []string, error) {
+func getExistingHostportIPTablesRules(
+	iptables utiliptables.Interface,
+) (map[utiliptables.Chain]string, []string, error) {
 	iptablesData := bytes.NewBuffer(nil)
 	err := iptables.SaveInto(utiliptables.TableNAT, iptablesData)
 	if err != nil { // if we failed to get any rules
@@ -388,7 +433,8 @@ func getExistingHostportIPTablesRules(iptables utiliptables.Interface) (map[util
 	existingHostportRules := []string{}
 
 	for chain := range existingNATChains {
-		if strings.HasPrefix(string(chain), string(kubeHostportsChain)) || strings.HasPrefix(string(chain), kubeHostportChainPrefix) {
+		if strings.HasPrefix(string(chain), string(kubeHostportsChain)) ||
+			strings.HasPrefix(string(chain), kubeHostportChainPrefix) {
 			existingHostportChains[chain] = string(existingNATChains[chain])
 		}
 	}

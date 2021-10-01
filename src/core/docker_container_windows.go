@@ -39,7 +39,10 @@ type containerCleanupInfo struct {
 // applyPlatformSpecificDockerConfig applies platform-specific configurations to a dockertypes.ContainerCreateConfig struct.
 // The containerCleanupInfo struct it returns will be passed as is to performPlatformSpecificContainerCleanup
 // after either the container creation has failed or the container has been removed.
-func (ds *dockerService) applyPlatformSpecificDockerConfig(request *runtimeapi.CreateContainerRequest, createConfig *dockertypes.ContainerCreateConfig) (*containerCleanupInfo, error) {
+func (ds *dockerService) applyPlatformSpecificDockerConfig(
+	request *runtimeapi.CreateContainerRequest,
+	createConfig *dockertypes.ContainerCreateConfig,
+) (*containerCleanupInfo, error) {
 	cleanupInfo := &containerCleanupInfo{}
 
 	if err := applyGMSAConfig(request.GetConfig(), createConfig, cleanupInfo); err != nil {
@@ -57,7 +60,11 @@ func (ds *dockerService) applyPlatformSpecificDockerConfig(request *runtimeapi.C
 // When docker supports passing a credential spec's contents directly, we should switch to using that
 // as it will avoid cluttering the registry - there is a moby PR out for this:
 // https://github.com/moby/moby/pull/38777
-func applyGMSAConfig(config *runtimeapi.ContainerConfig, createConfig *dockertypes.ContainerCreateConfig, cleanupInfo *containerCleanupInfo) error {
+func applyGMSAConfig(
+	config *runtimeapi.ContainerConfig,
+	createConfig *dockertypes.ContainerCreateConfig,
+	cleanupInfo *containerCleanupInfo,
+) error {
 	var credSpec string
 	if config.Windows != nil && config.Windows.SecurityContext != nil {
 		credSpec = config.Windows.SecurityContext.CredentialSpec
@@ -75,7 +82,10 @@ func applyGMSAConfig(config *runtimeapi.ContainerConfig, createConfig *dockertyp
 		createConfig.HostConfig = &dockercontainer.HostConfig{}
 	}
 
-	createConfig.HostConfig.SecurityOpt = append(createConfig.HostConfig.SecurityOpt, "credentialspec=registry://"+valueName)
+	createConfig.HostConfig.SecurityOpt = append(
+		createConfig.HostConfig.SecurityOpt,
+		"credentialspec=registry://"+valueName,
+	)
 	cleanupInfo.gMSARegistryValueName = valueName
 
 	return nil
@@ -110,7 +120,13 @@ var randomReader = rand.Reader
 
 // gMSARegistryValueNamesRegex is the regex used to detect gMSA cred spec
 // registry values in `removeAllGMSARegistryValues` below.
-var gMSARegistryValueNamesRegex = regexp.MustCompile(fmt.Sprintf("^%s[0-9a-f]{%d}$", gMSARegistryValueNamePrefix, 2*gMSARegistryValueNameSuffixRandomBytes))
+var gMSARegistryValueNamesRegex = regexp.MustCompile(
+	fmt.Sprintf(
+		"^%s[0-9a-f]{%d}$",
+		gMSARegistryValueNamePrefix,
+		2*gMSARegistryValueNameSuffixRandomBytes,
+	),
+)
 
 // copyGMSACredSpecToRegistryKey copies the credential specs to a unique registry value, and returns its name.
 func copyGMSACredSpecToRegistryValue(credSpec string) (string, error) {
@@ -120,13 +136,26 @@ func copyGMSACredSpecToRegistryValue(credSpec string) (string, error) {
 	}
 
 	// write to the registry
-	key, _, err := registryCreateKeyFunc(registry.LOCAL_MACHINE, credentialSpecRegistryLocation, registry.SET_VALUE)
+	key, _, err := registryCreateKeyFunc(
+		registry.LOCAL_MACHINE,
+		credentialSpecRegistryLocation,
+		registry.SET_VALUE,
+	)
 	if err != nil {
-		return "", fmt.Errorf("unable to open registry key %q: %v", credentialSpecRegistryLocation, err)
+		return "", fmt.Errorf(
+			"unable to open registry key %q: %v",
+			credentialSpecRegistryLocation,
+			err,
+		)
 	}
 	defer key.Close()
 	if err = key.SetStringValue(valueName, credSpec); err != nil {
-		return "", fmt.Errorf("unable to write into registry value %q/%q: %v", credentialSpecRegistryLocation, valueName, err)
+		return "", fmt.Errorf(
+			"unable to write into registry value %q/%q: %v",
+			credentialSpecRegistryLocation,
+			valueName,
+			err,
+		)
 	}
 
 	return valueName, nil
@@ -160,7 +189,9 @@ func randomString(length int) (string, error) {
 
 // performPlatformSpecificContainerCleanup is responsible for doing any platform-specific cleanup
 // after either the container creation has failed or the container has been removed.
-func (ds *dockerService) performPlatformSpecificContainerCleanup(cleanupInfo *containerCleanupInfo) (errors []error) {
+func (ds *dockerService) performPlatformSpecificContainerCleanup(
+	cleanupInfo *containerCleanupInfo,
+) (errors []error) {
 	if err := removeGMSARegistryValue(cleanupInfo); err != nil {
 		errors = append(errors, err)
 	}
@@ -173,13 +204,22 @@ func removeGMSARegistryValue(cleanupInfo *containerCleanupInfo) error {
 		return nil
 	}
 
-	key, _, err := registryCreateKeyFunc(registry.LOCAL_MACHINE, credentialSpecRegistryLocation, registry.SET_VALUE)
+	key, _, err := registryCreateKeyFunc(
+		registry.LOCAL_MACHINE,
+		credentialSpecRegistryLocation,
+		registry.SET_VALUE,
+	)
 	if err != nil {
 		return fmt.Errorf("unable to open registry key %q: %v", credentialSpecRegistryLocation, err)
 	}
 	defer key.Close()
 	if err = key.DeleteValue(cleanupInfo.gMSARegistryValueName); err != nil {
-		return fmt.Errorf("unable to remove registry value %q/%q: %v", credentialSpecRegistryLocation, cleanupInfo.gMSARegistryValueName, err)
+		return fmt.Errorf(
+			"unable to remove registry value %q/%q: %v",
+			credentialSpecRegistryLocation,
+			cleanupInfo.gMSARegistryValueName,
+			err,
+		)
 	}
 
 	return nil
@@ -194,21 +234,41 @@ func (ds *dockerService) platformSpecificContainerInitCleanup() (errors []error)
 }
 
 func removeAllGMSARegistryValues() (errors []error) {
-	key, _, err := registryCreateKeyFunc(registry.LOCAL_MACHINE, credentialSpecRegistryLocation, registry.SET_VALUE)
+	key, _, err := registryCreateKeyFunc(
+		registry.LOCAL_MACHINE,
+		credentialSpecRegistryLocation,
+		registry.SET_VALUE,
+	)
 	if err != nil {
-		return []error{fmt.Errorf("unable to open registry key %q: %v", credentialSpecRegistryLocation, err)}
+		return []error{
+			fmt.Errorf("unable to open registry key %q: %v", credentialSpecRegistryLocation, err),
+		}
 	}
 	defer key.Close()
 
 	valueNames, err := key.ReadValueNames(0)
 	if err != nil {
-		return []error{fmt.Errorf("unable to list values under registry key %q: %v", credentialSpecRegistryLocation, err)}
+		return []error{
+			fmt.Errorf(
+				"unable to list values under registry key %q: %v",
+				credentialSpecRegistryLocation,
+				err,
+			),
+		}
 	}
 
 	for _, valueName := range valueNames {
 		if gMSARegistryValueNamesRegex.MatchString(valueName) {
 			if err = key.DeleteValue(valueName); err != nil {
-				errors = append(errors, fmt.Errorf("unable to remove registry value %q/%q: %v", credentialSpecRegistryLocation, valueName, err))
+				errors = append(
+					errors,
+					fmt.Errorf(
+						"unable to remove registry value %q/%q: %v",
+						credentialSpecRegistryLocation,
+						valueName,
+						err,
+					),
+				)
 			}
 		}
 	}

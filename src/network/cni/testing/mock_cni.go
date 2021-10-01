@@ -32,62 +32,104 @@ type MockCNI struct {
 	mock.Mock
 }
 
-func (m *MockCNI) AddNetwork(ctx context.Context, net *libcni.NetworkConfig, rt *libcni.RuntimeConf) (types.Result, error) {
+func (m *MockCNI) AddNetwork(
+	ctx context.Context,
+	net *libcni.NetworkConfig,
+	rt *libcni.RuntimeConf,
+) (types.Result, error) {
 	args := m.Called(ctx, net, rt)
 	return args.Get(0).(types.Result), args.Error(1)
 }
 
-func (m *MockCNI) DelNetwork(ctx context.Context, net *libcni.NetworkConfig, rt *libcni.RuntimeConf) error {
+func (m *MockCNI) DelNetwork(
+	ctx context.Context,
+	net *libcni.NetworkConfig,
+	rt *libcni.RuntimeConf,
+) error {
 	args := m.Called(ctx, net, rt)
 	return args.Error(0)
 }
 
-func (m *MockCNI) DelNetworkList(ctx context.Context, net *libcni.NetworkConfigList, rt *libcni.RuntimeConf) error {
+func (m *MockCNI) DelNetworkList(
+	ctx context.Context,
+	net *libcni.NetworkConfigList,
+	rt *libcni.RuntimeConf,
+) error {
 	args := m.Called(ctx, net, rt)
 	return args.Error(0)
 }
 
-func (m *MockCNI) GetNetworkListCachedConfig(net *libcni.NetworkConfigList, rt *libcni.RuntimeConf) ([]byte, *libcni.RuntimeConf, error) {
+func (m *MockCNI) GetNetworkListCachedConfig(
+	net *libcni.NetworkConfigList,
+	rt *libcni.RuntimeConf,
+) ([]byte, *libcni.RuntimeConf, error) {
 	args := m.Called(net, rt)
 	return args.Get(0).([]byte), args.Get(1).(*libcni.RuntimeConf), args.Error(1)
 }
 
-func (m *MockCNI) GetNetworkListCachedResult(net *libcni.NetworkConfigList, rt *libcni.RuntimeConf) (types.Result, error) {
+func (m *MockCNI) GetNetworkListCachedResult(
+	net *libcni.NetworkConfigList,
+	rt *libcni.RuntimeConf,
+) (types.Result, error) {
 	args := m.Called(net, rt)
 	return args.Get(0).(types.Result), args.Error(1)
 }
 
-func (m *MockCNI) AddNetworkList(ctx context.Context, net *libcni.NetworkConfigList, rt *libcni.RuntimeConf) (types.Result, error) {
+func (m *MockCNI) AddNetworkList(
+	ctx context.Context,
+	net *libcni.NetworkConfigList,
+	rt *libcni.RuntimeConf,
+) (types.Result, error) {
 	args := m.Called(ctx, net, rt)
 	return args.Get(0).(types.Result), args.Error(1)
 }
 
-func (m *MockCNI) CheckNetworkList(ctx context.Context, net *libcni.NetworkConfigList, rt *libcni.RuntimeConf) error {
+func (m *MockCNI) CheckNetworkList(
+	ctx context.Context,
+	net *libcni.NetworkConfigList,
+	rt *libcni.RuntimeConf,
+) error {
 	args := m.Called(ctx, net, rt)
 	return args.Error(0)
 }
 
-func (m *MockCNI) CheckNetwork(ctx context.Context, net *libcni.NetworkConfig, rt *libcni.RuntimeConf) error {
+func (m *MockCNI) CheckNetwork(
+	ctx context.Context,
+	net *libcni.NetworkConfig,
+	rt *libcni.RuntimeConf,
+) error {
 	args := m.Called(ctx, net, rt)
 	return args.Error(0)
 }
 
-func (m *MockCNI) GetNetworkCachedConfig(net *libcni.NetworkConfig, rt *libcni.RuntimeConf) ([]byte, *libcni.RuntimeConf, error) {
+func (m *MockCNI) GetNetworkCachedConfig(
+	net *libcni.NetworkConfig,
+	rt *libcni.RuntimeConf,
+) ([]byte, *libcni.RuntimeConf, error) {
 	args := m.Called(net, rt)
 	return args.Get(0).([]byte), args.Get(1).(*libcni.RuntimeConf), args.Error(1)
 }
 
-func (m *MockCNI) GetNetworkCachedResult(net *libcni.NetworkConfig, rt *libcni.RuntimeConf) (types.Result, error) {
+func (m *MockCNI) GetNetworkCachedResult(
+	net *libcni.NetworkConfig,
+	rt *libcni.RuntimeConf,
+) (types.Result, error) {
 	args := m.Called(net, rt)
 	return args.Get(0).(types.Result), args.Error(0)
 }
 
-func (m *MockCNI) ValidateNetworkList(ctx context.Context, net *libcni.NetworkConfigList) ([]string, error) {
+func (m *MockCNI) ValidateNetworkList(
+	ctx context.Context,
+	net *libcni.NetworkConfigList,
+) ([]string, error) {
 	args := m.Called(ctx, net)
 	return args.Get(0).([]string), args.Error(0)
 }
 
-func (m *MockCNI) ValidateNetwork(ctx context.Context, net *libcni.NetworkConfig) ([]string, error) {
+func (m *MockCNI) ValidateNetwork(
+	ctx context.Context,
+	net *libcni.NetworkConfig,
+) ([]string, error) {
 	args := m.Called(ctx, net)
 	return args.Get(0).([]string), args.Error(0)
 }

@@ -26,6 +26,9 @@ import (
 )
 
 // ImageFsInfo returns information of the filesystem that is used to store images.
-func (ds *dockerService) ImageFsInfo(_ context.Context, r *runtimeapi.ImageFsInfoRequest) (*runtimeapi.ImageFsInfoResponse, error) {
+func (ds *dockerService) ImageFsInfo(
+	_ context.Context,
+	r *runtimeapi.ImageFsInfoRequest,
+) (*runtimeapi.ImageFsInfoResponse, error) {
 	return nil, fmt.Errorf("not implemented")
 }

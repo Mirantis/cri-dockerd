@@ -29,21 +29,42 @@ import (
 func TestRestoreFlushRules(t *testing.T) {
 	iptables := NewFakeIPTables()
 	rules := [][]string{
-		{"-A", "KUBE-HOSTPORTS", "-m comment --comment \"pod3_ns1 hostport 8443\" -m tcp -p tcp --dport 8443 -j KUBE-HP-5N7UH5JAXCVP5UJR"},
-		{"-A", "POSTROUTING", "-m comment --comment \"SNAT for localhost access to hostports\" -o cbr0 -s 127.0.0.0/8 -j MASQUERADE"},
+		{
+			"-A",
+			"KUBE-HOSTPORTS",
+			"-m comment --comment \"pod3_ns1 hostport 8443\" -m tcp -p tcp --dport 8443 -j KUBE-HP-5N7UH5JAXCVP5UJR",
+		},
+		{
+			"-A",
+			"POSTROUTING",
+			"-m comment --comment \"SNAT for localhost access to hostports\" -o cbr0 -s 127.0.0.0/8 -j MASQUERADE",
+		},
 	}
 	natRules := bytes.NewBuffer(nil)
 	writeLine(natRules, "*nat")
 	for _, rule := range rules {
 		_, err := iptables.EnsureChain(utiliptables.TableNAT, utiliptables.Chain(rule[1]))
 		assert.NoError(t, err)
-		_, err = iptables.ensureRule(utiliptables.RulePosition(rule[0]), utiliptables.TableNAT, utiliptables.Chain(rule[1]), rule[2])
+		_, err = iptables.ensureRule(
+			utiliptables.RulePosition(rule[0]),
+			utiliptables.TableNAT,
+			utiliptables.Chain(rule[1]),
+			rule[2],
+		)
 		assert.NoError(t, err)
 
 		writeLine(natRules, utiliptables.MakeChainLine(utiliptables.Chain(rule[1])))
 	}
 	writeLine(natRules, "COMMIT")
-	assert.NoError(t, iptables.Restore(utiliptables.TableNAT, natRules.Bytes(), utiliptables.NoFlushTables, utiliptables.RestoreCounters))
+	assert.NoError(
+		t,
+		iptables.Restore(
+			utiliptables.TableNAT,
+			natRules.Bytes(),
+			utiliptables.NoFlushTables,
+			utiliptables.RestoreCounters,
+		),
+	)
 	natTable, ok := iptables.tables[string(utiliptables.TableNAT)]
 	assert.True(t, ok)
 	// check KUBE-HOSTPORTS chain, should have been cleaned up

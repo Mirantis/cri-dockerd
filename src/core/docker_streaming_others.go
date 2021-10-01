@@ -28,7 +28,11 @@ import (
 	"k8s.io/klog/v2"
 )
 
-func (r *streamingRuntime) portForward(podSandboxID string, port int32, stream io.ReadWriteCloser) error {
+func (r *streamingRuntime) portForward(
+	podSandboxID string,
+	port int32,
+	stream io.ReadWriteCloser,
+) error {
 	container, err := r.client.InspectContainer(podSandboxID)
 	if err != nil {
 		return err
@@ -44,7 +48,14 @@ func (r *streamingRuntime) portForward(podSandboxID string, port int32, stream i
 		return fmt.Errorf("unable to do port forwarding: socat not found")
 	}
 
-	args := []string{"-t", fmt.Sprintf("%d", containerPid), "-n", socatPath, "-", fmt.Sprintf("TCP4:localhost:%d", port)}
+	args := []string{
+		"-t",
+		fmt.Sprintf("%d", containerPid),
+		"-n",
+		socatPath,
+		"-",
+		fmt.Sprintf("TCP4:localhost:%d", port),
+	}
 
 	nsenterPath, lookupErr := exec.LookPath("nsenter")
 	if lookupErr != nil {

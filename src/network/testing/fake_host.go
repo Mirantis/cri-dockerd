@@ -63,6 +63,8 @@ type FakePortMappingGetter struct {
 	PortMaps map[string][]*hostport.PortMapping
 }
 
-func (pm *FakePortMappingGetter) GetPodPortMappings(containerID string) ([]*hostport.PortMapping, error) {
+func (pm *FakePortMappingGetter) GetPodPortMappings(
+	containerID string,
+) ([]*hostport.PortMapping, error) {
 	return pm.PortMaps[containerID], nil
 }

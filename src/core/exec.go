@@ -34,7 +34,17 @@ import (
 
 // ExecHandler knows how to execute a command in a running Docker container.
 type ExecHandler interface {
-	ExecInContainer(ctx context.Context, client libdocker.Interface, container *dockertypes.ContainerJSON, cmd []string, stdin io.Reader, stdout, stderr io.WriteCloser, tty bool, resize <-chan remotecommand.TerminalSize, timeout time.Duration) error
+	ExecInContainer(
+		ctx context.Context,
+		client libdocker.Interface,
+		container *dockertypes.ContainerJSON,
+		cmd []string,
+		stdin io.Reader,
+		stdout, stderr io.WriteCloser,
+		tty bool,
+		resize <-chan remotecommand.TerminalSize,
+		timeout time.Duration,
+	) error
 }
 
 type dockerExitError struct {
@@ -61,7 +71,17 @@ func (d *dockerExitError) ExitStatus() int {
 type NativeExecHandler struct{}
 
 // ExecInContainer executes the cmd in container using the Docker's exec API
-func (*NativeExecHandler) ExecInContainer(ctx context.Context, client libdocker.Interface, container *dockertypes.ContainerJSON, cmd []string, stdin io.Reader, stdout, stderr io.WriteCloser, tty bool, resize <-chan remotecommand.TerminalSize, timeout time.Duration) error {
+func (*NativeExecHandler) ExecInContainer(
+	ctx context.Context,
+	client libdocker.Interface,
+	container *dockertypes.ContainerJSON,
+	cmd []string,
+	stdin io.Reader,
+	stdout, stderr io.WriteCloser,
+	tty bool,
+	resize <-chan remotecommand.TerminalSize,
+	timeout time.Duration,
+) error {
 	done := make(chan struct{})
 	defer close(done)
 
@@ -150,7 +170,14 @@ func (*NativeExecHandler) ExecInContainer(ctx context.Context, client libdocker.
 
 		retries++
 		if retries == maxRetries {
-			klog.ErrorS(nil, "Exec session in the container terminated but process still running!", "execSession", execObj.ID, "containerID", container.ID)
+			klog.ErrorS(
+				nil,
+				"Exec session in the container terminated but process still running!",
+				"execSession",
+				execObj.ID,
+				"containerID",
+				container.ID,
+			)
 			return nil
 		}
 

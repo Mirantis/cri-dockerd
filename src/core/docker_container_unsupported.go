@@ -28,13 +28,18 @@ type containerCleanupInfo struct{}
 // applyPlatformSpecificDockerConfig applies platform-specific configurations to a dockertypes.ContainerCreateConfig struct.
 // The containerCleanupInfo struct it returns will be passed as is to performPlatformSpecificContainerCleanup
 // after either the container creation has failed or the container has been removed.
-func (ds *dockerService) applyPlatformSpecificDockerConfig(*runtimeapi.CreateContainerRequest, *dockertypes.ContainerCreateConfig) (*containerCleanupInfo, error) {
+func (ds *dockerService) applyPlatformSpecificDockerConfig(
+	*runtimeapi.CreateContainerRequest,
+	*dockertypes.ContainerCreateConfig,
+) (*containerCleanupInfo, error) {
 	return nil, nil
 }
 
 // performPlatformSpecificContainerCleanup is responsible for doing any platform-specific cleanup
 // after either the container creation has failed or the container has been removed.
-func (ds *dockerService) performPlatformSpecificContainerCleanup(cleanupInfo *containerCleanupInfo) (errors []error) {
+func (ds *dockerService) performPlatformSpecificContainerCleanup(
+	cleanupInfo *containerCleanupInfo,
+) (errors []error) {
 	return
 }
 
