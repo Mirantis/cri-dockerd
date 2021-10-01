@@ -198,6 +198,7 @@ func getDefaultCNINetwork(confDir string, binDirs []string) (*cniNetwork, error)
 
 		// Before using this CNI config, we have to validate it to make sure that
 		// all plugins of this config exist on disk
+		caps, err := cniConfig.ValidateNetworkList(context.TODO(), confList)
 		if err != nil {
 			klog.InfoS("Error validating CNI config list", "configList", string(confList.Bytes[:maxStringLengthInLog(len(confList.Bytes))]), "err", err)
 			continue

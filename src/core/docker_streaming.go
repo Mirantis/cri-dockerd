@@ -50,6 +50,7 @@ var _ streaming.Runtime = &streamingRuntime{}
 const maxMsgSize = 1024 * 1024 * 16
 
 func (r *streamingRuntime) Exec(containerID string, cmd []string, in io.Reader, out, err io.WriteCloser, tty bool, resize <-chan remotecommand.TerminalSize) error {
+	return r.exec(context.TODO(), containerID, cmd, in, out, err, tty, resize, 0)
 }
 
 // Internal version of Exec adds a timeout.
