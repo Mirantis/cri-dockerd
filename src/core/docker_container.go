@@ -105,7 +105,6 @@ func (ds *dockerService) clearContainerCleanupInfo(containerID string) {
 // CreateContainer creates a new container in the given PodSandbox
 // Docker cannot store the log to an arbitrary location (yet), so we create an
 // symlink at LogPath, linking to the actual path of the log.
-// TODO: check if the default values returned by the runtime API are ok.
 func (ds *dockerService) CreateContainer(_ context.Context, r *runtimeapi.CreateContainerRequest) (*runtimeapi.CreateContainerResponse, error) {
 	podSandboxID := r.PodSandboxId
 	config := r.GetConfig()
@@ -139,7 +138,6 @@ func (ds *dockerService) CreateContainer(_ context.Context, r *runtimeapi.Create
 	createConfig := dockertypes.ContainerCreateConfig{
 		Name: containerName,
 		Config: &dockercontainer.Config{
-			// TODO: set User.
 			Entrypoint: dockerstrslice.StrSlice(config.Command),
 			Cmd:        dockerstrslice.StrSlice(config.Args),
 			Env:        generateEnvList(config.GetEnvs()),
@@ -404,7 +402,6 @@ func (ds *dockerService) ContainerStatus(_ context.Context, req *runtimeapi.Cont
 			state = runtimeapi.ContainerState_CONTAINER_EXITED
 			switch {
 			case r.State.OOMKilled:
-				// TODO: consider exposing OOMKilled via the runtimeAPI.
 				// Note: if an application handles OOMKilled gracefully, the
 				// exit code could be zero.
 				reason = "OOMKilled"

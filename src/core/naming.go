@@ -39,7 +39,6 @@ import (
 // Code must be added to ensure the shim knows how to recognize and extract
 // information the older containers.
 //
-// TODO: Add code to handle backward compatibility, i.e., making sure we can
 // recognize older containers and extract information from their names if
 // necessary.
 
@@ -96,14 +95,12 @@ func parseUint32(s string) (uint32, error) {
 	return uint32(n), nil
 }
 
-// TODO: Evaluate whether we should rely on labels completely.
 func parseSandboxName(name string) (*runtimeapi.PodSandboxMetadata, error) {
 	// Docker adds a "/" prefix to names. so trim it.
 	name = strings.TrimPrefix(name, "/")
 
 	parts := strings.Split(name, nameDelimiter)
 	// Tolerate the random suffix.
-	// TODO(random-liu): Remove 7 field case when docker 1.11 is deprecated.
 	if len(parts) != 6 && len(parts) != 7 {
 		return nil, fmt.Errorf("failed to parse the sandbox name: %q", name)
 	}
@@ -124,14 +121,12 @@ func parseSandboxName(name string) (*runtimeapi.PodSandboxMetadata, error) {
 	}, nil
 }
 
-// TODO: Evaluate whether we should rely on labels completely.
 func parseContainerName(name string) (*runtimeapi.ContainerMetadata, error) {
 	// Docker adds a "/" prefix to names. so trim it.
 	name = strings.TrimPrefix(name, "/")
 
 	parts := strings.Split(name, nameDelimiter)
 	// Tolerate the random suffix.
-	// TODO(random-liu): Remove 7 field case when docker 1.11 is deprecated.
 	if len(parts) != 6 && len(parts) != 7 {
 		return nil, fmt.Errorf("failed to parse the container name: %q", name)
 	}

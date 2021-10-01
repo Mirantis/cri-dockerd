@@ -33,7 +33,6 @@ func listenFD(addr string) (net.Listener, error) {
 		return listeners[0], nil
 	}
 
-	//TODO: systemd fd selection (default is 3)
 	return nil, errors.New("not supported yet")
 }
 

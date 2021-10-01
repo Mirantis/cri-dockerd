@@ -125,7 +125,6 @@ func (ds *dockerService) PullImage(_ context.Context, r *runtimeapi.PullImageReq
 func (ds *dockerService) RemoveImage(_ context.Context, r *runtimeapi.RemoveImageRequest) (*runtimeapi.RemoveImageResponse, error) {
 	image := r.GetImage()
 	// If the image has multiple tags, we need to remove all the tags
-	// TODO: We assume image.Image is image ID here, which is true in the current implementation
 	// of kubelet, but we should still clarify this in CRI.
 	imageInspect, err := ds.client.InspectImageByID(image.Image)
 

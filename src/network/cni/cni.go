@@ -46,7 +46,6 @@ const (
 	CNIPluginName = "cni"
 
 	// defaultSyncConfigPeriod is the default period to sync CNI config
-	// TODO: consider making this value configurable or to be a more appropriate value.
 	defaultSyncConfigPeriod = time.Second * 5
 
 	// supported capabilities
@@ -199,7 +198,6 @@ func getDefaultCNINetwork(confDir string, binDirs []string) (*cniNetwork, error)
 
 		// Before using this CNI config, we have to validate it to make sure that
 		// all plugins of this config exist on disk
-		caps, err := cniConfig.ValidateNetworkList(context.TODO(), confList)
 		if err != nil {
 			klog.InfoS("Error validating CNI config list", "configList", string(confList.Bytes[:maxStringLengthInLog(len(confList.Bytes))]), "err", err)
 			continue

@@ -63,12 +63,11 @@ func matchImageTagOrSHA(inspected dockertypes.ImageInspect, image string) bool {
 			if strings.HasSuffix(image, tag) || strings.HasSuffix(tag, image) {
 				return true
 			} else {
-				// TODO: We need to remove this hack when project atomic based
 				// docker distro(s) like centos/fedora/rhel image fix problems on
 				// their end.
 				// Say the tag is "docker.io/busybox:latest"
 				// and the image is "docker.io/library/busybox:latest"
-				t, err := dockerref.ParseNormalizedNamed(tag)
+				initialName, err := dockerref.ParseNormalizedNamed(tag)
 				if err != nil {
 					continue
 				}
@@ -81,13 +80,12 @@ func matchImageTagOrSHA(inspected dockertypes.ImageInspect, image string) bool {
 				// 	tag: "latest"
 				// }
 				// If it does not have tags then we bail out
-				t2, ok := t.(dockerref.Tagged)
+				maybeTag, ok := initialName.(dockerref.Tagged)
 				if !ok {
 					continue
 				}
-				// normalized tag would look like "docker.io/library/busybox:latest"
-				// note the library get added in the string
-				normalizedTag := t2.String()
+
+				normalizedTag := maybeTag.String()
 				if normalizedTag == "" {
 					continue
 				}

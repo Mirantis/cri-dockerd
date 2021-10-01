@@ -24,10 +24,10 @@ import (
 	"os"
 	"strings"
 
+	"github.com/Mirantis/cri-dockerd/core"
 	"google.golang.org/grpc"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 	"k8s.io/klog/v2"
-	"github.com/Mirantis/cri-dockerd/core"
 	"k8s.io/kubernetes/pkg/kubelet/util"
 )
 
@@ -65,7 +65,7 @@ func getListener(addr string) (net.Listener, error) {
 	}
 }
 
-// Start starts the crid-ckerd grpc server.
+// Start starts the cri-dockerd grpc server.
 func (s *DockerServer) Start() error {
 	// Start the internal service.
 	if err := s.service.Start(); err != nil {

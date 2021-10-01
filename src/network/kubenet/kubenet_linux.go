@@ -185,7 +185,6 @@ func (plugin *kubenetNetworkPlugin) Init(host network.Host, hairpinMode kubeletc
 	return nil
 }
 
-// TODO: move thic logic into cni bridge plugin and remove this from kubenet
 func (plugin *kubenetNetworkPlugin) ensureMasqRule() error {
 	if plugin.nonMasqueradeCIDR != zeroCIDRv4 && plugin.nonMasqueradeCIDR != zeroCIDRv6 {
 		// switch according to target nonMasqueradeCidr ip family
@@ -348,7 +347,6 @@ func (plugin *kubenetNetworkPlugin) setup(namespace string, name string, id kube
 	if err != nil {
 		return fmt.Errorf("unable to understand network config: %v", err)
 	}
-	//TODO: v1.16 (khenidak) update NET_CONFIG_TEMPLATE to CNI version 0.3.0 or later so
 	// that we get multiple IP addresses in the returned Result structure
 	if res.IP4 != nil {
 		ipv4 = res.IP4.IP.IP.To4()
@@ -366,7 +364,6 @@ func (plugin *kubenetNetworkPlugin) setup(namespace string, name string, id kube
 		return fmt.Errorf("cni didn't report ipv4 ipv6")
 	}
 	// Put the container bridge into promiscuous mode to force it to accept hairpin packets.
-	// TODO: Remove this once the kernel bug (#20096) is fixed.
 	if plugin.hairpinMode == kubeletconfig.PromiscuousBridge {
 		link, err := netlink.LinkByName(BridgeName)
 		if err != nil {
@@ -400,7 +397,6 @@ func (plugin *kubenetNetworkPlugin) setup(namespace string, name string, id kube
 }
 
 // The first SetUpPod call creates the bridge; get a shaper for the sake of initialization
-// TODO: replace with CNI traffic shaper plugin
 func (plugin *kubenetNetworkPlugin) addTrafficShaping(id kubecontainer.ContainerID, annotations map[string]string) error {
 	shaper := plugin.shaper()
 	ingress, egress, err := bandwidth.ExtractPodBandwidthResources(annotations)
@@ -430,7 +426,6 @@ func (plugin *kubenetNetworkPlugin) addTrafficShaping(id kubecontainer.Container
 	return nil
 }
 
-// TODO: replace with CNI port-forwarding plugin
 func (plugin *kubenetNetworkPlugin) addPortMapping(id kubecontainer.ContainerID, name, namespace string) error {
 	portMappings, err := plugin.host.GetPodPortMappings(id.ID)
 	if err != nil {
@@ -590,7 +585,6 @@ func (plugin *kubenetNetworkPlugin) TearDownPod(namespace string, name string, i
 	return nil
 }
 
-// TODO: Use the addToNetwork function to obtain the IP of the Pod. That will assume idempotent ADD call to the plugin.
 // Also fix the runtime's call to Status function to be done only in the case that the IP is lost, no need to do periodic calls
 func (plugin *kubenetNetworkPlugin) GetPodNetworkStatus(namespace string, name string, id kubecontainer.ContainerID) (*network.PodNetworkStatus, error) {
 	// try cached version
@@ -751,7 +745,6 @@ func (plugin *kubenetNetworkPlugin) shaper() bandwidth.Shaper {
 	return plugin.bandwidthShaper
 }
 
-//TODO: make this into a goroutine and rectify the dedup rules periodically
 func (plugin *kubenetNetworkPlugin) syncEbtablesDedupRules(macAddr net.HardwareAddr, podCIDRs []net.IPNet, podGateways []net.IP) {
 	if plugin.ebtables == nil {
 		plugin.ebtables = utilebtables.New(plugin.execer)
