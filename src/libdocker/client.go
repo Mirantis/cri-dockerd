@@ -26,7 +26,7 @@ import (
 	dockercontainer "github.com/docker/docker/api/types/container"
 	dockerimagetypes "github.com/docker/docker/api/types/image"
 	dockerapi "github.com/docker/docker/client"
-	"k8s.io/klog/v2"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -80,7 +80,7 @@ type DockerClientInterface interface {
 // DOCKER_HOST, DOCKER_TLS_VERIFY, and DOCKER_CERT path per their spec
 func getDockerClient(dockerEndpoint string) (*dockerapi.Client, error) {
 	if len(dockerEndpoint) > 0 {
-		klog.InfoS("Connecting to docker on the dockerEndpoint", "endpoint", dockerEndpoint)
+		logrus.Info("Connecting to docker on the dockerEndpoint", "endpoint", dockerEndpoint)
 		return dockerapi.NewClientWithOpts(
 			dockerapi.WithHost(dockerEndpoint),
 			dockerapi.WithVersion(""),
@@ -101,10 +101,10 @@ func ConnectToDockerOrDie(
 ) DockerClientInterface {
 	client, err := getDockerClient(dockerEndpoint)
 	if err != nil {
-		klog.ErrorS(err, "Couldn't connect to docker")
+		logrus.Error(err, "Couldn't connect to docker")
 		os.Exit(1)
 
 	}
-	klog.InfoS("Start docker client with request timeout", "timeout", requestTimeout)
+	logrus.Info("Start docker client with request timeout", "timeout", requestTimeout)
 	return newKubeDockerClient(client, requestTimeout, imagePullProgressDeadline)
 }

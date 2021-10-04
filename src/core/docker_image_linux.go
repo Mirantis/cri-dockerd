@@ -24,7 +24,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"k8s.io/klog/v2"
+	"github.com/sirupsen/logrus"
 
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 )
@@ -36,7 +36,7 @@ func (ds *dockerService) ImageFsInfo(
 ) (*runtimeapi.ImageFsInfoResponse, error) {
 	info, err := ds.client.Info()
 	if err != nil {
-		klog.ErrorS(err, "Failed to get docker info")
+		logrus.Error(err, "Failed to get docker info")
 		return nil, err
 	}
 

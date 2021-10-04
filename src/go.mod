@@ -32,7 +32,7 @@ require (
 	k8s.io/component-helpers v0.20.4 // indirect
 	k8s.io/cri-api v0.20.4
 	k8s.io/klog v1.0.0
-	k8s.io/klog/v2 v2.4.0
+	github.com/sirupsen/logrus v1.8.1
 	k8s.io/kubernetes v1.20.4
 	k8s.io/utils v0.0.0-20201110183641-67b214c5f920
 )

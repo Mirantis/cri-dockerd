@@ -33,8 +33,7 @@ import (
 
 	"github.com/blang/semver"
 	dockertypes "github.com/docker/docker/api/types"
-	"k8s.io/klog/v2"
-
+	"github.com/sirupsen/logrus"
 	"github.com/Mirantis/cri-dockerd/cm"
 	"github.com/Mirantis/cri-dockerd/libdocker"
 	"github.com/Mirantis/cri-dockerd/metrics"
@@ -259,7 +258,7 @@ func NewDockerService(
 		// lead to retries of the same failure, so just fail hard.
 		return nil, err
 	}
-	klog.InfoS("Hairpin mode is set", "hairpinMode", pluginSettings.HairpinMode)
+	logrus.Info("Hairpin mode is set", "hairpinMode", pluginSettings.HairpinMode)
 
 	// cri-dockerd currently only supports CNI plugins.
 	pluginSettings.PluginBinDirs = cni.SplitDirs(pluginSettings.PluginBinDirString)
@@ -292,7 +291,7 @@ func NewDockerService(
 		)
 	}
 	ds.network = network.NewPluginManager(plug)
-	klog.InfoS(
+	logrus.Info(
 		"Docker cri networking managed by the network plugin",
 		"networkPluginName",
 		plug.Name(),
@@ -303,13 +302,13 @@ func NewDockerService(
 		// NOTE: cgroup driver is only detectable in docker 1.11+
 		cgroupDriver := defaultCgroupDriver
 		dockerInfo, err := ds.client.Info()
-		klog.InfoS("Docker Info", "dockerInfo", dockerInfo)
+		logrus.Info("Docker Info", "dockerInfo", dockerInfo)
 		if err != nil {
-			klog.ErrorS(err, "Failed to execute Info() call to the Docker client")
-			klog.InfoS("Falling back to use the default driver", "cgroupDriver", cgroupDriver)
+			logrus.Error(err, "Failed to execute Info() call to the Docker client")
+			logrus.Info("Falling back to use the default driver", "cgroupDriver", cgroupDriver)
 		} else if len(dockerInfo.CgroupDriver) == 0 {
-			klog.InfoS("No cgroup driver is set in Docker")
-			klog.InfoS("Falling back to use the default driver", "cgroupDriver", cgroupDriver)
+			logrus.Info("No cgroup driver is set in Docker")
+			logrus.Info("Falling back to use the default driver", "cgroupDriver", cgroupDriver)
 		} else {
 			cgroupDriver = dockerInfo.CgroupDriver
 		}
@@ -320,7 +319,7 @@ func NewDockerService(
 				cgroupDriver,
 			)
 		}
-		klog.InfoS("Setting cgroupDriver", "cgroupDriver", cgroupDriver)
+		logrus.Info("Setting cgroupDriver", "cgroupDriver", cgroupDriver)
 		ds.cgroupDriver = cgroupDriver
 	}
 
@@ -406,7 +405,7 @@ func (ds *dockerService) UpdateRuntimeConfig(
 		return &runtimeapi.UpdateRuntimeConfigResponse{}, nil
 	}
 
-	klog.InfoS("Docker cri received runtime config", "runtimeConfig", runtimeConfig)
+	logrus.Info("Docker cri received runtime config", "runtimeConfig", runtimeConfig)
 	if ds.network != nil && runtimeConfig.NetworkConfig.PodCidr != "" {
 		event := make(map[string]interface{})
 		event[network.NET_PLUGIN_EVENT_POD_CIDR_CHANGE_DETAIL_CIDR] = runtimeConfig.NetworkConfig.PodCidr
@@ -438,7 +437,7 @@ func (ds *dockerService) GetPodPortMappings(podSandboxID string) ([]*hostport.Po
 		}
 		errRem := ds.checkpointManager.RemoveCheckpoint(podSandboxID)
 		if errRem != nil {
-			klog.ErrorS(
+			logrus.Error(
 				errRem,
 				"Failed to delete corrupt checkpoint for sandbox",
 				"podSandboxID",
@@ -467,7 +466,7 @@ func (ds *dockerService) Start() error {
 
 	go func() {
 		if err := ds.streamingServer.Start(true); err != nil {
-			klog.ErrorS(err, "Streaming server stopped unexpectedly")
+			logrus.Error(err, "Streaming server stopped unexpectedly")
 			os.Exit(1)
 		}
 	}()
@@ -481,7 +480,7 @@ func (ds *dockerService) initCleanup() {
 	errors := ds.platformSpecificContainerInitCleanup()
 
 	for _, err := range errors {
-		klog.InfoS("Initialization error", "err", err)
+		logrus.Info("Initialization error", "err", err)
 	}
 }
 
@@ -533,7 +532,7 @@ func (ds *dockerService) GenerateExpectedCgroupParent(cgroupParent string) (stri
 			cgroupParent = path.Base(cgroupParent)
 		}
 	}
-	klog.V(3).InfoS("Setting cgroup parent", "cgroupParent", cgroupParent)
+	logrus.Info("Setting cgroup parent", "cgroupParent", cgroupParent)
 	return cgroupParent, nil
 }
 
@@ -601,7 +600,7 @@ func toAPIProtocol(protocol Protocol) v1.Protocol {
 	case protocolSCTP:
 		return v1.ProtocolSCTP
 	}
-	klog.InfoS("Unknown protocol, defaulting to TCP", "protocol", protocol)
+	logrus.Info("Unknown protocol, defaulting to TCP", "protocol", protocol)
 	return v1.ProtocolTCP
 }
 
@@ -621,7 +620,7 @@ func effectiveHairpinMode(s *NetworkPluginSettings) error {
 			// This is not a valid combination, since promiscuous-bridge only works on kubenet. Users might be using the
 			// default values (from before the hairpin-mode flag existed) and we
 			// should keep the old behavior.
-			klog.InfoS(
+			logrus.Info(
 				"Hairpin mode is set but kubenet is not enabled, falling back to HairpinVeth",
 				"hairpinMode",
 				s.HairpinMode,

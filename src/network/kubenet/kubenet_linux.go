@@ -32,12 +32,12 @@ import (
 	"github.com/containernetworking/cni/libcni"
 	cnitypes "github.com/containernetworking/cni/pkg/types"
 	cnitypes020 "github.com/containernetworking/cni/pkg/types/020"
+	"github.com/sirupsen/logrus"
 	"github.com/vishvananda/netlink"
 	"golang.org/x/sys/unix"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	utilnet "k8s.io/apimachinery/pkg/util/net"
 	utilsets "k8s.io/apimachinery/pkg/util/sets"
-	"k8s.io/klog/v2"
 	kubeletconfig "k8s.io/kubernetes/pkg/kubelet/apis/config"
 	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
 	"k8s.io/kubernetes/pkg/util/bandwidth"
@@ -148,18 +148,9 @@ func (plugin *kubenetNetworkPlugin) Init(
 	if mtu == network.UseDefaultMTU {
 		if link, err := findMinMTU(); err == nil {
 			plugin.mtu = link.MTU
-			klog.V(
-				5,
-			).InfoS(
-				"Using the interface MTU value as bridge MTU",
-				"interfaceName",
-				link.Name,
-				"mtuValue",
-				link.MTU,
-			)
 		} else {
 			plugin.mtu = fallbackMTU
-			klog.InfoS("Failed to find default bridge MTU, using default value", "mtuValue", fallbackMTU, "err", err)
+			logrus.Info("Failed to find default bridge MTU, using default value", "mtuValue", fallbackMTU, "err", err)
 		}
 	} else {
 		plugin.mtu = mtu
@@ -174,7 +165,7 @@ func (plugin *kubenetNetworkPlugin) Init(
 	plugin.execer.Command("modprobe", "br-netfilter").CombinedOutput()
 	err := plugin.sysctl.SetSysctl(sysctlBridgeCallIPTables, 1)
 	if err != nil {
-		klog.InfoS("can't set sysctl bridge-nf-call-iptables", "err", err)
+		logrus.Info("can't set sysctl bridge-nf-call-iptables", "err", err)
 	}
 
 	plugin.loConfig, err = libcni.ConfFromBytes([]byte(`{
@@ -258,7 +249,7 @@ func (plugin *kubenetNetworkPlugin) Event(name string, details map[string]interf
 
 	podCIDR, ok := details[network.NET_PLUGIN_EVENT_POD_CIDR_CHANGE_DETAIL_CIDR].(string)
 	if !ok {
-		klog.InfoS(
+		logrus.Info(
 			"The event didn't contain pod CIDR",
 			"event",
 			network.NET_PLUGIN_EVENT_POD_CIDR_CHANGE,
@@ -267,18 +258,16 @@ func (plugin *kubenetNetworkPlugin) Event(name string, details map[string]interf
 	}
 
 	if plugin.netConfig != nil {
-		klog.InfoS("Ignoring subsequent pod CIDR update to new cidr", "podCIDR", podCIDR)
+		logrus.Info("Ignoring subsequent pod CIDR update to new cidr", "podCIDR", podCIDR)
 		return
 	}
 
-	klog.V(4).InfoS("Kubenet: PodCIDR is set to new value", "podCIDR", podCIDR)
+	logrus.Debug("Kubenet: PodCIDR is set to new value", "podCIDR", podCIDR)
 	podCIDRs := strings.Split(podCIDR, ",")
 
 	// reset to one cidr if dual stack is not enabled
 	if !utilfeature.DefaultFeatureGate.Enabled(kubefeatures.IPv6DualStack) && len(podCIDRs) > 1 {
-		klog.V(
-			2,
-		).InfoS(
+		logrus.Warning(
 			"This node has multiple pod cidrs assigned and dual stack is not enabled. ignoring all except first cidr",
 		)
 		podCIDRs = podCIDRs[0:1]
@@ -287,7 +276,7 @@ func (plugin *kubenetNetworkPlugin) Event(name string, details map[string]interf
 	for idx, currentPodCIDR := range podCIDRs {
 		_, cidr, err := net.ParseCIDR(currentPodCIDR)
 		if nil != err {
-			klog.InfoS(
+			logrus.Info(
 				"Failed to generate CNI network config with cidr at the index",
 				"podCIDR",
 				currentPodCIDR,
@@ -314,10 +303,10 @@ func (plugin *kubenetNetworkPlugin) Event(name string, details map[string]interf
 		plugin.getRangesConfig(),
 		plugin.getRoutesConfig(),
 	)
-	klog.V(4).InfoS("CNI network config set to json format", "cniNetworkConfig", json)
+
 	plugin.netConfig, err = libcni.ConfFromBytes([]byte(json))
 	if err != nil {
-		klog.InfoS("** failed to set up CNI with json format", "cniNetworkConfig", json, "err", err)
+		logrus.Info("** failed to set up CNI with json format", "cniNetworkConfig", json, "err", err)
 		// just incase it was set by mistake
 		plugin.netConfig = nil
 		// we bail out by clearing the *entire* list
@@ -344,9 +333,7 @@ func (plugin *kubenetNetworkPlugin) clearUnusedBridgeAddresses() {
 
 	addrs, err := netlink.AddrList(bridge, unix.AF_INET)
 	if err != nil {
-		klog.V(
-			2,
-		).InfoS(
+		logrus.Error(
 			"Attempting to get address for the interface failed",
 			"interfaceName",
 			BridgeName,
@@ -358,15 +345,6 @@ func (plugin *kubenetNetworkPlugin) clearUnusedBridgeAddresses() {
 
 	for _, addr := range addrs {
 		if !cidrIncluded(plugin.podCIDRs, addr.IPNet) {
-			klog.V(
-				2,
-			).InfoS(
-				"Removing old address from the interface",
-				"interfaceName",
-				BridgeName,
-				"address",
-				addr.IPNet.String(),
-			)
 			netlink.AddrDel(bridge, &addr)
 		}
 	}
@@ -393,7 +371,7 @@ func (plugin *kubenetNetworkPlugin) setup(
 
 	// Disable DAD so we skip the kernel delay on bringing up new interfaces.
 	if err := plugin.disableContainerDAD(id); err != nil {
-		klog.V(3).InfoS("Failed to disable DAD in container", "err", err)
+		logrus.Error("Failed to disable DAD in container", "err", err)
 	}
 
 	// Bring up container loopback interface
@@ -551,33 +529,19 @@ func (plugin *kubenetNetworkPlugin) SetUpPod(
 	id kubecontainer.ContainerID,
 	annotations, options map[string]string,
 ) error {
-	start := time.Now()
 
 	if err := plugin.Status(); err != nil {
 		return fmt.Errorf("kubenet cannot SetUpPod: %v", err)
 	}
 
-	defer func() {
-		klog.V(
-			4,
-		).InfoS(
-			"SetUpPod took time",
-			"pod",
-			klog.KRef(namespace, name),
-			"duration",
-			time.Since(start),
-		)
-	}()
-
 	if err := plugin.setup(namespace, name, id, annotations); err != nil {
 		if err := plugin.teardown(namespace, name, id); err != nil {
 			// Not a hard error or warning
-			klog.V(
-				4,
-			).InfoS(
+			logrus.Error(
 				"Failed to clean up pod after SetUpPod failure",
 				"pod",
-				klog.KRef(namespace, name),
+				namespace,
+				name,
 				"err",
 				err,
 			)
@@ -587,7 +551,7 @@ func (plugin *kubenetNetworkPlugin) SetUpPod(
 
 	// Need to SNAT outbound traffic from cluster
 	if err := plugin.ensureMasqRule(); err != nil {
-		klog.ErrorS(err, "Failed to ensure MASQ rule")
+		logrus.Error(err, "Failed to ensure MASQ rule")
 	}
 
 	return nil
@@ -604,14 +568,14 @@ func (plugin *kubenetNetworkPlugin) teardown(
 
 	// Loopback network deletion failure should not be fatal on teardown
 	if err := plugin.delContainerFromNetwork(plugin.loConfig, "lo", namespace, name, id); err != nil {
-		klog.InfoS("Failed to delete loopback network", "err", err)
+		logrus.Info("Failed to delete loopback network", "err", err)
 		errList = append(errList, err)
 
 	}
 
 	// no ip dependent actions
 	if err := plugin.delContainerFromNetwork(plugin.netConfig, network.DefaultInterfaceName, namespace, name, id); err != nil {
-		klog.InfoS(
+		logrus.Info(
 			"Failed to delete the interface network",
 			"interfaceName",
 			network.DefaultInterfaceName,
@@ -624,15 +588,6 @@ func (plugin *kubenetNetworkPlugin) teardown(
 	// If there are no IPs registered we can't teardown pod's IP dependencies
 	iplist, exists := plugin.getCachedPodIPs(id)
 	if !exists || len(iplist) == 0 {
-		klog.V(
-			5,
-		).InfoS(
-			"Container does not have IP registered. Ignoring teardown call",
-			"containerID",
-			id,
-			"pod",
-			klog.KRef(namespace, name),
-		)
 		return nil
 	}
 
@@ -645,7 +600,6 @@ func (plugin *kubenetNetworkPlugin) teardown(
 	// process each pod IP
 	for _, ip := range iplist {
 		isV6 := netutils.IsIPv6String(ip)
-		klog.V(5).InfoS("Removing pod port mappings from the IP", "IP", ip)
 		if portMappings != nil && len(portMappings) > 0 {
 			if isV6 {
 				if err = plugin.hostportManagerv6.Remove(id.ID, &hostport.PodPortMapping{
@@ -668,15 +622,6 @@ func (plugin *kubenetNetworkPlugin) teardown(
 			}
 		}
 
-		klog.V(
-			5,
-		).InfoS(
-			"Removing pod IP from shaper for the pod",
-			"pod",
-			klog.KRef(namespace, name),
-			"IP",
-			ip,
-		)
 		// shaper uses a cidr, but we are using a single IP.
 		mask := "32"
 		if isV6 {
@@ -685,7 +630,7 @@ func (plugin *kubenetNetworkPlugin) teardown(
 
 		if err := plugin.shaper().Reset(fmt.Sprintf("%s/%s", ip, mask)); err != nil {
 			// Possible bandwidth shaping wasn't enabled for this pod anyways
-			klog.V(4).InfoS("Failed to remove pod IP from shaper", "IP", ip, "err", err)
+			logrus.Error("Failed to remove pod IP from shaper", "IP", ip, "err", err)
 		}
 
 		plugin.removePodIP(id, ip)
@@ -698,19 +643,6 @@ func (plugin *kubenetNetworkPlugin) TearDownPod(
 	name string,
 	id kubecontainer.ContainerID,
 ) error {
-	start := time.Now()
-	defer func() {
-		klog.V(
-			4,
-		).InfoS(
-			"TearDownPod took time",
-			"pod",
-			klog.KRef(namespace, name),
-			"duration",
-			time.Since(start),
-		)
-	}()
-
 	if plugin.netConfig == nil {
 		return fmt.Errorf("kubenet needs a PodCIDR to tear down pods")
 	}
@@ -721,7 +653,7 @@ func (plugin *kubenetNetworkPlugin) TearDownPod(
 
 	// Need to SNAT outbound traffic from cluster
 	if err := plugin.ensureMasqRule(); err != nil {
-		klog.ErrorS(err, "Failed to ensure MASQ rule")
+		logrus.Error(err, "Failed to ensure MASQ rule")
 	}
 	return nil
 }
@@ -849,7 +781,7 @@ func (plugin *kubenetNetworkPlugin) buildCNIRuntimeConf(
 ) (*libcni.RuntimeConf, error) {
 	netnsPath, err := plugin.host.GetNetNS(id.ID)
 	if needNetNs && err != nil {
-		klog.ErrorS(err, "Kubenet failed to retrieve network namespace path")
+		logrus.Error(err, "Kubenet failed to retrieve network namespace path")
 	}
 
 	return &libcni.RuntimeConf{
@@ -869,20 +801,6 @@ func (plugin *kubenetNetworkPlugin) addContainerToNetwork(
 	if err != nil {
 		return nil, fmt.Errorf("error building CNI config: %v", err)
 	}
-
-	klog.V(
-		3,
-	).InfoS(
-		"Adding pod to network with CNI plugin and runtime",
-		"pod",
-		klog.KRef(namespace, name),
-		"networkName",
-		config.Network.Name,
-		"networkType",
-		config.Network.Type,
-		"rt",
-		rt,
-	)
 	// Because the default remote runtime request timeout is 4 min,so set slightly less than 240 seconds
 	// Todo get the timeout from parent ctx
 	cniTimeoutCtx, cancelFunc := context.WithTimeout(
@@ -907,19 +825,6 @@ func (plugin *kubenetNetworkPlugin) delContainerFromNetwork(
 		return fmt.Errorf("error building CNI config: %v", err)
 	}
 
-	klog.V(
-		3,
-	).InfoS(
-		"Removing pod from network with CNI plugin and runtime",
-		"pod",
-		klog.KRef(namespace, name),
-		"networkName",
-		config.Network.Name,
-		"networkType",
-		config.Network.Type,
-		"rt",
-		rt,
-	)
 	// Because the default remote runtime request timeout is 4 min,so set slightly less than 240 seconds
 	// Todo get the timeout from parent ctx
 	cniTimeoutCtx, cancelFunc := context.WithTimeout(
@@ -955,21 +860,20 @@ func (plugin *kubenetNetworkPlugin) syncEbtablesDedupRules(
 ) {
 	if plugin.ebtables == nil {
 		plugin.ebtables = utilebtables.New(plugin.execer)
-		klog.V(3).InfoS("Flushing dedup chain")
 		if err := plugin.ebtables.FlushChain(utilebtables.TableFilter, dedupChain); err != nil {
-			klog.ErrorS(err, "Failed to flush dedup chain")
+			logrus.Error(err, "Failed to flush dedup chain")
 		}
 	}
 	_, err := plugin.ebtables.GetVersion()
 	if err != nil {
-		klog.InfoS("Failed to get ebtables version. Skip syncing ebtables dedup rules", "err", err)
+		logrus.Info("Failed to get ebtables version. Skip syncing ebtables dedup rules", "err", err)
 		return
 	}
 
 	// ensure custom chain exists
 	_, err = plugin.ebtables.EnsureChain(utilebtables.TableFilter, dedupChain)
 	if err != nil {
-		klog.ErrorS(nil, "Failed to ensure filter table KUBE-DEDUP chain")
+		logrus.Error(nil, "Failed to ensure filter table KUBE-DEDUP chain")
 		return
 	}
 
@@ -982,24 +886,12 @@ func (plugin *kubenetNetworkPlugin) syncEbtablesDedupRules(
 		string(dedupChain),
 	)
 	if err != nil {
-		klog.ErrorS(err, "Failed to ensure filter table OUTPUT chain jump to KUBE-DEDUP chain")
+		logrus.Error(err, "Failed to ensure filter table OUTPUT chain jump to KUBE-DEDUP chain")
 		return
 	}
 
 	// per gateway rule
 	for idx, gw := range podGateways {
-		klog.V(
-			3,
-		).InfoS(
-			"Filtering packets with ebtables",
-			"mac",
-			macAddr.String(),
-			"gateway",
-			gw.String(),
-			"podCIDR",
-			podCIDRs[idx].String(),
-		)
-
 		bIsV6 := netutils.IsIPv6(gw)
 		IPFamily := "IPv4"
 		ipSrc := "--ip-src"
@@ -1014,7 +906,7 @@ func (plugin *kubenetNetworkPlugin) syncEbtablesDedupRules(
 			dedupChain,
 			append(commonArgs, ipSrc, gw.String(), "-j", "ACCEPT")...)
 		if err != nil {
-			klog.ErrorS(
+			logrus.Error(
 				err,
 				"Failed to ensure packets from cbr0 gateway to be accepted with error",
 				"gateway",
@@ -1029,7 +921,7 @@ func (plugin *kubenetNetworkPlugin) syncEbtablesDedupRules(
 			dedupChain,
 			append(commonArgs, ipSrc, podCIDRs[idx].String(), "-j", "DROP")...)
 		if err != nil {
-			klog.ErrorS(
+			logrus.Error(
 				err,
 				"Failed to ensure packets from podCidr but has mac address of cbr0 to get dropped.",
 				"podCIDR",

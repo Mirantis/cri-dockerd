@@ -24,7 +24,7 @@ import (
 	"strconv"
 	"strings"
 
-	"k8s.io/klog/v2"
+	"github.com/sirupsen/logrus"
 
 	v1 "k8s.io/api/core/v1"
 	utiliptables "k8s.io/kubernetes/pkg/util/iptables"
@@ -114,7 +114,6 @@ func openLocalPort(hp *hostport) (closeable, error) {
 	default:
 		return nil, fmt.Errorf("unknown protocol %q", hp.protocol)
 	}
-	klog.V(3).InfoS("Opened local port", "port", hp.String())
 	return socket, nil
 }
 
@@ -130,7 +129,7 @@ func portMappingToHostport(portMapping *PortMapping, family ipFamily) hostport {
 
 // ensureKubeHostportChains ensures the KUBE-HOSTPORTS chain is setup correctly
 func ensureKubeHostportChains(iptables utiliptables.Interface, natInterfaceName string) error {
-	klog.V(4).InfoS("Ensuring kubelet hostport chains")
+	logrus.Debug("Ensuring kubelet hostport chains")
 	// Ensure kubeHostportChain
 	if _, err := iptables.EnsureChain(utiliptables.TableNAT, kubeHostportsChain); err != nil {
 		return fmt.Errorf(

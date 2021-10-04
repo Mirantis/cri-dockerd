@@ -26,7 +26,7 @@ import (
 	dockertypes "github.com/docker/docker/api/types"
 	dockercontainer "github.com/docker/docker/api/types/container"
 	dockerfilters "github.com/docker/docker/api/types/filters"
-	"k8s.io/klog/v2"
+	"github.com/sirupsen/logrus"
 
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 )
@@ -41,7 +41,7 @@ func (ds *core.dockerService) getSecurityOpts(
 	separator rune,
 ) ([]string, error) {
 	if seccompProfile != "" {
-		klog.InfoS("seccomp annotations are not supported on windows")
+		logrus.Info("seccomp annotations are not supported on windows")
 	}
 	return nil, nil
 }

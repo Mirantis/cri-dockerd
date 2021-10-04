@@ -25,10 +25,9 @@ import (
 	"time"
 
 	dockertypes "github.com/docker/docker/api/types"
-
+	"github.com/sirupsen/logrus"
 	"github.com/Mirantis/cri-dockerd/libdocker"
 	"k8s.io/client-go/tools/remotecommand"
-	"k8s.io/klog/v2"
 	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
 )
 
@@ -170,7 +169,7 @@ func (*NativeExecHandler) ExecInContainer(
 
 		retries++
 		if retries == maxRetries {
-			klog.ErrorS(
+			logrus.Error(
 				nil,
 				"Exec session in the container terminated but process still running!",
 				"execSession",

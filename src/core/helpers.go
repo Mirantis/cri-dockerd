@@ -31,7 +31,7 @@ import (
 	dockercontainer "github.com/docker/docker/api/types/container"
 	dockerfilters "github.com/docker/docker/api/types/filters"
 	dockernat "github.com/docker/go-connections/nat"
-	"k8s.io/klog/v2"
+	"github.com/sirupsen/logrus"
 
 	"github.com/Mirantis/cri-dockerd/libdocker"
 	v1 "k8s.io/api/core/v1"
@@ -149,7 +149,7 @@ func generateMountBindings(mounts []*runtimeapi.Mount) []string {
 		case runtimeapi.MountPropagation_PROPAGATION_HOST_TO_CONTAINER:
 			attrs = append(attrs, "rslave")
 		default:
-			klog.InfoS("Unknown propagation mode for hostPath", "path", m.HostPath)
+			logrus.Info("Unknown propagation mode for hostPath", "path", m.HostPath)
 			// Falls back to "private"
 		}
 
@@ -184,7 +184,7 @@ func makePortsAndBindings(
 		case runtimeapi.Protocol_SCTP:
 			protocol = "/sctp"
 		default:
-			klog.InfoS("Unknown protocol, defaulting to TCP", "protocol", port.Protocol)
+			logrus.Info("Unknown protocol, defaulting to TCP", "protocol", port.Protocol)
 			protocol = "/tcp"
 		}
 
@@ -297,17 +297,17 @@ func recoverFromCreationConflictIfNeeded(
 	}
 
 	id := matches[1]
-	klog.InfoS(
+	logrus.Info(
 		"Unable to create pod sandbox due to conflict. Attempting to remove sandbox",
 		"containerID",
 		id,
 	)
 	rmErr := client.RemoveContainer(id, dockertypes.ContainerRemoveOptions{RemoveVolumes: true})
 	if rmErr == nil {
-		klog.V(2).InfoS("Successfully removed conflicting container", "containerID", id)
+		logrus.Info("Successfully removed conflicting container", "containerID", id)
 		return nil, err
 	}
-	klog.ErrorS(rmErr, "Failed to remove the conflicting container", "containerID", id)
+	logrus.Error(rmErr, "Failed to remove the conflicting container", "containerID", id)
 	// Return if the error is not container not found error.
 	if !libdocker.IsContainerNotFoundError(rmErr) {
 		return nil, err
@@ -315,9 +315,7 @@ func recoverFromCreationConflictIfNeeded(
 
 	// randomize the name to avoid conflict.
 	createConfig.Name = randomizeName(createConfig.Name)
-	klog.V(
-		2,
-	).InfoS(
+	logrus.Info(
 		"Create the container with the randomized name",
 		"containerName",
 		createConfig.Name,
@@ -356,7 +354,7 @@ func ensureSandboxImageExists(client libdocker.DockerClientInterface, image stri
 	keyring := credentialprovider.NewDockerKeyring()
 	creds, withCredentials := keyring.Lookup(repoToPull)
 	if !withCredentials {
-		klog.V(3).InfoS("Pulling the image without credentials", "image", image)
+		logrus.Info("Pulling the image without credentials", "image", image)
 
 		err := client.PullImage(image, dockertypes.AuthConfig{}, dockertypes.ImagePullOptions{})
 		if err != nil {

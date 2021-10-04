@@ -28,9 +28,9 @@ import (
 	"github.com/opencontainers/runc/libcontainer/cgroups"
 	cgroupfs "github.com/opencontainers/runc/libcontainer/cgroups/fs"
 	"github.com/opencontainers/runc/libcontainer/configs"
+	"github.com/sirupsen/logrus"
 	utilversion "k8s.io/apimachinery/pkg/util/version"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/klog/v2"
 
 	"github.com/Mirantis/cri-dockerd/libdocker"
 )
@@ -86,19 +86,19 @@ func (m *containerManager) Start() error {
 func (m *containerManager) doWork() {
 	v, err := m.client.Version()
 	if err != nil {
-		klog.ErrorS(err, "Unable to get docker version")
+		logrus.Error(err, "Unable to get docker version")
 		return
 	}
 	version, err := utilversion.ParseGeneric(v.APIVersion)
 	if err != nil {
-		klog.ErrorS(err, "Unable to parse docker version", "dockerVersion", v.APIVersion)
+		logrus.Error(err, "Unable to parse docker version", "dockerVersion", v.APIVersion)
 		return
 	}
 	// EnsureDockerInContainer does two things.
 	//   1. Ensure processes run in the cgroups if m.cgroupsManager is not nil.
 	//   2. Ensure processes have the OOM score applied.
 	if err := m.ensureDockerInContainer(version, dockerOOMScoreAdj, m.cgroupsManager); err != nil {
-		klog.ErrorS(err, "Unable to ensure the docker processes run in the desired containers")
+		logrus.Error(err, "Unable to ensure the docker processes run in the desired containers")
 	}
 }
 
@@ -107,7 +107,7 @@ func createCgroupManager(name string) (cgroups.Manager, error) {
 
 	memoryCapacity, err := getMemoryCapacity()
 	if err != nil {
-		klog.ErrorS(err, "Failed to get the memory capacity on machine")
+		logrus.Error(err, "Failed to get the memory capacity on machine")
 	} else {
 		memoryLimit = memoryCapacity * dockerMemoryLimitThresholdPercent / 100
 	}
@@ -115,9 +115,7 @@ func createCgroupManager(name string) (cgroups.Manager, error) {
 	if err != nil || memoryLimit < minDockerMemoryLimit {
 		memoryLimit = minDockerMemoryLimit
 	}
-	klog.V(
-		2,
-	).InfoS(
+	logrus.Info(
 		"Configure resource-only container with memory limit",
 		"containerName",
 		name,
