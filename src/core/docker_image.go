@@ -28,8 +28,8 @@ import (
 	"github.com/docker/docker/pkg/jsonmessage"
 
 	"github.com/Mirantis/cri-dockerd/libdocker"
+	"github.com/sirupsen/logrus"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
-	"k8s.io/klog/v2"
 )
 
 // This file implements methods in ImageManagerService.
@@ -57,9 +57,7 @@ func (ds *dockerService) ListImages(
 	for _, i := range images {
 		apiImage, err := imageToRuntimeAPIImage(&i)
 		if err != nil {
-			klog.V(
-				5,
-			).InfoS(
+			logrus.Info(
 				"Failed to convert docker API image to runtime API image",
 				"image",
 				i,

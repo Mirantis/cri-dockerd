@@ -22,10 +22,11 @@ import (
 	"github.com/Mirantis/cri-dockerd/pkg/app/options"
 	dockerremote "github.com/Mirantis/cri-dockerd/remote"
 	"github.com/Mirantis/cri-dockerd/version"
+	"github.com/sirupsen/logrus"
+
 	"k8s.io/component-base/cli/flag"
 	utilflag "k8s.io/component-base/cli/flag"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
-	"k8s.io/klog"
 	"k8s.io/kubernetes/pkg/kubelet/cri/streaming"
 	"net/url"
 
@@ -55,20 +56,20 @@ func NewDockerCRICommand(stopCh <-chan struct{}) *cobra.Command {
 			// initial flag parse, since we disable cobra's flag parsing
 			if err := cleanFlagSet.Parse(args); err != nil {
 				cmd.Usage()
-				klog.Fatal(err)
+				logrus.Fatal(err)
 			}
 
 			// check if there are non-flag arguments in the command line
 			cmds := cleanFlagSet.Args()
 			if len(cmds) > 0 {
 				cmd.Usage()
-				klog.Fatalf("Unknown command: %s", cmds[0])
+				logrus.Fatalf("Unknown command: %s", cmds[0])
 			}
 
 			// short-circuit on help
 			help, err := cleanFlagSet.GetBool("help")
 			if err != nil {
-				klog.Fatal(`"help" flag is non-bool`)
+				logrus.Fatal(`"help" flag is non-bool`)
 			}
 			if help {
 				cmd.Help()
@@ -90,7 +91,7 @@ func NewDockerCRICommand(stopCh <-chan struct{}) *cobra.Command {
 			utilflag.PrintFlags(cleanFlagSet)
 
 			if err := RunCriDockerd(kubeletFlags, stopCh); err != nil {
-				klog.Fatal(err)
+				logrus.Fatal(err)
 			}
 		},
 	}
@@ -175,7 +176,7 @@ func RunCriDockerd(f *options.DockerCRIFlags, stopCh <-chan struct{}) error {
 		return err
 	}
 
-	klog.V(2).Infof("Starting the GRPC server for the Docker CRI interface.")
+	logrus.Infof("Starting the GRPC server for the Docker CRI interface.")
 	server := dockerremote.NewDockerServer(f.RemoteRuntimeEndpoint, ds)
 	if err := server.Start(); err != nil {
 		return err

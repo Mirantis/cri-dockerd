@@ -19,9 +19,9 @@ package cm
 import (
 	"fmt"
 	"github.com/opencontainers/runc/libcontainer/cgroups"
+	"github.com/sirupsen/logrus"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	utilversion "k8s.io/apimachinery/pkg/util/version"
-	"k8s.io/klog/v2"
 	"k8s.io/kubernetes/pkg/util/oom"
 	"k8s.io/kubernetes/pkg/util/procfs"
 	"os"
@@ -34,12 +34,12 @@ func isProcessRunningInHost(pid int) (bool, error) {
 	if err != nil {
 		return false, fmt.Errorf("failed to find pid namespace of init process")
 	}
-	klog.V(10).Infof("init pid ns is %q", initPidNs)
+	logrus.Debug("init pid ns is %q", initPidNs)
 	processPidNs, err := os.Readlink(fmt.Sprintf("/proc/%d/ns/pid", pid))
 	if err != nil {
 		return false, fmt.Errorf("failed to find pid namespace of process %q", pid)
 	}
-	klog.V(10).Infof("Pid %d pid ns is %q", pid, processPidNs)
+	logrus.Debug("Pid %d pid ns is %q", pid, processPidNs)
 	return initPidNs == processPidNs, nil
 }
 
@@ -82,10 +82,10 @@ func getContainer(pid int) (string, error) {
 	// in addition, you would not get memory or cpu accounting for the runtime unless accounting was enabled on its unit (or globally).
 	if systemd, found := cgs["name=systemd"]; found {
 		if systemd != cpu {
-			klog.Warningf("CPUAccounting not enabled for pid: %d", pid)
+			logrus.Warningf("CPUAccounting not enabled for pid: %d", pid)
 		}
 		if systemd != memory {
-			klog.Warningf("MemoryAccounting not enabled for pid: %d", pid)
+			logrus.Warningf("MemoryAccounting not enabled for pid: %d", pid)
 		}
 		return systemd, nil
 	}
@@ -129,7 +129,7 @@ func ensureProcessInContainerWithOOMScore(pid int, oomScoreAdj int, manager cgro
 		return err
 	} else if !runningInHost {
 		// Process is running inside a container. Don't touch that.
-		klog.V(2).Infof("pid %d is not running in the host namespaces", pid)
+		logrus.Infof("pid %d is not running in the host namespaces", pid)
 		return nil
 	}
 
@@ -158,9 +158,9 @@ func ensureProcessInContainerWithOOMScore(pid int, oomScoreAdj int, manager cgro
 
 	// Also apply oom-score-adj to processes
 	oomAdjuster := oom.NewOOMAdjuster()
-	klog.V(5).Infof("attempting to apply oom_score_adj of %d to pid %d", oomScoreAdj, pid)
+	logrus.Debugf("attempting to apply oom_score_adj of %d to pid %d", oomScoreAdj, pid)
 	if err := oomAdjuster.ApplyOOMScoreAdj(pid, oomScoreAdj); err != nil {
-		klog.V(3).Infof("Failed to apply oom_score_adj %d for pid %d: %v", oomScoreAdj, pid, err)
+		logrus.Infof("Failed to apply oom_score_adj %d for pid %d: %v", oomScoreAdj, pid, err)
 		errs = append(errs, fmt.Errorf("failed to apply oom score %d to PID %d: %v", oomScoreAdj, pid, err))
 	}
 	return utilerrors.NewAggregate(errs)
@@ -206,6 +206,6 @@ func getPidsForProcess(name, pidFile string) ([]int, error) {
 
 	// Return error from getPidFromPidFile since that should have worked
 	// and is the real source of the problem.
-	klog.V(4).Infof("unable to get pid from %s: %v", pidFile, err)
+	logrus.Infof("unable to get pid from %s: %v", pidFile, err)
 	return []int{}, err
 }

@@ -27,7 +27,7 @@ import (
 	"regexp"
 	"strconv"
 
-	"k8s.io/klog/v2"
+	"github.com/sirupsen/logrus"
 	"k8s.io/utils/exec"
 )
 
@@ -95,7 +95,7 @@ func findPairInterfaceOfContainerInterface(
 }
 
 func setUpInterface(ifName string) error {
-	klog.V(3).InfoS("Enabling hairpin on interface", "interfaceName", ifName)
+	logrus.Info("Enabling hairpin on interface", "interfaceName", ifName)
 	ifPath := path.Join(sysfsNetPath, ifName)
 	if _, err := os.Stat(ifPath); err != nil {
 		return err

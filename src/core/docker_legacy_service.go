@@ -29,10 +29,10 @@ import (
 	"github.com/armon/circbuf"
 	dockertypes "github.com/docker/docker/api/types"
 
+	"github.com/sirupsen/logrus"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kubetypes "k8s.io/apimachinery/pkg/types"
-	"k8s.io/klog/v2"
 	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
 
 	"github.com/Mirantis/cri-dockerd/libdocker"
@@ -91,7 +91,7 @@ func (d *dockerService) GetContainerLogs(
 	}
 	err = d.client.Logs(containerID.ID, opts, sopts)
 	if errors.Is(err, errMaximumWrite) {
-		klog.V(2).InfoS("Finished logs, hit byte limit", "byteLimit", *logOptions.LimitBytes)
+		logrus.Info("Finished logs, hit byte limit", "byteLimit", *logOptions.LimitBytes)
 		err = nil
 	}
 	return err

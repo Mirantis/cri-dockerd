@@ -27,11 +27,11 @@ import (
 
 	"github.com/Mirantis/cri-dockerd/network/hostport"
 	"github.com/Mirantis/cri-dockerd/network/metrics"
+	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	utilsets "k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation"
-	"k8s.io/klog/v2"
 	kubeletconfig "k8s.io/kubernetes/pkg/kubelet/apis/config"
 	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
 	utilsysctl "k8s.io/kubernetes/pkg/util/sysctl"
@@ -193,7 +193,7 @@ func InitNetworkPlugin(
 				fmt.Errorf("network plugin %q failed init: %v", networkPluginName, err),
 			)
 		} else {
-			klog.V(1).InfoS("Loaded network plugin", "networkPluginName", networkPluginName)
+			logrus.Info("Loaded network plugin", "networkPluginName", networkPluginName)
 		}
 	} else {
 		allErrs = append(allErrs, fmt.Errorf("network plugin %q not found", networkPluginName))
@@ -225,12 +225,12 @@ func (plugin *NoopNetworkPlugin) Init(
 	// it was built-in.
 	utilexec.New().Command("modprobe", "br-netfilter").CombinedOutput()
 	if err := plugin.Sysctl.SetSysctl(sysctlBridgeCallIPTables, 1); err != nil {
-		klog.InfoS("can't set sysctl bridge-nf-call-iptables", "err", err)
+		logrus.Info("can't set sysctl bridge-nf-call-iptables", "err", err)
 	}
 	if val, err := plugin.Sysctl.GetSysctl(sysctlBridgeCallIP6Tables); err == nil {
 		if val != 1 {
 			if err = plugin.Sysctl.SetSysctl(sysctlBridgeCallIP6Tables, 1); err != nil {
-				klog.InfoS("can't set sysctl bridge-nf-call-ip6tables", "err", err)
+				logrus.Info("can't set sysctl bridge-nf-call-ip6tables", "err", err)
 			}
 		}
 	}
@@ -431,12 +431,12 @@ func (pm *PluginManager) podUnlock(fullPodName string) {
 
 	lock, ok := pm.pods[fullPodName]
 	if !ok {
-		klog.InfoS("Unbalanced pod lock unref for the pod", "podFullName", fullPodName)
+		logrus.Info("Unbalanced pod lock unref for the pod", "podFullName", fullPodName)
 		return
 	} else if lock.refcount == 0 {
 		// This should never ever happen, but handle it anyway
 		delete(pm.pods, fullPodName)
-		klog.InfoS("Pod lock for the pod still in map with zero refcount", "podFullName", fullPodName)
+		logrus.Info("Pod lock for the pod still in map with zero refcount", "podFullName", fullPodName)
 		return
 	}
 	lock.refcount--
@@ -496,15 +496,6 @@ func (pm *PluginManager) SetUpPod(
 	pm.podLock(fullPodName).Lock()
 	defer pm.podUnlock(fullPodName)
 
-	klog.V(
-		3,
-	).InfoS(
-		"Calling network plugin to set up the pod",
-		"pod",
-		klog.KRef(podNamespace, podName),
-		"networkPluginName",
-		pm.plugin.Name(),
-	)
 	if err := pm.plugin.SetUpPod(podNamespace, podName, id, annotations, options); err != nil {
 		recordError(operation)
 		return fmt.Errorf(
@@ -528,15 +519,6 @@ func (pm *PluginManager) TearDownPod(
 	pm.podLock(fullPodName).Lock()
 	defer pm.podUnlock(fullPodName)
 
-	klog.V(
-		3,
-	).InfoS(
-		"Calling network plugin to tear down the pod",
-		"pod",
-		klog.KRef(podNamespace, podName),
-		"networkPluginName",
-		pm.plugin.Name(),
-	)
 	if err := pm.plugin.TearDownPod(podNamespace, podName, id); err != nil {
 		recordError(operation)
 		return fmt.Errorf(

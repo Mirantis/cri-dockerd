@@ -25,7 +25,7 @@ import (
 	dockerref "github.com/docker/distribution/reference"
 	dockertypes "github.com/docker/docker/api/types"
 	godigest "github.com/opencontainers/go-digest"
-	"k8s.io/klog/v2"
+	"github.com/sirupsen/logrus"
 )
 
 // ParseDockerTimestamp parses the timestamp returned by DockerClientInterface from string to time.Time
@@ -44,7 +44,7 @@ func matchImageTagOrSHA(inspected dockertypes.ImageInspect, image string) bool {
 	// https://github.com/docker/distribution/blob/master/reference/reference.go#L4
 	named, err := dockerref.ParseNormalizedNamed(image)
 	if err != nil {
-		klog.V(4).InfoS("Couldn't parse image reference", "image", image, "err", err)
+		logrus.Info("Couldn't parse image reference", "image", image, "err", err)
 		return false
 	}
 	_, isTagged := named.(dockerref.Tagged)
@@ -100,9 +100,7 @@ func matchImageTagOrSHA(inspected dockertypes.ImageInspect, image string) bool {
 		for _, repoDigest := range inspected.RepoDigests {
 			named, err := dockerref.ParseNormalizedNamed(repoDigest)
 			if err != nil {
-				klog.V(
-					4,
-				).InfoS(
+				logrus.Info(
 					"Couldn't parse image RepoDigest reference",
 					"digest",
 					repoDigest,
@@ -122,7 +120,7 @@ func matchImageTagOrSHA(inspected dockertypes.ImageInspect, image string) bool {
 		// process the ID as a digest
 		id, err := godigest.Parse(inspected.ID)
 		if err != nil {
-			klog.V(4).InfoS("Couldn't parse image ID reference", "imageID", id, "err", err)
+			logrus.Info("Couldn't parse image ID reference", "imageID", id, "err", err)
 			return false
 		}
 		if digest.Digest().Algorithm().String() == id.Algorithm().String() &&
@@ -130,9 +128,7 @@ func matchImageTagOrSHA(inspected dockertypes.ImageInspect, image string) bool {
 			return true
 		}
 	}
-	klog.V(
-		4,
-	).InfoS(
+	logrus.Info(
 		"Inspected image ID does not match image",
 		"inspectedImageID",
 		inspected.ID,
@@ -155,19 +151,19 @@ func matchImageIDOnly(inspected dockertypes.ImageInspect, image string) bool {
 	// Otherwise, we should try actual parsing to be more correct
 	ref, err := dockerref.Parse(image)
 	if err != nil {
-		klog.V(4).InfoS("Couldn't parse image reference", "image", image, "err", err)
+		logrus.Info("Couldn't parse image reference", "image", image, "err", err)
 		return false
 	}
 
 	digest, isDigested := ref.(dockerref.Digested)
 	if !isDigested {
-		klog.V(4).InfoS("The image reference was not a digest reference", "image", image)
+		logrus.Info("The image reference was not a digest reference", "image", image)
 		return false
 	}
 
 	id, err := godigest.Parse(inspected.ID)
 	if err != nil {
-		klog.V(4).InfoS("Couldn't parse image ID reference", "imageID", id, "err", err)
+		logrus.Info("Couldn't parse image ID reference", "imageID", id, "err", err)
 		return false
 	}
 
@@ -176,7 +172,7 @@ func matchImageIDOnly(inspected dockertypes.ImageInspect, image string) bool {
 		return true
 	}
 
-	klog.V(4).InfoS("The image reference does not directly refer to the given image's ID",
+	logrus.Info("The image reference does not directly refer to the given image's ID",
 		"image", image, "inspectedImageID", inspected.ID)
 	return false
 }

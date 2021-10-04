@@ -24,7 +24,6 @@ import (
 	"github.com/Mirantis/cri-dockerd/network"
 	cniTypes020 "github.com/containernetworking/cni/pkg/types/020"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
-	"k8s.io/klog/v2"
 	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
 	"net"
 	"time"
@@ -73,9 +72,8 @@ func (plugin *cniNetworkPlugin) GetPodNetworkStatus(
 		nil,
 		nil,
 	)
-	klog.V(5).Infof("GetPodNetworkStatus result %+v", result)
 	if err != nil {
-		klog.Errorf("error while adding to cni network: %s", err)
+		logrus.Errorf("error while adding to cni network: %s", err)
 		return nil, err
 	}
 
@@ -83,7 +81,7 @@ func (plugin *cniNetworkPlugin) GetPodNetworkStatus(
 	var result020 *cniTypes020.Result
 	result020, err = cniTypes020.GetResult(result)
 	if err != nil {
-		klog.Errorf("error while cni parsing result: %s", err)
+		logrus.Errorf("error while cni parsing result: %s", err)
 		return nil, err
 	}
 

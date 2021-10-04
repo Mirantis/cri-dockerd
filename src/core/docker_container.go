@@ -29,7 +29,7 @@ import (
 	dockercontainer "github.com/docker/docker/api/types/container"
 	dockerfilters "github.com/docker/docker/api/types/filters"
 	dockerstrslice "github.com/docker/docker/api/types/strslice"
-	"k8s.io/klog/v2"
+	"github.com/sirupsen/logrus"
 
 	"github.com/Mirantis/cri-dockerd/libdocker"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
@@ -76,7 +76,7 @@ func (ds *dockerService) ListContainers(
 
 		converted, err := toRuntimeAPIContainer(&c)
 		if err != nil {
-			klog.V(4).InfoS("Unable to convert docker to runtime API container", "err", err)
+			logrus.Info("Unable to convert docker to runtime API container", "err", err)
 			continue
 		}
 
@@ -256,9 +256,7 @@ func (ds *dockerService) createContainerLogSymlink(containerID string) error {
 	}
 
 	if path == "" {
-		klog.V(
-			5,
-		).InfoS(
+		logrus.Debug(
 			"Container log path isn't specified, will not create the symlink",
 			"containerID",
 			containerID,
@@ -270,7 +268,7 @@ func (ds *dockerService) createContainerLogSymlink(containerID string) error {
 		// Only create the symlink when container log path is specified and log file exists.
 		// Delete possibly existing file first
 		if err = ds.os.Remove(path); err == nil {
-			klog.InfoS("Deleted previously existing symlink file", "path", path)
+			logrus.Info("Deleted previously existing symlink file", "path", path)
 		}
 		if err = ds.os.Symlink(realPath, path); err != nil {
 			return fmt.Errorf(
@@ -284,14 +282,14 @@ func (ds *dockerService) createContainerLogSymlink(containerID string) error {
 	} else {
 		supported, err := ds.IsCRISupportedLogDriver()
 		if err != nil {
-			klog.InfoS("Failed to check supported logging driver by CRI", "err", err)
+			logrus.Info("Failed to check supported logging driver by CRI", "err", err)
 			return nil
 		}
 
 		if supported {
-			klog.InfoS("Cannot create symbolic link because container log file doesn't exist!")
+			logrus.Info("Cannot create symbolic link because container log file doesn't exist!")
 		} else {
-			klog.V(5).InfoS("Unsupported logging driver by CRI")
+			logrus.Debug("Unsupported logging driver by CRI")
 		}
 	}
 
@@ -433,7 +431,7 @@ func (ds *dockerService) ContainerStatus(
 				err,
 			)
 		}
-		klog.InfoS(
+		logrus.Info(
 			"Ignore error image not found while inspecting docker container",
 			"containerID",
 			containerID,
@@ -575,7 +573,7 @@ func (ds *dockerService) performPlatformSpecificContainerCleanupAndLogErrors(
 
 	errors := ds.performPlatformSpecificContainerCleanup(cleanupInfo)
 	for _, err := range errors {
-		klog.InfoS(
+		logrus.Info(
 			"Error when cleaning up after container",
 			"containerNameOrID",
 			containerNameOrID,

@@ -25,9 +25,9 @@ import (
 	"strings"
 
 	"github.com/Mirantis/cri-dockerd/core"
+	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
-	"k8s.io/klog/v2"
 	"k8s.io/kubernetes/pkg/kubelet/util"
 )
 
@@ -69,11 +69,11 @@ func getListener(addr string) (net.Listener, error) {
 func (s *DockerServer) Start() error {
 	// Start the internal service.
 	if err := s.service.Start(); err != nil {
-		klog.ErrorS(err, "Unable to start cri-dockerd service")
+		logrus.Error(err, "Unable to start cri-dockerd service")
 		return err
 	}
 
-	klog.V(2).InfoS("Start cri-dockerd grpc server")
+	logrus.Info("Start cri-dockerd grpc server")
 	l, err := getListener(s.endpoint)
 	if err != nil {
 		return fmt.Errorf("cri-dockerd failed to listen on %q: %v", s.endpoint, err)
@@ -87,7 +87,7 @@ func (s *DockerServer) Start() error {
 	runtimeapi.RegisterImageServiceServer(s.server, s.service)
 	go func() {
 		if err := s.server.Serve(l); err != nil {
-			klog.ErrorS(err, "Failed to serve connections from cri-dockerd")
+			logrus.Error(err, "Failed to serve connections from cri-dockerd")
 			os.Exit(1)
 		}
 	}()

@@ -25,7 +25,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"k8s.io/klog/v2"
+	"github.com/sirupsen/logrus"
 )
 
 func (r *streamingRuntime) portForward(
@@ -63,7 +63,7 @@ func (r *streamingRuntime) portForward(
 	}
 
 	commandString := fmt.Sprintf("%s %s", nsenterPath, strings.Join(args, " "))
-	klog.V(4).InfoS("Executing port forwarding command", "command", commandString)
+	logrus.Info("Executing port forwarding command", "command", commandString)
 
 	command := exec.Command(nsenterPath, args...)
 	command.Stdout = stream

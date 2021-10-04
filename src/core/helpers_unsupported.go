@@ -24,7 +24,7 @@ import (
 	"github.com/blang/semver"
 	dockertypes "github.com/docker/docker/api/types"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
-	"k8s.io/klog/v2"
+	"github.com/sirupsen/logrus"
 )
 
 // DefaultMemorySwap always returns -1 for no memory swap in a sandbox
@@ -36,12 +36,12 @@ func (ds *core.dockerService) getSecurityOpts(
 	seccompProfile string,
 	separator rune,
 ) ([]string, error) {
-	klog.InfoS("getSecurityOpts is unsupported in this build")
+	logrus.Info("getSecurityOpts is unsupported in this build")
 	return nil, nil
 }
 
 func (ds *core.dockerService) getSandBoxSecurityOpts(separator rune) []string {
-	klog.InfoS("getSandBoxSecurityOpts is unsupported in this build")
+	logrus.Info("getSandBoxSecurityOpts is unsupported in this build")
 	return nil
 }
 
@@ -50,12 +50,12 @@ func (ds *core.dockerService) updateCreateConfig(
 	config *runtimeapi.ContainerConfig,
 	sandboxConfig *runtimeapi.PodSandboxConfig,
 	podSandboxID string, securityOptSep rune, apiVersion *semver.Version) error {
-	klog.InfoS("updateCreateConfig is unsupported in this build")
+	logrus.Info("updateCreateConfig is unsupported in this build")
 	return nil
 }
 
 func (ds *core.dockerService) determinePodIPBySandboxID(uid string) []string {
-	klog.InfoS("determinePodIPBySandboxID is unsupported in this build")
+	logrus.Info("determinePodIPBySandboxID is unsupported in this build")
 	return nil
 }
 

@@ -30,7 +30,7 @@ import (
 	"sync"
 	"time"
 
-	"k8s.io/klog/v2"
+	"github.com/sirupsen/logrus"
 
 	dockertypes "github.com/docker/docker/api/types"
 	dockercontainer "github.com/docker/docker/api/types/container"
@@ -365,7 +365,7 @@ func (p *progressReporter) start() {
 				progress, timestamp := p.progress.get()
 				// If there is no progress for p.imagePullProgressDeadline, cancel the operation.
 				if time.Since(timestamp) > p.imagePullProgressDeadline {
-					klog.ErrorS(
+					logrus.Error(
 						nil,
 						"Cancel pulling image because of exceed image pull deadline, record latest progress",
 						"image",
@@ -378,10 +378,10 @@ func (p *progressReporter) start() {
 					p.cancel()
 					return
 				}
-				klog.V(2).InfoS("Pulling image", "image", p.image, "progress", progress)
+				logrus.Info("Pulling image", "image", p.image, "progress", progress)
 			case <-p.stopCh:
 				progress, _ := p.progress.get()
-				klog.V(2).InfoS("Stop pulling image", "image", p.image, "progress", progress)
+				logrus.Info("Stop pulling image", "image", p.image, "progress", progress)
 				return
 			}
 		}
