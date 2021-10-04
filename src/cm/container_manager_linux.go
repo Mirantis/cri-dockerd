@@ -31,7 +31,6 @@ import (
 	utilversion "k8s.io/apimachinery/pkg/util/version"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/klog/v2"
-	kubecm "k8s.io/kubernetes/pkg/kubelet/cm"
 
 	"github.com/Mirantis/cri-dockerd/libdocker"
 )
@@ -98,7 +97,7 @@ func (m *containerManager) doWork() {
 	// EnsureDockerInContainer does two things.
 	//   1. Ensure processes run in the cgroups if m.cgroupsManager is not nil.
 	//   2. Ensure processes have the OOM score applied.
-	if err := kubecm.EnsureDockerInContainer(version, dockerOOMScoreAdj, m.cgroupsManager); err != nil {
+	if err := m.ensureDockerInContainer(version, dockerOOMScoreAdj, m.cgroupsManager); err != nil {
 		klog.ErrorS(err, "Unable to ensure the docker processes run in the desired containers")
 	}
 }
