@@ -24,9 +24,10 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/Mirantis/cri-dockerd/config"
+
 	"github.com/sirupsen/logrus"
 
-	v1 "k8s.io/api/core/v1"
 	utiliptables "k8s.io/kubernetes/pkg/util/iptables"
 )
 
@@ -41,7 +42,7 @@ const (
 type PortMapping struct {
 	HostPort      int32
 	ContainerPort int32
-	Protocol      v1.Protocol
+	Protocol      config.Protocol
 	HostIP        string
 }
 

@@ -25,9 +25,10 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/Mirantis/cri-dockerd/config"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"k8s.io/api/core/v1"
 )
 
 func TestGetSeccompSecurityOpts(t *testing.T) {
@@ -45,11 +46,11 @@ func TestGetSeccompSecurityOpts(t *testing.T) {
 		expectedOpts:   []string{"seccomp=unconfined"},
 	}, {
 		msg:            "Seccomp default",
-		seccompProfile: v1.SeccompProfileRuntimeDefault,
+		seccompProfile: config.SeccompProfileRuntimeDefault,
 		expectedOpts:   nil,
 	}, {
 		msg:            "Seccomp deprecated default",
-		seccompProfile: v1.DeprecatedSeccompProfileDockerDefault,
+		seccompProfile: config.DeprecatedSeccompProfileDockerDefault,
 		expectedOpts:   nil,
 	}}
 

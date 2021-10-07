@@ -25,17 +25,18 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Mirantis/cri-dockerd/network/hostport"
-	"github.com/Mirantis/cri-dockerd/network/metrics"
+	"github.com/Mirantis/cri-dockerd/config"
+
 	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	utilsets "k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation"
-	kubeletconfig "k8s.io/kubernetes/pkg/kubelet/apis/config"
-	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
 	utilsysctl "k8s.io/kubernetes/pkg/util/sysctl"
 	utilexec "k8s.io/utils/exec"
+
+	"github.com/Mirantis/cri-dockerd/network/hostport"
+	"github.com/Mirantis/cri-dockerd/network/metrics"
+	utilerrors "github.com/Mirantis/cri-dockerd/utils/errors"
 
 	utilfeature "k8s.io/apiserver/pkg/util/feature"
 	kubefeatures "k8s.io/kubernetes/pkg/features"
@@ -54,7 +55,7 @@ const (
 type NetworkPlugin interface {
 	// Init initializes the plugin.  This will be called exactly once
 	// before any other methods are called.
-	Init(host Host, hairpinMode kubeletconfig.HairpinMode, nonMasqueradeCIDR string, mtu int) error
+	Init(host Host, hairpinMode config.HairpinMode, nonMasqueradeCIDR string, mtu int) error
 
 	// Called on various events like:
 	// NET_PLUGIN_EVENT_POD_CIDR_CHANGE
@@ -73,25 +74,25 @@ type NetworkPlugin interface {
 	SetUpPod(
 		namespace string,
 		name string,
-		podSandboxID kubecontainer.ContainerID,
+		podSandboxID config.ContainerID,
 		annotations, options map[string]string,
 	) error
 
 	// TearDownPod is the method called before a pod's infra container will be deleted
-	TearDownPod(namespace string, name string, podSandboxID kubecontainer.ContainerID) error
+	TearDownPod(namespace string, name string, podSandboxID config.ContainerID) error
 
 	// GetPodNetworkStatus is the method called to obtain the ipv4 or ipv6 addresses of the container
 	GetPodNetworkStatus(
 		namespace string,
 		name string,
-		podSandboxID kubecontainer.ContainerID,
+		podSandboxID config.ContainerID,
 	) (*PodNetworkStatus, error)
 
 	// Status returns error if the network plugin is in error state
 	Status() error
 }
 
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/cmd/runtime.Object
 
 // PodNetworkStatus stores the network status of a pod (currently just the primary IP address)
 // This struct represents version "v1beta1"
@@ -143,7 +144,7 @@ func InitNetworkPlugin(
 	plugins []NetworkPlugin,
 	networkPluginName string,
 	host Host,
-	hairpinMode kubeletconfig.HairpinMode,
+	hairpinMode config.HairpinMode,
 	nonMasqueradeCIDR string,
 	mtu int,
 ) (NetworkPlugin, error) {
@@ -211,7 +212,7 @@ const sysctlBridgeCallIP6Tables = "net/bridge/bridge-nf-call-ip6tables"
 
 func (plugin *NoopNetworkPlugin) Init(
 	host Host,
-	hairpinMode kubeletconfig.HairpinMode,
+	hairpinMode config.HairpinMode,
 	nonMasqueradeCIDR string,
 	mtu int,
 ) error {
@@ -252,7 +253,7 @@ func (plugin *NoopNetworkPlugin) Capabilities() utilsets.Int {
 func (plugin *NoopNetworkPlugin) SetUpPod(
 	namespace string,
 	name string,
-	id kubecontainer.ContainerID,
+	id config.ContainerID,
 	annotations, options map[string]string,
 ) error {
 	return nil
@@ -261,7 +262,7 @@ func (plugin *NoopNetworkPlugin) SetUpPod(
 func (plugin *NoopNetworkPlugin) TearDownPod(
 	namespace string,
 	name string,
-	id kubecontainer.ContainerID,
+	id config.ContainerID,
 ) error {
 	return nil
 }
@@ -269,7 +270,7 @@ func (plugin *NoopNetworkPlugin) TearDownPod(
 func (plugin *NoopNetworkPlugin) GetPodNetworkStatus(
 	namespace string,
 	name string,
-	id kubecontainer.ContainerID,
+	id config.ContainerID,
 ) (*PodNetworkStatus, error) {
 	return nil, nil
 }
@@ -463,11 +464,11 @@ func recordError(operation string) {
 
 func (pm *PluginManager) GetPodNetworkStatus(
 	podNamespace, podName string,
-	id kubecontainer.ContainerID,
+	id config.ContainerID,
 ) (*PodNetworkStatus, error) {
 	const operation = "get_pod_network_status"
 	defer recordOperation(operation, time.Now())
-	fullPodName := kubecontainer.BuildPodFullName(podName, podNamespace)
+	fullPodName := buildPodFullName(podName, podNamespace)
 	pm.podLock(fullPodName).Lock()
 	defer pm.podUnlock(fullPodName)
 
@@ -487,12 +488,12 @@ func (pm *PluginManager) GetPodNetworkStatus(
 
 func (pm *PluginManager) SetUpPod(
 	podNamespace, podName string,
-	id kubecontainer.ContainerID,
+	id config.ContainerID,
 	annotations, options map[string]string,
 ) error {
 	const operation = "set_up_pod"
 	defer recordOperation(operation, time.Now())
-	fullPodName := kubecontainer.BuildPodFullName(podName, podNamespace)
+	fullPodName := buildPodFullName(podName, podNamespace)
 	pm.podLock(fullPodName).Lock()
 	defer pm.podUnlock(fullPodName)
 
@@ -511,11 +512,11 @@ func (pm *PluginManager) SetUpPod(
 
 func (pm *PluginManager) TearDownPod(
 	podNamespace, podName string,
-	id kubecontainer.ContainerID,
+	id config.ContainerID,
 ) error {
 	const operation = "tear_down_pod"
 	defer recordOperation(operation, time.Now())
-	fullPodName := kubecontainer.BuildPodFullName(podName, podNamespace)
+	fullPodName := buildPodFullName(podName, podNamespace)
 	pm.podLock(fullPodName).Lock()
 	defer pm.podUnlock(fullPodName)
 
@@ -530,4 +531,8 @@ func (pm *PluginManager) TearDownPod(
 	}
 
 	return nil
+}
+
+func buildPodFullName(name, namespace string) string {
+	return name + "_" + namespace
 }

@@ -22,9 +22,10 @@ package testing
 // a fake host is created here that can be used by plugins for testing
 
 import (
-	"github.com/Mirantis/cri-dockerd/network/hostport"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	clientset "k8s.io/client-go/kubernetes"
+
+	"github.com/Mirantis/cri-dockerd/network/hostport"
 )
 
 type fakeNetworkHost struct {

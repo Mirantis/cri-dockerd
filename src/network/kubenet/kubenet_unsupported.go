@@ -21,9 +21,8 @@ package kubenet
 import (
 	"fmt"
 
+	"github.com/Mirantis/cri-dockerd/config"
 	"github.com/Mirantis/cri-dockerd/network"
-	kubeletconfig "k8s.io/kubernetes/pkg/kubelet/apis/config"
-	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
 )
 
 type kubenetNetworkPlugin struct {
@@ -36,7 +35,7 @@ func NewPlugin(networkPluginDirs []string, cacheDir string) network.NetworkPlugi
 
 func (plugin *kubenetNetworkPlugin) Init(
 	host network.Host,
-	hairpinMode kubeletconfig.HairpinMode,
+	hairpinMode config.HairpinMode,
 	nonMasqueradeCIDR string,
 	mtu int,
 ) error {
@@ -50,7 +49,7 @@ func (plugin *kubenetNetworkPlugin) Name() string {
 func (plugin *kubenetNetworkPlugin) SetUpPod(
 	namespace string,
 	name string,
-	id kubecontainer.ContainerID,
+	id config.ContainerID,
 	annotations, options map[string]string,
 ) error {
 	return fmt.Errorf("Kubenet is not supported in this build")
@@ -59,7 +58,7 @@ func (plugin *kubenetNetworkPlugin) SetUpPod(
 func (plugin *kubenetNetworkPlugin) TearDownPod(
 	namespace string,
 	name string,
-	id kubecontainer.ContainerID,
+	id config.ContainerID,
 ) error {
 	return fmt.Errorf("Kubenet is not supported in this build")
 }
@@ -67,7 +66,7 @@ func (plugin *kubenetNetworkPlugin) TearDownPod(
 func (plugin *kubenetNetworkPlugin) GetPodNetworkStatus(
 	namespace string,
 	name string,
-	id kubecontainer.ContainerID,
+	id config.ContainerID,
 ) (*network.PodNetworkStatus, error) {
 	return nil, fmt.Errorf("Kubenet is not supported in this build")
 }

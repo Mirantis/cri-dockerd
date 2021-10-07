@@ -30,7 +30,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	mockclient "github.com/Mirantis/cri-dockerd/libdocker/testing"
-	"k8s.io/client-go/tools/remotecommand"
+	"github.com/Mirantis/cri-dockerd/streaming/remotecommand"
 )
 
 func TestExecInContainer(t *testing.T) {
@@ -129,7 +129,7 @@ func TestExecInContainer(t *testing.T) {
 			tc.returnInspectExec1,
 			tc.returnInspectExec2)
 
-		// use parent context of 2 minutes since that's the default remote
+		// use parent context of 2 minutes since that's the default backend
 		// runtime connection timeout used by cri-dockerd
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 		defer cancel()

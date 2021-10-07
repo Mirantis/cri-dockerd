@@ -1,5 +1,3 @@
-// +build !dockerless
-
 /*
 Copyright 2016 The Kubernetes Authors.
 
@@ -26,22 +24,23 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/Mirantis/cri-dockerd/config"
+
 	"github.com/armon/circbuf"
 	dockertypes "github.com/docker/docker/api/types"
 
 	"github.com/sirupsen/logrus"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kubetypes "k8s.io/apimachinery/pkg/types"
-	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
 
 	"github.com/Mirantis/cri-dockerd/libdocker"
 )
 
-// We define `DockerLegacyService` in `pkg/kubelet/legacy`, instead of in this
-// file. We make this decision because `pkg/kubelet` depends on
+// We define `DockerLegacyService` in `cmd/kubelet/legacy`, instead of in this
+// file. We make this decision because `cmd/kubelet` depends on
 // `DockerLegacyService`, and we want to be able to build the `kubelet` without
-// relying on `github.com/docker/docker` or `pkg/kubelet/cri-dockerd`.
+// relying on `github.com/docker/docker` or `cmd/kubelet/cri-dockerd`.
 //
 // See https://github.com/kubernetes/enhancements/blob/master/keps/sig-node/1547-building-kubelet-without-docker/README.md
 // for details.
@@ -50,7 +49,7 @@ import (
 func (d *dockerService) GetContainerLogs(
 	_ context.Context,
 	pod *v1.Pod,
-	containerID kubecontainer.ContainerID,
+	containerID config.ContainerID,
 	logOptions *v1.PodLogOptions,
 	stdout, stderr io.Writer,
 ) error {
@@ -101,16 +100,16 @@ func (d *dockerService) GetContainerLogs(
 // from the end of the log when docker is configured with a log driver other than json-log.
 // It reads up to MaxContainerTerminationMessageLogLines lines.
 func (d *dockerService) GetContainerLogTail(
-	uid kubetypes.UID,
+	uid config.UID,
 	name, namespace string,
-	containerID kubecontainer.ContainerID,
+	containerID config.ContainerID,
 ) (string, error) {
-	value := int64(kubecontainer.MaxContainerTerminationMessageLogLines)
-	buf, _ := circbuf.NewBuffer(kubecontainer.MaxContainerTerminationMessageLogLength)
+	value := int64(config.MaxContainerTerminationMessageLogLines)
+	buf, _ := circbuf.NewBuffer(config.MaxContainerTerminationMessageLogLength)
 	// Although this is not a full spec pod, dockerLegacyService.GetContainerLogs() currently completely ignores its pod param
 	pod := &v1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			UID:       uid,
+			UID:       kubetypes.UID(uid),
 			Name:      name,
 			Namespace: namespace,
 		},

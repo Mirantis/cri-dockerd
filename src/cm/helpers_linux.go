@@ -1,3 +1,5 @@
+// +build !windows
+
 /*
 Copyright 2021 Mirantis
 
@@ -18,14 +20,15 @@ package cm
 
 import (
 	"fmt"
+	"os"
+	"strconv"
+
 	"github.com/opencontainers/runc/libcontainer/cgroups"
 	"github.com/sirupsen/logrus"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	utilversion "k8s.io/apimachinery/pkg/util/version"
 	"k8s.io/kubernetes/pkg/util/oom"
 	"k8s.io/kubernetes/pkg/util/procfs"
-	"os"
-	"strconv"
 )
 
 func isProcessRunningInHost(pid int) (bool, error) {
@@ -98,7 +101,6 @@ func (m *containerManager) ensureDockerInContainer(dockerAPIVersion *utilversion
 	dockerProcs := []process{{
 		"dockerd",
 		"/var/run/docker.pid",
-
 	}}
 
 	containerdAPIVersion := utilversion.MustParseGeneric("1.23")

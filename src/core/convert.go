@@ -25,8 +25,9 @@ import (
 
 	dockertypes "github.com/docker/docker/api/types"
 
+	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
+
 	"github.com/Mirantis/cri-dockerd/libdocker"
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 )
 
 // This file contains helper functions to convert docker API types to runtime

@@ -23,13 +23,15 @@ limitations under the License.
 package testing
 
 import (
-	libdocker "github.com/Mirantis/cri-dockerd/libdocker"
+	reflect "reflect"
+	time "time"
+
 	types "github.com/docker/docker/api/types"
 	container "github.com/docker/docker/api/types/container"
 	image "github.com/docker/docker/api/types/image"
 	gomock "github.com/golang/mock/gomock"
-	reflect "reflect"
-	time "time"
+
+	libdocker "github.com/Mirantis/cri-dockerd/libdocker"
 )
 
 // MockInterface is a mock of DockerClientInterface interface

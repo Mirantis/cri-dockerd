@@ -31,21 +31,25 @@ import (
 	"testing"
 	"text/template"
 
-	"github.com/Mirantis/cri-dockerd/network"
-	"github.com/Mirantis/cri-dockerd/network/cni/testing"
-	"github.com/Mirantis/cri-dockerd/network/hostport"
-	networktest "github.com/Mirantis/cri-dockerd/network/testing"
+	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
+
+	"github.com/Mirantis/cri-dockerd/config"
+
 	types020 "github.com/containernetworking/cni/pkg/types/020"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	clientset "k8s.io/client-go/kubernetes"
 	utiltesting "k8s.io/client-go/util/testing"
 	kubeletconfig "k8s.io/kubernetes/pkg/kubelet/apis/config"
-	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
 	containertest "k8s.io/kubernetes/pkg/kubelet/container/testing"
 	"k8s.io/utils/exec"
 	fakeexec "k8s.io/utils/exec/testing"
+
+	"github.com/Mirantis/cri-dockerd/network"
+	mock_cni "github.com/Mirantis/cri-dockerd/network/cni/testing"
+	"github.com/Mirantis/cri-dockerd/network/hostport"
+	networktest "github.com/Mirantis/cri-dockerd/network/testing"
 )
 
 // Returns .in file path, .out file path, and .env file path
@@ -234,11 +238,11 @@ func TestCNIPlugin(t *testing.T) {
 		podIP,
 	)
 
-	containerID := kubecontainer.ContainerID{Type: "test", ID: "test_infra_container"}
+	containerID := config.ContainerID{Type: "test", ID: "test_infra_container"}
 	pods := []*containertest.FakePod{{
 		Pod: &kubecontainer.Pod{
 			Containers: []*kubecontainer.Container{
-				{ID: containerID},
+				{ID: kubecontainer.ContainerID(containerID)},
 			},
 		},
 		NetnsPath: "/proc/12345/ns/net",

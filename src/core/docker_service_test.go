@@ -24,19 +24,20 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Mirantis/cri-dockerd/libdocker"
-	"github.com/Mirantis/cri-dockerd/network"
-	nettest "github.com/Mirantis/cri-dockerd/network/testing"
+	"github.com/Mirantis/cri-dockerd/store"
+
 	"github.com/blang/semver"
 	dockertypes "github.com/docker/docker/api/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/util/clock"
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
-	"k8s.io/kubernetes/pkg/kubelet/checkpointmanager"
+	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 	containertest "k8s.io/kubernetes/pkg/kubelet/container/testing"
-	"k8s.io/kubernetes/pkg/kubelet/util/cache"
+
+	"github.com/Mirantis/cri-dockerd/libdocker"
+	"github.com/Mirantis/cri-dockerd/network"
+	nettest "github.com/Mirantis/cri-dockerd/network/testing"
 )
 
 // newTestNetworkPlugin returns a mock plugin that implements network.NetworkPlugin
@@ -51,7 +52,7 @@ type mockCheckpointManager struct {
 
 func (ckm *mockCheckpointManager) CreateCheckpoint(
 	checkpointKey string,
-	checkpoint checkpointmanager.Checkpoint,
+	checkpoint store.Checkpoint,
 ) error {
 	ckm.checkpoint[checkpointKey] = checkpoint.(*PodSandboxCheckpoint)
 	return nil
@@ -59,7 +60,7 @@ func (ckm *mockCheckpointManager) CreateCheckpoint(
 
 func (ckm *mockCheckpointManager) GetCheckpoint(
 	checkpointKey string,
-	checkpoint checkpointmanager.Checkpoint,
+	checkpoint store.Checkpoint,
 ) error {
 	*(checkpoint.(*PodSandboxCheckpoint)) = *(ckm.checkpoint[checkpointKey])
 	return nil
@@ -81,7 +82,7 @@ func (ckm *mockCheckpointManager) ListCheckpoints() ([]string, error) {
 	return keys, nil
 }
 
-func newMockCheckpointManager() checkpointmanager.CheckpointManager {
+func newMockCheckpointManager() store.CheckpointManager {
 	return &mockCheckpointManager{checkpoint: make(map[string]*PodSandboxCheckpoint)}
 }
 
@@ -108,7 +109,7 @@ func newTestDockerService() (*dockerService, *libdocker.FakeDockerClient, *clock
 
 func newTestDockerServiceWithVersionCache() (*dockerService, *libdocker.FakeDockerClient, *clock.FakeClock) {
 	ds, c, fakeClock := newTestDockerService()
-	ds.versionCache = cache.NewObjectCache(
+	ds.versionCache = store.NewObjectCache(
 		func() (interface{}, error) {
 			return ds.getDockerVersion()
 		},

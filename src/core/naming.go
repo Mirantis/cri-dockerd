@@ -24,8 +24,9 @@ import (
 	"strconv"
 	"strings"
 
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
-	"k8s.io/kubernetes/pkg/kubelet/leaky"
+	"github.com/Mirantis/cri-dockerd/config"
+
+	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
 // Container "names" are implementation details that do not concern
@@ -47,7 +48,7 @@ const (
 	kubePrefix = "k8s"
 	// sandboxContainerName is a string to include in the docker container so
 	// that users can easily identify the sandboxes.
-	sandboxContainerName = leaky.PodInfraContainerName
+	sandboxContainerName = config.PodInfraContainerName
 	// Delimiter used to construct docker container names.
 	nameDelimiter = "_"
 	// DockerImageIDPrefix is the prefix of image id in container status.

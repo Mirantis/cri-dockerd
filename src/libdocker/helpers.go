@@ -19,6 +19,7 @@ limitations under the License.
 package libdocker
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -175,4 +176,18 @@ func matchImageIDOnly(inspected dockertypes.ImageInspect, image string) bool {
 	logrus.Info("The image reference does not directly refer to the given image's ID",
 		"image", image, "inspectedImageID", inspected.ID)
 	return false
+}
+
+func CheckContainerStatus(
+	client DockerClientInterface,
+	containerID string,
+) (*dockertypes.ContainerJSON, error) {
+	container, err := client.InspectContainer(containerID)
+	if err != nil {
+		return nil, err
+	}
+	if !container.State.Running {
+		return nil, fmt.Errorf("container not running (%s)", container.ID)
+	}
+	return container, nil
 }
