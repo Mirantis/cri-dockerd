@@ -24,8 +24,9 @@ import (
 
 	dockercontainer "github.com/docker/docker/api/types/container"
 
+	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
+
 	knetwork "github.com/Mirantis/cri-dockerd/network"
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 )
 
 // applySandboxSecurityContext updates docker sandbox options according to security context.

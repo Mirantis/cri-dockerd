@@ -20,11 +20,12 @@ package core
 
 import (
 	"fmt"
-	dockercontainer "github.com/docker/docker/api/types/container"
-	"github.com/stretchr/testify/assert"
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 	"strconv"
 	"testing"
+
+	dockercontainer "github.com/docker/docker/api/types/container"
+	"github.com/stretchr/testify/assert"
+	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
 func TestModifyContainerConfig(t *testing.T) {

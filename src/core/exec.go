@@ -24,27 +24,15 @@ import (
 	"io"
 	"time"
 
+	"k8s.io/client-go/tools/remotecommand"
+
 	dockertypes "github.com/docker/docker/api/types"
 	"github.com/sirupsen/logrus"
-	"github.com/Mirantis/cri-dockerd/libdocker"
-	"k8s.io/client-go/tools/remotecommand"
-	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
-)
 
-// ExecHandler knows how to execute a command in a running Docker container.
-type ExecHandler interface {
-	ExecInContainer(
-		ctx context.Context,
-		client libdocker.DockerClientInterface,
-		container *dockertypes.ContainerJSON,
-		cmd []string,
-		stdin io.Reader,
-		stdout, stderr io.WriteCloser,
-		tty bool,
-		resize <-chan remotecommand.TerminalSize,
-		timeout time.Duration,
-	) error
-}
+	"github.com/Mirantis/cri-dockerd/libdocker"
+
+	"k8s.io/apimachinery/pkg/util/runtime"
+)
 
 type dockerExitError struct {
 	Inspect *dockertypes.ContainerExecInspect
@@ -64,6 +52,23 @@ func (d *dockerExitError) Exited() bool {
 
 func (d *dockerExitError) ExitStatus() int {
 	return d.Inspect.ExitCode
+}
+
+func handleResizing(resize <-chan remotecommand.TerminalSize, resizeFunc func(size remotecommand.TerminalSize)) {
+	if resize == nil {
+		return
+	}
+
+	go func() {
+		defer runtime.HandleCrash()
+
+		for size := range resize {
+			if size.Height < 1 || size.Width < 1 {
+				continue
+			}
+			resizeFunc(size)
+		}
+	}()
 }
 
 // NativeExecHandler executes commands in Docker containers using Docker's exec API.
@@ -111,7 +116,7 @@ func (*NativeExecHandler) ExecInContainer(
 			return
 		}
 
-		kubecontainer.HandleResizing(resize, func(size remotecommand.TerminalSize) {
+		handleResizing(resize, func(size remotecommand.TerminalSize) {
 			client.ResizeExecTTY(execObj.ID, uint(size.Height), uint(size.Width))
 		})
 	}()

@@ -27,8 +27,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Mirantis/cri-dockerd/network"
-	"github.com/Mirantis/cri-dockerd/network/hostport"
+	"github.com/Mirantis/cri-dockerd/config"
+
 	"github.com/containernetworking/cni/libcni"
 	cnitypes "github.com/containernetworking/cni/pkg/types"
 	cnitypes020 "github.com/containernetworking/cni/pkg/types/020"
@@ -38,13 +38,14 @@ import (
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	utilnet "k8s.io/apimachinery/pkg/util/net"
 	utilsets "k8s.io/apimachinery/pkg/util/sets"
-	kubeletconfig "k8s.io/kubernetes/pkg/kubelet/apis/config"
-	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
 	"k8s.io/kubernetes/pkg/util/bandwidth"
 	utiliptables "k8s.io/kubernetes/pkg/util/iptables"
 	utilsysctl "k8s.io/kubernetes/pkg/util/sysctl"
 	utilexec "k8s.io/utils/exec"
 	utilebtables "k8s.io/utils/net/ebtables"
+
+	"github.com/Mirantis/cri-dockerd/network"
+	"github.com/Mirantis/cri-dockerd/network/hostport"
 
 	utilfeature "k8s.io/apiserver/pkg/util/feature"
 	kubefeatures "k8s.io/kubernetes/pkg/features"
@@ -96,11 +97,11 @@ type kubenetNetworkPlugin struct {
 	cniConfig         libcni.CNI
 	bandwidthShaper   bandwidth.Shaper
 	mu                sync.Mutex //Mutex for protecting podIPs map, netConfig, and shaper initialization
-	podIPs            map[kubecontainer.ContainerID]utilsets.String
+	podIPs            map[config.ContainerID]utilsets.String
 	mtu               int
 	execer            utilexec.Interface
 	nsenterPath       string
-	hairpinMode       kubeletconfig.HairpinMode
+	hairpinMode       config.HairpinMode
 	hostportManager   hostport.HostPortManager
 	hostportManagerv6 hostport.HostPortManager
 	iptables          utiliptables.Interface
@@ -120,7 +121,7 @@ func NewPlugin(networkPluginDirs []string, cacheDir string) network.NetworkPlugi
 	iptInterface := utiliptables.New(execer, utiliptables.ProtocolIPv4)
 	iptInterfacev6 := utiliptables.New(execer, utiliptables.ProtocolIPv6)
 	return &kubenetNetworkPlugin{
-		podIPs:            make(map[kubecontainer.ContainerID]utilsets.String),
+		podIPs:            make(map[config.ContainerID]utilsets.String),
 		execer:            utilexec.New(),
 		iptables:          iptInterface,
 		iptablesv6:        iptInterfacev6,
@@ -136,7 +137,7 @@ func NewPlugin(networkPluginDirs []string, cacheDir string) network.NetworkPlugi
 
 func (plugin *kubenetNetworkPlugin) Init(
 	host network.Host,
-	hairpinMode kubeletconfig.HairpinMode,
+	hairpinMode config.HairpinMode,
 	nonMasqueradeCIDR string,
 	mtu int,
 ) error {
@@ -292,7 +293,7 @@ func (plugin *kubenetNetworkPlugin) Event(name string, details map[string]interf
 	}
 
 	//setup hairpinMode
-	setHairpin := plugin.hairpinMode == kubeletconfig.HairpinVeth
+	setHairpin := plugin.hairpinMode == config.HairpinVeth
 
 	json := fmt.Sprintf(
 		NET_CONFIG_TEMPLATE,
@@ -362,7 +363,7 @@ func (plugin *kubenetNetworkPlugin) Capabilities() utilsets.Int {
 func (plugin *kubenetNetworkPlugin) setup(
 	namespace string,
 	name string,
-	id kubecontainer.ContainerID,
+	id config.ContainerID,
 	annotations map[string]string,
 ) error {
 	var ipv4, ipv6 net.IP
@@ -418,7 +419,7 @@ func (plugin *kubenetNetworkPlugin) setup(
 		return fmt.Errorf("cni didn't report ipv4 ipv6")
 	}
 	// Put the container bridge into promiscuous mode to force it to accept hairpin packets.
-	if plugin.hairpinMode == kubeletconfig.PromiscuousBridge {
+	if plugin.hairpinMode == config.PromiscuousBridge {
 		link, err := netlink.LinkByName(BridgeName)
 		if err != nil {
 			return fmt.Errorf("failed to lookup %q: %v", BridgeName, err)
@@ -452,7 +453,7 @@ func (plugin *kubenetNetworkPlugin) setup(
 
 // The first SetUpPod call creates the bridge; get a shaper for the sake of initialization
 func (plugin *kubenetNetworkPlugin) addTrafficShaping(
-	id kubecontainer.ContainerID,
+	id config.ContainerID,
 	annotations map[string]string,
 ) error {
 	shaper := plugin.shaper()
@@ -484,7 +485,7 @@ func (plugin *kubenetNetworkPlugin) addTrafficShaping(
 }
 
 func (plugin *kubenetNetworkPlugin) addPortMapping(
-	id kubecontainer.ContainerID,
+	id config.ContainerID,
 	name, namespace string,
 ) error {
 	portMappings, err := plugin.host.GetPodPortMappings(id.ID)
@@ -526,7 +527,7 @@ func (plugin *kubenetNetworkPlugin) addPortMapping(
 func (plugin *kubenetNetworkPlugin) SetUpPod(
 	namespace string,
 	name string,
-	id kubecontainer.ContainerID,
+	id config.ContainerID,
 	annotations, options map[string]string,
 ) error {
 
@@ -562,7 +563,7 @@ func (plugin *kubenetNetworkPlugin) SetUpPod(
 func (plugin *kubenetNetworkPlugin) teardown(
 	namespace string,
 	name string,
-	id kubecontainer.ContainerID,
+	id config.ContainerID,
 ) error {
 	errList := []error{}
 
@@ -641,7 +642,7 @@ func (plugin *kubenetNetworkPlugin) teardown(
 func (plugin *kubenetNetworkPlugin) TearDownPod(
 	namespace string,
 	name string,
-	id kubecontainer.ContainerID,
+	id config.ContainerID,
 ) error {
 	if plugin.netConfig == nil {
 		return fmt.Errorf("kubenet needs a PodCIDR to tear down pods")
@@ -662,7 +663,7 @@ func (plugin *kubenetNetworkPlugin) TearDownPod(
 func (plugin *kubenetNetworkPlugin) GetPodNetworkStatus(
 	namespace string,
 	name string,
-	id kubecontainer.ContainerID,
+	id config.ContainerID,
 ) (*network.PodNetworkStatus, error) {
 	// try cached version
 	networkStatus := plugin.getNetworkStatus(id)
@@ -702,7 +703,7 @@ func (plugin *kubenetNetworkPlugin) GetPodNetworkStatus(
 
 // returns networkstatus
 func (plugin *kubenetNetworkPlugin) getNetworkStatus(
-	id kubecontainer.ContainerID,
+	id config.ContainerID,
 ) *network.PodNetworkStatus {
 	// Assuming the ip of pod does not change. Try to retrieve ip from kubenet map first.
 	iplist, ok := plugin.getCachedPodIPs(id)
@@ -776,7 +777,7 @@ func (plugin *kubenetNetworkPlugin) checkRequiredCNIPluginsInOneDir(dir string) 
 
 func (plugin *kubenetNetworkPlugin) buildCNIRuntimeConf(
 	ifName string,
-	id kubecontainer.ContainerID,
+	id config.ContainerID,
 	needNetNs bool,
 ) (*libcni.RuntimeConf, error) {
 	netnsPath, err := plugin.host.GetNetNS(id.ID)
@@ -795,13 +796,13 @@ func (plugin *kubenetNetworkPlugin) buildCNIRuntimeConf(
 func (plugin *kubenetNetworkPlugin) addContainerToNetwork(
 	config *libcni.NetworkConfig,
 	ifName, namespace, name string,
-	id kubecontainer.ContainerID,
+	id config.ContainerID,
 ) (cnitypes.Result, error) {
 	rt, err := plugin.buildCNIRuntimeConf(ifName, id, true)
 	if err != nil {
 		return nil, fmt.Errorf("error building CNI config: %v", err)
 	}
-	// Because the default remote runtime request timeout is 4 min,so set slightly less than 240 seconds
+	// Because the default backend runtime request timeout is 4 min,so set slightly less than 240 seconds
 	// Todo get the timeout from parent ctx
 	cniTimeoutCtx, cancelFunc := context.WithTimeout(
 		context.Background(),
@@ -818,14 +819,14 @@ func (plugin *kubenetNetworkPlugin) addContainerToNetwork(
 func (plugin *kubenetNetworkPlugin) delContainerFromNetwork(
 	config *libcni.NetworkConfig,
 	ifName, namespace, name string,
-	id kubecontainer.ContainerID,
+	id config.ContainerID,
 ) error {
 	rt, err := plugin.buildCNIRuntimeConf(ifName, id, false)
 	if err != nil {
 		return fmt.Errorf("error building CNI config: %v", err)
 	}
 
-	// Because the default remote runtime request timeout is 4 min,so set slightly less than 240 seconds
+	// Because the default backend runtime request timeout is 4 min,so set slightly less than 240 seconds
 	// Todo get the timeout from parent ctx
 	cniTimeoutCtx, cancelFunc := context.WithTimeout(
 		context.Background(),
@@ -940,7 +941,7 @@ func (plugin *kubenetNetworkPlugin) syncEbtablesDedupRules(
 //
 // This sets net.ipv6.conf.default.dad_transmits to 0. It must be run *before*
 // the CNI plugins are run.
-func (plugin *kubenetNetworkPlugin) disableContainerDAD(id kubecontainer.ContainerID) error {
+func (plugin *kubenetNetworkPlugin) disableContainerDAD(id config.ContainerID) error {
 	key := "net/ipv6/conf/default/dad_transmits"
 
 	sysctlBin, err := plugin.execer.LookPath("sysctl")
@@ -1015,7 +1016,7 @@ func (plugin *kubenetNetworkPlugin) getRoutesConfig() string {
 	return strings.Join(routes, ",")
 }
 
-func (plugin *kubenetNetworkPlugin) addPodIP(id kubecontainer.ContainerID, ip string) {
+func (plugin *kubenetNetworkPlugin) addPodIP(id config.ContainerID, ip string) {
 	plugin.mu.Lock()
 	defer plugin.mu.Unlock()
 
@@ -1029,7 +1030,7 @@ func (plugin *kubenetNetworkPlugin) addPodIP(id kubecontainer.ContainerID, ip st
 	}
 }
 
-func (plugin *kubenetNetworkPlugin) removePodIP(id kubecontainer.ContainerID, ip string) {
+func (plugin *kubenetNetworkPlugin) removePodIP(id config.ContainerID, ip string) {
 	plugin.mu.Lock()
 	defer plugin.mu.Unlock()
 
@@ -1050,7 +1051,7 @@ func (plugin *kubenetNetworkPlugin) removePodIP(id kubecontainer.ContainerID, ip
 
 // returns a copy of pod ips
 // false is returned if id does not exist
-func (plugin *kubenetNetworkPlugin) getCachedPodIPs(id kubecontainer.ContainerID) ([]string, bool) {
+func (plugin *kubenetNetworkPlugin) getCachedPodIPs(id config.ContainerID) ([]string, bool) {
 	plugin.mu.Lock()
 	defer plugin.mu.Unlock()
 

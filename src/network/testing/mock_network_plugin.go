@@ -16,17 +16,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Generated code, generated via: `mockgen k8s.io/kubernetes/pkg/kubelet/network NetworkPlugin > $GOPATH/src/k8s.io/kubernetes/pkg/kubelet/network/testing/mock_network_plugin.go`
+// Generated code, generated via: `mockgen k8s.io/kubernetes/cmd/kubelet/network NetworkPlugin > $GOPATH/src/k8s.io/kubernetes/cmd/kubelet/network/testing/mock_network_plugin.go`
 // Edited by hand for boilerplate and gofmt.
 
 package testing
 
 import (
-	"github.com/Mirantis/cri-dockerd/network"
 	gomock "github.com/golang/mock/gomock"
 	sets "k8s.io/apimachinery/pkg/util/sets"
-	kubeletconfig "k8s.io/kubernetes/pkg/kubelet/apis/config"
-	container "k8s.io/kubernetes/pkg/kubelet/container"
+
+	"github.com/Mirantis/cri-dockerd/config"
+	"github.com/Mirantis/cri-dockerd/network"
 )
 
 // Mock of NetworkPlugin interface
@@ -75,7 +75,7 @@ func (_mr *_MockNetworkPluginRecorder) Event(arg0, arg1 interface{}) *gomock.Cal
 func (_m *MockNetworkPlugin) GetPodNetworkStatus(
 	_param0 string,
 	_param1 string,
-	_param2 container.ContainerID,
+	_param2 config.ContainerID,
 ) (*network.PodNetworkStatus, error) {
 	ret := _m.ctrl.Call(_m, "GetPodNetworkStatus", _param0, _param1, _param2)
 	ret0, _ := ret[0].(*network.PodNetworkStatus)
@@ -91,7 +91,7 @@ func (_mr *_MockNetworkPluginRecorder) GetPodNetworkStatus(
 
 func (_m *MockNetworkPlugin) Init(
 	_param0 network.Host,
-	_param1 kubeletconfig.HairpinMode,
+	_param1 config.HairpinMode,
 	nonMasqueradeCIDR string,
 	mtu int,
 ) error {
@@ -117,7 +117,7 @@ func (_mr *_MockNetworkPluginRecorder) Name() *gomock.Call {
 func (_m *MockNetworkPlugin) SetUpPod(
 	_param0 string,
 	_param1 string,
-	_param2 container.ContainerID,
+	_param2 config.ContainerID,
 	annotations, options map[string]string,
 ) error {
 	ret := _m.ctrl.Call(_m, "SetUpPod", _param0, _param1, _param2)
@@ -142,7 +142,7 @@ func (_mr *_MockNetworkPluginRecorder) Status() *gomock.Call {
 func (_m *MockNetworkPlugin) TearDownPod(
 	_param0 string,
 	_param1 string,
-	_param2 container.ContainerID,
+	_param2 config.ContainerID,
 ) error {
 	ret := _m.ctrl.Call(_m, "TearDownPod", _param0, _param1, _param2)
 	ret0, _ := ret[0].(error)

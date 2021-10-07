@@ -27,19 +27,20 @@ import (
 	"strings"
 	"sync/atomic"
 
+	"github.com/Mirantis/cri-dockerd/config"
+	"github.com/Mirantis/cri-dockerd/utils"
+
 	dockertypes "github.com/docker/docker/api/types"
 	dockercontainer "github.com/docker/docker/api/types/container"
 	dockerfilters "github.com/docker/docker/api/types/filters"
 	dockernat "github.com/docker/go-connections/nat"
 	"github.com/sirupsen/logrus"
 
-	"github.com/Mirantis/cri-dockerd/libdocker"
-	v1 "k8s.io/api/core/v1"
-	utilerrors "k8s.io/apimachinery/pkg/util/errors"
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
+	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 	"k8s.io/kubernetes/pkg/credentialprovider"
-	"k8s.io/kubernetes/pkg/kubelet/types"
-	"k8s.io/kubernetes/pkg/util/parsers"
+
+	"github.com/Mirantis/cri-dockerd/libdocker"
+	utilerrors "github.com/Mirantis/cri-dockerd/utils/errors"
 )
 
 const (
@@ -56,7 +57,7 @@ var (
 	// if a container starts but the executable file is not found, runc gives a message that matches
 	startRE = regexp.MustCompile(`\\\\\\\"(.*)\\\\\\\": executable file not found`)
 
-	defaultSeccompOpt = []dockerOpt{{"seccomp", v1.SeccompProfileNameUnconfined, ""}}
+	defaultSeccompOpt = []dockerOpt{{"seccomp", config.SeccompProfileNameUnconfined, ""}}
 )
 
 // generateEnvList converts KeyValue list to a list of strings, in the form of
@@ -104,7 +105,7 @@ func extractLabels(input map[string]string) (map[string]string, map[string]strin
 
 		// Delete the container name label for the sandbox. It is added in the shim,
 		// should not be exposed via CRI.
-		if k == types.KubernetesContainerNameLabel &&
+		if k == config.KubernetesContainerNameLabel &&
 			input[containerTypeLabelKey] == containerTypeLabelSandbox {
 			continue
 		}
@@ -215,11 +216,11 @@ func getApparmorSecurityOpts(
 	sc *runtimeapi.LinuxContainerSecurityContext,
 	separator rune,
 ) ([]string, error) {
-	if sc == nil || sc.ApparmorProfile == "" {
+	if sc == nil || sc.Apparmor.String() == "" {
 		return nil, nil
 	}
 
-	appArmorOpts, err := getAppArmorOpts(sc.ApparmorProfile)
+	appArmorOpts, err := getAppArmorOpts(sc.Apparmor.String())
 	if err != nil {
 		return nil, err
 	}
@@ -346,7 +347,7 @@ func ensureSandboxImageExists(client libdocker.DockerClientInterface, image stri
 		return fmt.Errorf("failed to inspect sandbox image %q: %v", image, err)
 	}
 
-	repoToPull, _, _, err := parsers.ParseImageName(image)
+	repoToPull, _, _, err := utils.ParseImageName(image)
 	if err != nil {
 		return err
 	}
@@ -380,18 +381,18 @@ func ensureSandboxImageExists(client libdocker.DockerClientInterface, image stri
 }
 
 func getAppArmorOpts(profile string) ([]dockerOpt, error) {
-	if profile == "" || profile == v1.AppArmorBetaProfileRuntimeDefault {
+	if profile == "" || profile == config.AppArmorBetaProfileRuntimeDefault {
 		// The docker applies the default profile by default.
 		return nil, nil
 	}
 
 	// Return unconfined profile explicitly
-	if profile == v1.AppArmorBetaProfileNameUnconfined {
-		return []dockerOpt{{"apparmor", v1.AppArmorBetaProfileNameUnconfined, ""}}, nil
+	if profile == config.AppArmorBetaProfileNameUnconfined {
+		return []dockerOpt{{"apparmor", config.AppArmorBetaProfileNameUnconfined, ""}}, nil
 	}
 
 	// Assume validation has already happened.
-	profileName := strings.TrimPrefix(profile, v1.AppArmorBetaProfileNamePrefix)
+	profileName := strings.TrimPrefix(profile, config.AppArmorBetaProfileNamePrefix)
 	return []dockerOpt{{"apparmor", profileName, ""}}, nil
 }
 
@@ -411,7 +412,7 @@ type dockerOpt struct {
 	msg string
 }
 
-// Expose key/value from  dockerOpt.
+// GetKV exposes key/value from  dockerOpt.
 func (d dockerOpt) GetKV() (string, string) {
 	return d.key, d.value
 }
@@ -456,3 +457,17 @@ func sharedLimitWriter(w io.Writer, limit *int64) io.Writer {
 }
 
 var errMaximumWrite = errors.New("maximum write")
+
+// BuildContainerID returns the ContainerID given type and id.
+func BuildContainerID(typ, ID string) config.ContainerID {
+	return config.ContainerID{Type: typ, ID: ID}
+}
+
+// ParseContainerID is a convenience method for creating a ContainerID from an ID string.
+func ParseContainerID(containerID string) config.ContainerID {
+	var id config.ContainerID
+	if err := id.ParseString(containerID); err != nil {
+		logrus.Error(err)
+	}
+	return id
+}

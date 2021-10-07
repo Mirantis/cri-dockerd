@@ -21,12 +21,15 @@ package cni
 import (
 	"context"
 	"fmt"
-	"github.com/Mirantis/cri-dockerd/network"
-	cniTypes020 "github.com/containernetworking/cni/pkg/types/020"
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
-	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
 	"net"
 	"time"
+
+	cniTypes020 "github.com/containernetworking/cni/pkg/types/020"
+	"github.com/sirupsen/logrus"
+	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
+
+	"github.com/Mirantis/cri-dockerd/config"
+	"github.com/Mirantis/cri-dockerd/network"
 )
 
 func getLoNetwork(binDirs []string) *cniNetwork {
@@ -41,7 +44,7 @@ func (plugin *cniNetworkPlugin) platformInit() error {
 func (plugin *cniNetworkPlugin) GetPodNetworkStatus(
 	namespace string,
 	name string,
-	id kubecontainer.ContainerID,
+	id config.ContainerID,
 ) (*network.PodNetworkStatus, error) {
 	netnsPath, err := plugin.host.GetNetNS(id.ID)
 	if err != nil {
@@ -55,7 +58,7 @@ func (plugin *cniNetworkPlugin) GetPodNetworkStatus(
 		)
 	}
 
-	// Because the default remote runtime request timeout is 4 min,so set slightly less than 240 seconds
+	// Because the default backend runtime request timeout is 4 min,so set slightly less than 240 seconds
 	// Todo get the timeout from parent ctx
 	cniTimeoutCtx, cancelFunc := context.WithTimeout(
 		context.Background(),

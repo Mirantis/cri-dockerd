@@ -21,10 +21,12 @@ package cni
 import (
 	"fmt"
 
-	"github.com/Mirantis/cri-dockerd/network"
+	"github.com/Mirantis/cri-dockerd/config"
+
 	"github.com/containernetworking/cni/libcni"
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
-	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
+	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
+
+	"github.com/Mirantis/cri-dockerd/network"
 )
 
 func getLoNetwork(binDirs []string) *cniNetwork {
@@ -62,7 +64,7 @@ func (plugin *cniNetworkPlugin) platformInit() error {
 func (plugin *cniNetworkPlugin) GetPodNetworkStatus(
 	namespace string,
 	name string,
-	id kubecontainer.ContainerID,
+	id config.ContainerID,
 ) (*network.PodNetworkStatus, error) {
 	netnsPath, err := plugin.host.GetNetNS(id.ID)
 	if err != nil {

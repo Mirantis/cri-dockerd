@@ -28,17 +28,18 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Mirantis/cri-dockerd/network"
+	"github.com/Mirantis/cri-dockerd/config"
+
 	"github.com/containernetworking/cni/libcni"
 	cnitypes "github.com/containernetworking/cni/pkg/types"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/wait"
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
-	kubeletconfig "k8s.io/kubernetes/pkg/kubelet/apis/config"
-	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
+	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 	"k8s.io/kubernetes/pkg/util/bandwidth"
 	utilslice "k8s.io/kubernetes/pkg/util/slice"
 	utilexec "k8s.io/utils/exec"
+
+	"github.com/Mirantis/cri-dockerd/network"
 )
 
 const (
@@ -228,7 +229,7 @@ func getDefaultCNINetwork(confDir string, binDirs []string) (*cniNetwork, error)
 
 func (plugin *cniNetworkPlugin) Init(
 	host network.Host,
-	hairpinMode kubeletconfig.HairpinMode,
+	hairpinMode config.HairpinMode,
 	nonMasqueradeCIDR string,
 	mtu int,
 ) error {
@@ -321,7 +322,7 @@ func (plugin *cniNetworkPlugin) Status() error {
 func (plugin *cniNetworkPlugin) SetUpPod(
 	namespace string,
 	name string,
-	id kubecontainer.ContainerID,
+	id config.ContainerID,
 	annotations, options map[string]string,
 ) error {
 	if err := plugin.checkInitialized(); err != nil {
@@ -361,7 +362,7 @@ func (plugin *cniNetworkPlugin) SetUpPod(
 func (plugin *cniNetworkPlugin) TearDownPod(
 	namespace string,
 	name string,
-	id kubecontainer.ContainerID,
+	id config.ContainerID,
 ) error {
 	if err := plugin.checkInitialized(); err != nil {
 		return err
@@ -403,7 +404,7 @@ func (plugin *cniNetworkPlugin) addToNetwork(
 	network *cniNetwork,
 	podName string,
 	podNamespace string,
-	podSandboxID kubecontainer.ContainerID,
+	podSandboxID config.ContainerID,
 	podNetnsPath string,
 	annotations, options map[string]string,
 ) (cnitypes.Result, error) {
@@ -450,7 +451,7 @@ func (plugin *cniNetworkPlugin) deleteFromNetwork(
 	network *cniNetwork,
 	podName string,
 	podNamespace string,
-	podSandboxID kubecontainer.ContainerID,
+	podSandboxID config.ContainerID,
 	podNetnsPath string,
 	annotations map[string]string,
 ) error {
@@ -495,7 +496,7 @@ func (plugin *cniNetworkPlugin) deleteFromNetwork(
 func (plugin *cniNetworkPlugin) buildCNIRuntimeConf(
 	podName string,
 	podNs string,
-	podSandboxID kubecontainer.ContainerID,
+	podSandboxID config.ContainerID,
 	podNetnsPath string,
 	annotations, options map[string]string,
 ) (*libcni.RuntimeConf, error) {

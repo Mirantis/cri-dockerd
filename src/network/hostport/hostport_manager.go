@@ -28,6 +28,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/Mirantis/cri-dockerd/config"
+
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
@@ -135,7 +137,7 @@ func (hm *hostportManager) Add(
 		protocol := strings.ToLower(string(pm.Protocol))
 		chain := getHostportChain(id, pm)
 		newChains = append(newChains, chain)
-		if pm.Protocol == v1.ProtocolUDP {
+		if pm.Protocol == config.ProtocolUDP {
 			conntrackPortsToRemove = append(conntrackPortsToRemove, int(pm.HostPort))
 		}
 
@@ -314,7 +316,7 @@ func (hm *hostportManager) openHostports(
 		}
 
 		// We do not open host ports for SCTP ports, as we agreed in the Support of SCTP KEP
-		if pm.Protocol == v1.ProtocolSCTP {
+		if pm.Protocol == config.ProtocolSCTP {
 			continue
 		}
 

@@ -22,7 +22,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/Mirantis/cri-dockerd/pkg/app"
+	"github.com/Mirantis/cri-dockerd/cmd"
+
 	"k8s.io/apiserver/pkg/server"
 	"k8s.io/component-base/logs"
 )
@@ -30,7 +31,7 @@ import (
 func main() {
 	rand.Seed(time.Now().UnixNano())
 
-	command := app.NewDockerCRICommand(server.SetupSignalHandler())
+	command := cmd.NewDockerCRICommand(server.SetupSignalHandler())
 	logs.InitLogs()
 	defer logs.FlushLogs()
 

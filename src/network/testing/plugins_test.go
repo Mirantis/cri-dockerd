@@ -24,11 +24,12 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/Mirantis/cri-dockerd/network"
+	"github.com/Mirantis/cri-dockerd/config"
+
 	utilsets "k8s.io/apimachinery/pkg/util/sets"
-	kubeletconfig "k8s.io/kubernetes/pkg/kubelet/apis/config"
-	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
 	sysctltest "k8s.io/kubernetes/pkg/util/sysctl/testing"
+
+	"github.com/Mirantis/cri-dockerd/network"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
@@ -40,7 +41,7 @@ func TestSelectDefaultPlugin(t *testing.T) {
 		all_plugins,
 		"",
 		NewFakeHost(nil),
-		kubeletconfig.HairpinNone,
+		config.HairpinNone,
 		"10.0.0.0/8",
 		network.UseDefaultMTU,
 	)
@@ -78,7 +79,7 @@ func TestInit(t *testing.T) {
 		sysctl.Settings[tt.setting] = 0
 		plug := &network.NoopNetworkPlugin{}
 		plug.Sysctl = sysctl
-		plug.Init(NewFakeHost(nil), kubeletconfig.HairpinNone, "10.0.0.0/8", network.UseDefaultMTU)
+		plug.Init(NewFakeHost(nil), config.HairpinNone, "10.0.0.0/8", network.UseDefaultMTU)
 		// Verify the sysctl specified is set
 		assert.Equal(t, 1, sysctl.Settings[tt.setting], tt.setting+" sysctl should have been set")
 		// Verify iptables is always set
@@ -109,7 +110,7 @@ func TestPluginManager(t *testing.T) {
 	// works and the pod map isn't concurrently accessed
 	for i := 0; i < 10; i++ {
 		podName := fmt.Sprintf("pod%d", i)
-		containerID := kubecontainer.ContainerID{ID: podName}
+		containerID := config.ContainerID{ID: podName}
 
 		fnp.EXPECT().SetUpPod("", podName, containerID).Return(nil).Times(4)
 		fnp.EXPECT().GetPodNetworkStatus(
@@ -126,7 +127,7 @@ func TestPluginManager(t *testing.T) {
 
 		for x := 0; x < 4; x++ {
 			allDoneWg.Add(1)
-			go func(name string, id kubecontainer.ContainerID, num int) {
+			go func(name string, id config.ContainerID, num int) {
 				defer allDoneWg.Done()
 
 				// Block all goroutines from running until all have
@@ -159,7 +160,7 @@ func TestPluginManager(t *testing.T) {
 	allDoneWg.Wait()
 }
 
-type hookableFakeNetworkPluginSetupHook func(namespace, name string, id kubecontainer.ContainerID)
+type hookableFakeNetworkPluginSetupHook func(namespace, name string, id config.ContainerID)
 
 type hookableFakeNetworkPlugin struct {
 	setupHook hookableFakeNetworkPluginSetupHook
@@ -175,7 +176,7 @@ func newHookableFakeNetworkPlugin(
 
 func (p *hookableFakeNetworkPlugin) Init(
 	host network.Host,
-	hairpinMode kubeletconfig.HairpinMode,
+	hairpinMode config.HairpinMode,
 	nonMasqueradeCIDR string,
 	mtu int,
 ) error {
@@ -196,7 +197,7 @@ func (p *hookableFakeNetworkPlugin) Capabilities() utilsets.Int {
 func (p *hookableFakeNetworkPlugin) SetUpPod(
 	namespace string,
 	name string,
-	id kubecontainer.ContainerID,
+	id config.ContainerID,
 	annotations, options map[string]string,
 ) error {
 	if p.setupHook != nil {
@@ -205,14 +206,14 @@ func (p *hookableFakeNetworkPlugin) SetUpPod(
 	return nil
 }
 
-func (p *hookableFakeNetworkPlugin) TearDownPod(string, string, kubecontainer.ContainerID) error {
+func (p *hookableFakeNetworkPlugin) TearDownPod(string, string, config.ContainerID) error {
 	return nil
 }
 
 func (p *hookableFakeNetworkPlugin) GetPodNetworkStatus(
 	string,
 	string,
-	kubecontainer.ContainerID,
+	config.ContainerID,
 ) (*network.PodNetworkStatus, error) {
 	return &network.PodNetworkStatus{IP: net.ParseIP("10.1.2.3")}, nil
 }
@@ -233,7 +234,7 @@ func TestMultiPodParallelNetworkOps(t *testing.T) {
 	// to proceed.
 	didWait := false
 	fakePlugin := newHookableFakeNetworkPlugin(
-		func(podNamespace, podName string, id kubecontainer.ContainerID) {
+		func(podNamespace, podName string, id config.ContainerID) {
 			if podName == "waiter" {
 				podWg.Wait()
 				didWait = true
@@ -250,7 +251,7 @@ func TestMultiPodParallelNetworkOps(t *testing.T) {
 		defer opsWg.Done()
 
 		podName := "waiter"
-		containerID := kubecontainer.ContainerID{ID: podName}
+		containerID := config.ContainerID{ID: podName}
 
 		// Setup will block on the runner pod completing.  If network
 		// operations locking isn't correct (eg pod network operations
@@ -273,7 +274,7 @@ func TestMultiPodParallelNetworkOps(t *testing.T) {
 		defer podWg.Done()
 
 		podName := "runner"
-		containerID := kubecontainer.ContainerID{ID: podName}
+		containerID := config.ContainerID{ID: podName}
 
 		if err := pm.SetUpPod("", podName, containerID, nil, nil); err != nil {
 			t.Errorf("Failed to set up runner pod: %v", err)

@@ -27,11 +27,12 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/Mirantis/cri-dockerd/config"
+
 	"github.com/blang/semver"
 	dockertypes "github.com/docker/docker/api/types"
 	dockercontainer "github.com/docker/docker/api/types/container"
-	v1 "k8s.io/api/core/v1"
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
+	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
 // DefaultMemorySwap always returns 0 for no memory swap in a sandbox
@@ -56,23 +57,23 @@ func (ds *dockerService) getSandBoxSecurityOpts(separator rune) []string {
 }
 
 func getSeccompDockerOpts(seccompProfile string) ([]dockerOpt, error) {
-	if seccompProfile == "" || seccompProfile == v1.SeccompProfileNameUnconfined {
+	if seccompProfile == "" || seccompProfile == config.SeccompProfileNameUnconfined {
 		// return early the default
 		return defaultSeccompOpt, nil
 	}
 
-	if seccompProfile == v1.SeccompProfileRuntimeDefault ||
-		seccompProfile == v1.DeprecatedSeccompProfileDockerDefault {
+	if seccompProfile == config.SeccompProfileRuntimeDefault ||
+		seccompProfile == config.DeprecatedSeccompProfileDockerDefault {
 		// return nil so docker will load the default seccomp profile
 		return nil, nil
 	}
 
-	if !strings.HasPrefix(seccompProfile, v1.SeccompLocalhostProfileNamePrefix) {
+	if !strings.HasPrefix(seccompProfile, config.SeccompLocalhostProfileNamePrefix) {
 		return nil, fmt.Errorf("unknown seccomp profile option: %s", seccompProfile)
 	}
 
 	// get the full path of seccomp profile when prefixed with 'localhost/'.
-	fname := strings.TrimPrefix(seccompProfile, v1.SeccompLocalhostProfileNamePrefix)
+	fname := strings.TrimPrefix(seccompProfile, config.SeccompLocalhostProfileNamePrefix)
 	if !filepath.IsAbs(fname) {
 		return nil, fmt.Errorf(
 			"seccomp profile path must be absolute, but got relative path %q",
