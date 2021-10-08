@@ -269,7 +269,7 @@ func TestMakePortsAndBindings(t *testing.T) {
 		},
 	} {
 		t.Logf("TestCase: %s", desc)
-		actualExposedPorts, actualPortMappings := makePortsAndBindings(test.pm)
+		actualExposedPorts, actualPortMappings := libdocker.MakePortsAndBindings(test.pm)
 		assert.Equal(t, test.exposedPorts, actualExposedPorts)
 		assert.Equal(t, test.portmappings, actualPortMappings)
 	}
@@ -337,7 +337,7 @@ func TestGenerateMountBindings(t *testing.T) {
 		"/mnt/7:/var/lib/mysql/7",
 		"/mnt/8:/var/lib/mysql/8:ro,Z,rshared",
 	}
-	result := generateMountBindings(mounts)
+	result := libdocker.GenerateMountBindings(mounts)
 
 	assert.Equal(t, expectedResult, result)
 }
@@ -395,7 +395,7 @@ func TestLimitedWriter(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			limit := tc.limit
-			w := sharedLimitWriter(&tc.w, &limit)
+			w := SharedLimitWriter(&tc.w, &limit)
 			n, err := w.Write([]byte(tc.toWrite))
 			if int64(n) > max(0, tc.limit) {
 				t.Fatalf("bytes written (%d) exceeds limit (%d)", n, tc.limit)
@@ -427,8 +427,8 @@ func TestLimitedWriter(t *testing.T) {
 		var (
 			b1, b2 bytes.Buffer
 			limit  = int64(10)
-			w1     = sharedLimitWriter(&b1, &limit)
-			w2     = sharedLimitWriter(&b2, &limit)
+			w1     = SharedLimitWriter(&b1, &limit)
+			w2     = SharedLimitWriter(&b2, &limit)
 			ch     = make(chan struct{})
 			wg     sync.WaitGroup
 		)

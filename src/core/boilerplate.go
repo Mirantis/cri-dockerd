@@ -14,6 +14,4 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package cri-dockerd implements a container runtime interface
-// Docker integration using k8s.io/cri-api/cmd/apis/runtime/v1alpha2/api.pb.go
 package core
