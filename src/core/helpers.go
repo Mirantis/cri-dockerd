@@ -19,26 +19,14 @@ package core
 import (
 	"errors"
 	"fmt"
+	"github.com/Mirantis/cri-dockerd/config"
 	"io"
 	"regexp"
-	"strconv"
 	"strings"
 	"sync/atomic"
 
-	"github.com/Mirantis/cri-dockerd/config"
-	"github.com/Mirantis/cri-dockerd/utils"
-
-	dockertypes "github.com/docker/docker/api/types"
-	dockercontainer "github.com/docker/docker/api/types/container"
 	dockerfilters "github.com/docker/docker/api/types/filters"
-	dockernat "github.com/docker/go-connections/nat"
 	"github.com/sirupsen/logrus"
-
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
-	"k8s.io/kubernetes/pkg/credentialprovider"
-
-	"github.com/Mirantis/cri-dockerd/libdocker"
-	utilerrors "github.com/Mirantis/cri-dockerd/utils/errors"
 )
 
 const (
@@ -54,17 +42,23 @@ var (
 	// this is hacky, but extremely common.
 	// if a container starts but the executable file is not found, runc gives a message that matches
 	startRE = regexp.MustCompile(`\\\\\\\"(.*)\\\\\\\": executable file not found`)
+	defaultSeccompOpt = []DockerOpt{{"seccomp", config.SeccompProfileNameUnconfined, ""}}
 
-	defaultSeccompOpt = []dockerOpt{{"seccomp", config.SeccompProfileNameUnconfined, ""}}
+	errMaximumWrite = errors.New("maximum write")
 )
 
-// generateEnvList converts KeyValue list to a list of strings, in the form of
-// '<key>=<value>', which can be understood by docker.
-func generateEnvList(envs []*runtimeapi.KeyValue) (result []string) {
-	for _, env := range envs {
-		result = append(result, fmt.Sprintf("%s=%s", env.Key, env.Value))
+// BuildContainerID returns the ContainerID given type and id.
+func BuildContainerID(typ, ID string) config.ContainerID {
+	return config.ContainerID{Type: typ, ID: ID}
+}
+
+// ParseContainerID is a convenience method for creating a ContainerID from an ID string.
+func ParseContainerID(containerID string) config.ContainerID {
+	var id config.ContainerID
+	if err := id.ParseString(containerID); err != nil {
+		logrus.Error(err)
 	}
-	return
+	return id
 }
 
 // makeLabels converts annotations to labels and merge them with the given
@@ -118,122 +112,13 @@ func extractLabels(input map[string]string) (map[string]string, map[string]strin
 	return labels, annotations
 }
 
-// generateMountBindings converts the mount list to a list of strings that
-// can be understood by docker.
-// '<HostPath>:<ContainerPath>[:options]', where 'options'
-// is a comma-separated list of the following strings:
-// 'ro', if the path is read only
-// 'Z', if the volume requires SELinux relabeling
-// propagation mode such as 'rslave'
-func generateMountBindings(mounts []*runtimeapi.Mount) []string {
-	result := make([]string, 0, len(mounts))
-	for _, m := range mounts {
-		bind := fmt.Sprintf("%s:%s", m.HostPath, m.ContainerPath)
-		var attrs []string
-		if m.Readonly {
-			attrs = append(attrs, "ro")
-		}
-		// Only request relabeling if the pod provides an SELinux context. If the pod
-		// does not provide an SELinux context relabeling will label the volume with
-		// the container's randomly allocated MCS label. This would restrict access
-		// to the volume to the container which mounts it first.
-		if m.SelinuxRelabel {
-			attrs = append(attrs, "Z")
-		}
-		switch m.Propagation {
-		case runtimeapi.MountPropagation_PROPAGATION_PRIVATE:
-			// noop, private is default
-		case runtimeapi.MountPropagation_PROPAGATION_BIDIRECTIONAL:
-			attrs = append(attrs, "rshared")
-		case runtimeapi.MountPropagation_PROPAGATION_HOST_TO_CONTAINER:
-			attrs = append(attrs, "rslave")
-		default:
-			logrus.Info("Unknown propagation mode for hostPath", "path", m.HostPath)
-			// Falls back to "private"
-		}
-
-		if len(attrs) > 0 {
-			bind = fmt.Sprintf("%s:%s", bind, strings.Join(attrs, ","))
-		}
-		result = append(result, bind)
-	}
-	return result
-}
-
-func makePortsAndBindings(
-	pm []*runtimeapi.PortMapping,
-) (dockernat.PortSet, map[dockernat.Port][]dockernat.PortBinding) {
-	exposedPorts := dockernat.PortSet{}
-	portBindings := map[dockernat.Port][]dockernat.PortBinding{}
-	for _, port := range pm {
-		exteriorPort := port.HostPort
-		if exteriorPort == 0 {
-			// No need to do port binding when HostPort is not specified
-			continue
-		}
-		interiorPort := port.ContainerPort
-		// Some of this port stuff is under-documented voodoo.
-		// See http://stackoverflow.com/questions/20428302/binding-a-port-to-a-host-interface-using-the-rest-api
-		var protocol string
-		switch port.Protocol {
-		case runtimeapi.Protocol_UDP:
-			protocol = "/udp"
-		case runtimeapi.Protocol_TCP:
-			protocol = "/tcp"
-		case runtimeapi.Protocol_SCTP:
-			protocol = "/sctp"
-		default:
-			logrus.Info("Unknown protocol, defaulting to TCP", "protocol", port.Protocol)
-			protocol = "/tcp"
-		}
-
-		dockerPort := dockernat.Port(strconv.Itoa(int(interiorPort)) + protocol)
-		exposedPorts[dockerPort] = struct{}{}
-
-		hostBinding := dockernat.PortBinding{
-			HostPort: strconv.Itoa(int(exteriorPort)),
-			HostIP:   port.HostIp,
-		}
-
-		// Allow multiple host ports bind to same docker port
-		if existedBindings, ok := portBindings[dockerPort]; ok {
-			// If a docker port already map to a host port, just append the host ports
-			portBindings[dockerPort] = append(existedBindings, hostBinding)
-		} else {
-			// Otherwise, it's fresh new port binding
-			portBindings[dockerPort] = []dockernat.PortBinding{
-				hostBinding,
-			}
-		}
-	}
-	return exposedPorts, portBindings
-}
-
-// getApparmorSecurityOpts gets apparmor options from container config.
-func getApparmorSecurityOpts(
-	sc *runtimeapi.LinuxContainerSecurityContext,
-	separator rune,
-) ([]string, error) {
-	if sc == nil || sc.Apparmor.String() == "" {
-		return nil, nil
-	}
-
-	appArmorOpts, err := getAppArmorOpts(sc.Apparmor.String())
-	if err != nil {
-		return nil, err
-	}
-
-	fmtOpts := fmtDockerOpts(appArmorOpts, separator)
-	return fmtOpts, nil
-}
-
 // dockerFilter wraps around dockerfilters.Args and provides methods to modify
 // the filter easily.
 type dockerFilter struct {
 	args *dockerfilters.Args
 }
 
-func newDockerFilter(args *dockerfilters.Args) *dockerFilter {
+func NewDockerFilter(args *dockerfilters.Args) *dockerFilter {
 	return &dockerFilter{args: args}
 }
 
@@ -245,183 +130,13 @@ func (f *dockerFilter) AddLabel(key, value string) {
 	f.Add("label", fmt.Sprintf("%s=%s", key, value))
 }
 
-// parseUserFromImageUser splits the user out of an user:group string.
-func parseUserFromImageUser(id string) string {
-	if id == "" {
-		return id
-	}
-	// split instances where the id may contain user:group
-	if strings.Contains(id, ":") {
-		return strings.Split(id, ":")[0]
-	}
-	// no group, just return the id
-	return id
-}
-
-// getUserFromImageUser gets uid or user name of the image user.
-// If user is numeric, it will be treated as uid; or else, it is treated as user name.
-func getUserFromImageUser(imageUser string) (*int64, string) {
-	user := parseUserFromImageUser(imageUser)
-	// return both nil if user is not specified in the image.
-	if user == "" {
-		return nil, ""
-	}
-	// user could be either uid or user name. Try to interpret as numeric uid.
-	uid, err := strconv.ParseInt(user, 10, 64)
-	if err != nil {
-		// If user is non numeric, assume it's user name.
-		return nil, user
-	}
-	// If user is a numeric uid.
-	return &uid, ""
-}
-
-// See #33189. If the previous attempt to create a sandbox container name FOO
-// failed due to "device or resource busy", it is possible that docker did
-// not clean up properly and has inconsistent internal state. Docker would
-// not report the existence of FOO, but would complain if user wants to
-// create a new container named FOO. To work around this, we parse the error
-// message to identify failure caused by naming conflict, and try to remove
-// the old container FOO.
-// See #40443. Sometimes even removal may fail with "no such container" error.
-// In that case we have to create the container with a randomized name.
-func recoverFromCreationConflictIfNeeded(
-	client libdocker.DockerClientInterface,
-	createConfig dockertypes.ContainerCreateConfig,
-	err error,
-) (*dockercontainer.ContainerCreateCreatedBody, error) {
-	matches := conflictRE.FindStringSubmatch(err.Error())
-	if len(matches) != 2 {
-		return nil, err
-	}
-
-	id := matches[1]
-	logrus.Info(
-		"Unable to create pod sandbox due to conflict. Attempting to remove sandbox",
-		"containerID",
-		id,
-	)
-	rmErr := client.RemoveContainer(id, dockertypes.ContainerRemoveOptions{RemoveVolumes: true})
-	if rmErr == nil {
-		logrus.Info("Successfully removed conflicting container", "containerID", id)
-		return nil, err
-	}
-	logrus.Error(rmErr, "Failed to remove the conflicting container", "containerID", id)
-	// Return if the error is not container not found error.
-	if !libdocker.IsContainerNotFoundError(rmErr) {
-		return nil, err
-	}
-
-	// randomize the name to avoid conflict.
-	createConfig.Name = randomizeName(createConfig.Name)
-	logrus.Info(
-		"Create the container with the randomized name",
-		"containerName",
-		createConfig.Name,
-	)
-	return client.CreateContainer(createConfig)
-}
-
-// transformStartContainerError does regex parsing on returned error
-// for where container runtimes are giving less than ideal error messages.
-func transformStartContainerError(err error) error {
-	if err == nil {
-		return nil
-	}
-	matches := startRE.FindStringSubmatch(err.Error())
-	if len(matches) > 0 {
-		return fmt.Errorf("executable not found in $PATH")
-	}
-	return err
-}
-
-// ensureSandboxImageExists pulls the sandbox image when it's not present.
-func ensureSandboxImageExists(client libdocker.DockerClientInterface, image string) error {
-	_, err := client.InspectImageByRef(image)
-	if err == nil {
-		return nil
-	}
-	if !libdocker.IsImageNotFoundError(err) {
-		return fmt.Errorf("failed to inspect sandbox image %q: %v", image, err)
-	}
-
-	repoToPull, _, _, err := utils.ParseImageName(image)
-	if err != nil {
-		return err
-	}
-
-	keyring := credentialprovider.NewDockerKeyring()
-	creds, withCredentials := keyring.Lookup(repoToPull)
-	if !withCredentials {
-		logrus.Info("Pulling the image without credentials", "image", image)
-
-		err := client.PullImage(image, dockertypes.AuthConfig{}, dockertypes.ImagePullOptions{})
-		if err != nil {
-			return fmt.Errorf("failed pulling image %q: %v", image, err)
-		}
-
-		return nil
-	}
-
-	var pullErrs []error
-	for _, currentCreds := range creds {
-		authConfig := dockertypes.AuthConfig(currentCreds)
-		err := client.PullImage(image, authConfig, dockertypes.ImagePullOptions{})
-		// If there was no error, return success
-		if err == nil {
-			return nil
-		}
-
-		pullErrs = append(pullErrs, err)
-	}
-
-	return utilerrors.NewAggregate(pullErrs)
-}
-
-func getAppArmorOpts(profile string) ([]dockerOpt, error) {
-	if profile == "" || profile == config.AppArmorBetaProfileRuntimeDefault {
-		// The docker applies the default profile by default.
-		return nil, nil
-	}
-
-	// Return unconfined profile explicitly
-	if profile == config.AppArmorBetaProfileNameUnconfined {
-		return []dockerOpt{{"apparmor", config.AppArmorBetaProfileNameUnconfined, ""}}, nil
-	}
-
-	// Assume validation has already happened.
-	profileName := strings.TrimPrefix(profile, config.AppArmorBetaProfileNamePrefix)
-	return []dockerOpt{{"apparmor", profileName, ""}}, nil
-}
-
-// fmtDockerOpts formats the docker security options using the given separator.
-func fmtDockerOpts(opts []dockerOpt, sep rune) []string {
-	fmtOpts := make([]string, len(opts))
-	for i, opt := range opts {
-		fmtOpts[i] = fmt.Sprintf("%s%c%s", opt.key, sep, opt.value)
-	}
-	return fmtOpts
-}
-
-type dockerOpt struct {
-	// The key-value pair passed to docker.
-	key, value string
-	// The alternative value to use in log/event messages.
-	msg string
-}
-
-// GetKV exposes key/value from  dockerOpt.
-func (d dockerOpt) GetKV() (string, string) {
-	return d.key, d.value
-}
-
 // sharedWriteLimiter limits the total output written across one or more streams.
-type sharedWriteLimiter struct {
+type SharedWriteLimiter struct {
 	delegate io.Writer
 	limit    *int64
 }
 
-func (w sharedWriteLimiter) Write(p []byte) (int, error) {
+func (w SharedWriteLimiter) Write(p []byte) (int, error) {
 	if len(p) == 0 {
 		return 0, nil
 	}
@@ -444,28 +159,34 @@ func (w sharedWriteLimiter) Write(p []byte) (int, error) {
 	return n, err
 }
 
-func sharedLimitWriter(w io.Writer, limit *int64) io.Writer {
+func SharedLimitWriter(w io.Writer, limit *int64) io.Writer {
 	if w == nil {
 		return nil
 	}
-	return &sharedWriteLimiter{
+	return &SharedWriteLimiter{
 		delegate: w,
 		limit:    limit,
 	}
 }
 
-var errMaximumWrite = errors.New("maximum write")
-
-// BuildContainerID returns the ContainerID given type and id.
-func BuildContainerID(typ, ID string) config.ContainerID {
-	return config.ContainerID{Type: typ, ID: ID}
-}
-
-// ParseContainerID is a convenience method for creating a ContainerID from an ID string.
-func ParseContainerID(containerID string) config.ContainerID {
-	var id config.ContainerID
-	if err := id.ParseString(containerID); err != nil {
-		logrus.Error(err)
+// fmtDockerOpts formats the docker security options using the given separator.
+func FmtDockerOpts(opts []DockerOpt, sep rune) []string {
+	fmtOpts := make([]string, len(opts))
+	for i, opt := range opts {
+		fmtOpts[i] = fmt.Sprintf("%s%c%s", opt.key, sep, opt.value)
 	}
-	return id
+	return fmtOpts
 }
+
+type DockerOpt struct {
+	// The key-value pair passed to docker.
+	key, value string
+	// The alternative value to use in log/event messages.
+	msg string
+}
+
+// GetKV exposes key/value from  dockerOpt.
+func (d DockerOpt) GetKV() (string, string) {
+	return d.key, d.value
+}
+

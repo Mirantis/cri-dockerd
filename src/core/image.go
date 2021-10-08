@@ -20,6 +20,8 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
+	"strings"
 
 	dockertypes "github.com/docker/docker/api/types"
 	dockerfilters "github.com/docker/docker/api/types/filters"
@@ -206,3 +208,35 @@ func filterHTTPError(err error, image string) error {
 	return err
 
 }
+
+// parseUserFromImageUser splits the user out of an user:group string.
+func parseUserFromImageUser(id string) string {
+	if id == "" {
+		return id
+	}
+	// split instances where the id may contain user:group
+	if strings.Contains(id, ":") {
+		return strings.Split(id, ":")[0]
+	}
+	// no group, just return the id
+	return id
+}
+
+// getUserFromImageUser gets uid or user name of the image user.
+// If user is numeric, it will be treated as uid; or else, it is treated as user name.
+func getUserFromImageUser(imageUser string) (*int64, string) {
+	user := parseUserFromImageUser(imageUser)
+	// return both nil if user is not specified in the image.
+	if user == "" {
+		return nil, ""
+	}
+	// user could be either uid or user name. Try to interpret as numeric uid.
+	uid, err := strconv.ParseInt(user, 10, 64)
+	if err != nil {
+		// If user is non numeric, assume it's user name.
+		return nil, user
+	}
+	// If user is a numeric uid.
+	return &uid, ""
+}
+

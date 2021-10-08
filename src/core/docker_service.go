@@ -17,7 +17,6 @@ limitations under the License.
 package core
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -29,20 +28,15 @@ import (
 	"sync"
 	"time"
 
-	"google.golang.org/grpc/codes"
-
 	"github.com/Mirantis/cri-dockerd/cm"
 	"github.com/Mirantis/cri-dockerd/config"
 	"github.com/Mirantis/cri-dockerd/libdocker"
 	"github.com/Mirantis/cri-dockerd/metrics"
 	"github.com/Mirantis/cri-dockerd/network"
 	"github.com/Mirantis/cri-dockerd/network/cni"
-	"github.com/Mirantis/cri-dockerd/network/hostport"
 	"github.com/Mirantis/cri-dockerd/network/kubenet"
 	"github.com/Mirantis/cri-dockerd/store"
 	"github.com/Mirantis/cri-dockerd/streaming"
-	"github.com/Mirantis/cri-dockerd/utils"
-
 	"github.com/blang/semver"
 	dockertypes "github.com/docker/docker/api/types"
 	"github.com/sirupsen/logrus"
@@ -117,7 +111,6 @@ type DockerService interface {
 var internalLabelKeys = []string{containerTypeLabelKey, containerLogPathLabelKey, sandboxIDLabelKey}
 
 // NewDockerService creates a new `DockerService` struct.
-// NOTE: Anything passed to DockerService should be eventually handled in another way when we switch to running the shim as a different process.
 func NewDockerService(
 	clientConfig *config.ClientConfig,
 	podSandboxImage string,
@@ -330,51 +323,6 @@ func (ds *dockerService) UpdateRuntimeConfig(
 	return &runtimeapi.UpdateRuntimeConfigResponse{}, nil
 }
 
-// GetNetNS returns the network namespace of the given containerID. The ID
-// supplied is typically the ID of a pod sandbox. This getter doesn't try
-// to map non-sandbox IDs to their respective sandboxes.
-func (ds *dockerService) GetNetNS(podSandboxID string) (string, error) {
-	r, err := ds.client.InspectContainer(podSandboxID)
-	if err != nil {
-		return "", err
-	}
-	return getNetworkNamespace(r)
-}
-
-// GetPodPortMappings returns the port mappings of the given podSandbox ID.
-func (ds *dockerService) GetPodPortMappings(podSandboxID string) ([]*hostport.PortMapping, error) {
-	checkpoint := NewPodSandboxCheckpoint("", "", &CheckpointData{})
-	err := ds.checkpointManager.GetCheckpoint(podSandboxID, checkpoint)
-	// Return empty portMappings if checkpoint is not found
-	if err != nil {
-		if err == store.ErrCheckpointNotFound {
-			return nil, nil
-		}
-		errRem := ds.checkpointManager.RemoveCheckpoint(podSandboxID)
-		if errRem != nil {
-			logrus.Error(
-				errRem,
-				"Failed to delete corrupt checkpoint for sandbox",
-				"podSandboxID",
-				podSandboxID,
-			)
-		}
-		return nil, err
-	}
-	_, _, _, checkpointedPortMappings, _ := checkpoint.GetData()
-	portMappings := make([]*hostport.PortMapping, 0, len(checkpointedPortMappings))
-	for _, pm := range checkpointedPortMappings {
-		proto := toProtocol(*pm.Protocol)
-		portMappings = append(portMappings, &hostport.PortMapping{
-			HostPort:      *pm.HostPort,
-			ContainerPort: *pm.ContainerPort,
-			Protocol:      proto,
-			HostIP:        pm.HostIP,
-		})
-	}
-	return portMappings, nil
-}
-
 // Start initializes and starts components in dockerService.
 func (ds *dockerService) Start() error {
 	ds.initCleanup()
@@ -387,16 +335,6 @@ func (ds *dockerService) Start() error {
 	}()
 
 	return ds.containerManager.Start()
-}
-
-// initCleanup is responsible for cleaning up any crufts left by previous
-// runs. If there are any errors, it simply logs them.
-func (ds *dockerService) initCleanup() {
-	errors := ds.platformSpecificContainerInitCleanup()
-
-	for _, err := range errors {
-		logrus.Info("Initialization error", "err", err)
-	}
 }
 
 // Status returns the status of the runtime.
@@ -472,6 +410,16 @@ func (ds *dockerService) checkVersionCompatibility() error {
 	return nil
 }
 
+// initCleanup is responsible for cleaning up any crufts left by previous
+// runs. If there are any errors, it simply logs them.
+func (ds *dockerService) initCleanup() {
+	errors := ds.platformSpecificContainerInitCleanup()
+
+	for _, err := range errors {
+		logrus.Info("Initialization error", "err", err)
+	}
+}
+
 // getDockerAPIVersion gets the semver-compatible docker api version.
 func (ds *dockerService) getDockerAPIVersion() (*semver.Version, error) {
 	var dv *dockertypes.Version
@@ -506,157 +454,3 @@ func (ds *dockerService) getDockerVersionFromCache() (*dockertypes.Version, erro
 	return dv, nil
 }
 
-// namespaceGetter is a wrapper around the dockerService that implements
-// the network.NamespaceGetter interface.
-type namespaceGetter struct {
-	ds *dockerService
-}
-
-func (n *namespaceGetter) GetNetNS(containerID string) (string, error) {
-	return n.ds.GetNetNS(containerID)
-}
-
-// portMappingGetter is a wrapper around the dockerService that implements
-// the network.PortMappingGetter interface.
-type portMappingGetter struct {
-	ds *dockerService
-}
-
-func (p *portMappingGetter) GetPodPortMappings(
-	containerID string,
-) ([]*hostport.PortMapping, error) {
-	return p.ds.GetPodPortMappings(containerID)
-}
-
-// dockerNetworkHost implements network.Host by wrapping the legacy host passed in by the kubelet
-// and dockerServices which implements the rest of the network host interfaces.
-// The legacy host methods are slated for deletion.
-type dockerNetworkHost struct {
-	*namespaceGetter
-	*portMappingGetter
-}
-
-func toProtocol(protocol config.Protocol) config.Protocol {
-	switch protocol {
-	case protocolTCP:
-		return config.ProtocolTCP
-	case protocolUDP:
-		return config.ProtocolUDP
-	case protocolSCTP:
-		return config.ProtocolSCTP
-	}
-	logrus.Info("Unknown protocol, defaulting to TCP", "protocol", protocol)
-	return config.ProtocolTCP
-}
-
-// effectiveHairpinMode determines the effective hairpin mode given the
-// configured mode, and whether cbr0 should be configured.
-func effectiveHairpinMode(s *config.NetworkPluginSettings) error {
-	// The hairpin mode setting doesn't matter if:
-	// - We're not using a bridge network. This is hard to check because we might
-	//   be using a plugin.
-	// - It's set to hairpin-veth for a container runtime that doesn't know how
-	//   to set the hairpin flag on the veth's of containers. Currently the
-	//   docker runtime is the only one that understands this.
-	// - It's set to "none".
-	if s.HairpinMode == config.PromiscuousBridge ||
-		s.HairpinMode == config.HairpinVeth {
-		if s.HairpinMode == config.PromiscuousBridge && s.PluginName != "kubenet" {
-			// This is not a valid combination, since promiscuous-bridge only works on kubenet. Users might be using the
-			// default values (from before the hairpin-mode flag existed) and we
-			// should keep the old behavior.
-			logrus.Info(
-				"Hairpin mode is set but kubenet is not enabled, falling back to HairpinVeth",
-				"hairpinMode",
-				s.HairpinMode,
-			)
-			s.HairpinMode = config.HairpinVeth
-			return nil
-		}
-	} else if s.HairpinMode != config.HairpinNone {
-		return fmt.Errorf("unknown value: %q", s.HairpinMode)
-	}
-	return nil
-}
-
-// ExecSync executes a command in the container, and returns the stdout output.
-// If command exits with a non-zero exit code, an error is returned.
-func (ds *dockerService) ExecSync(
-	ctx context.Context,
-	req *runtimeapi.ExecSyncRequest,
-) (*runtimeapi.ExecSyncResponse, error) {
-	timeout := time.Duration(req.Timeout) * time.Second
-	var stdoutBuffer, stderrBuffer bytes.Buffer
-	err := ds.streamingRuntime.ExecWithContext(ctx, req.ContainerId, req.Cmd,
-		nil, // in
-		utils.WriteCloserWrapper(utils.LimitWriter(&stdoutBuffer, maxMsgSize)),
-		utils.WriteCloserWrapper(utils.LimitWriter(&stderrBuffer, maxMsgSize)),
-		false, // tty
-		nil,   // resize
-		timeout)
-
-	// kubelet's backend runtime expects a grpc error with status code DeadlineExceeded on time out.
-	if err == context.DeadlineExceeded {
-		return nil, fmt.Errorf(string(codes.DeadlineExceeded), err.Error())
-	}
-
-	var exitCode int32
-	if err != nil {
-		exitError, ok := err.(utils.ExitError)
-		if !ok {
-			return nil, err
-		}
-
-		exitCode = int32(exitError.ExitStatus())
-	}
-	return &runtimeapi.ExecSyncResponse{
-		Stdout:   stdoutBuffer.Bytes(),
-		Stderr:   stderrBuffer.Bytes(),
-		ExitCode: exitCode,
-	}, nil
-}
-
-// Exec prepares a streaming endpoint to execute a command in the container, and returns the address.
-func (ds *dockerService) Exec(
-	_ context.Context,
-	req *runtimeapi.ExecRequest,
-) (*runtimeapi.ExecResponse, error) {
-	if ds.streamingServer == nil {
-		return nil, streaming.NewErrorStreamingDisabled("exec")
-	}
-	_, err := libdocker.CheckContainerStatus(ds.client, req.ContainerId)
-	if err != nil {
-		return nil, err
-	}
-	return ds.streamingServer.GetExec(req)
-}
-
-// Attach prepares a streaming endpoint to attach to a running container, and returns the address.
-func (ds *dockerService) Attach(
-	_ context.Context,
-	req *runtimeapi.AttachRequest,
-) (*runtimeapi.AttachResponse, error) {
-	if ds.streamingServer == nil {
-		return nil, streaming.NewErrorStreamingDisabled("attach")
-	}
-	_, err := libdocker.CheckContainerStatus(ds.client, req.ContainerId)
-	if err != nil {
-		return nil, err
-	}
-	return ds.streamingServer.GetAttach(req)
-}
-
-// PortForward prepares a streaming endpoint to forward ports from a PodSandbox, and returns the address.
-func (ds *dockerService) PortForward(
-	_ context.Context,
-	req *runtimeapi.PortForwardRequest,
-) (*runtimeapi.PortForwardResponse, error) {
-	if ds.streamingServer == nil {
-		return nil, streaming.NewErrorStreamingDisabled("port forward")
-	}
-	_, err := libdocker.CheckContainerStatus(ds.client, req.PodSandboxId)
-	if err != nil {
-		return nil, err
-	}
-	return ds.streamingServer.GetPortForward(req)
-}

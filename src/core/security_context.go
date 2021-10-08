@@ -17,8 +17,15 @@ limitations under the License.
 package core
 
 import (
+	"bytes"
+	"crypto/md5"
+	"encoding/json"
 	"fmt"
+	"github.com/Mirantis/cri-dockerd/config"
+	"io/ioutil"
+	"path/filepath"
 	"strconv"
+	"strings"
 
 	dockercontainer "github.com/docker/docker/api/types/container"
 
@@ -240,3 +247,103 @@ func modifyHostOptionsForContainer(
 		hc.UTSMode = namespaceModeHost
 	}
 }
+
+func (ds *dockerService) getSecurityOpts(seccompProfile string, separator rune) ([]string, error) {
+	// Apply seccomp options.
+	seccompSecurityOpts, err := getSeccompSecurityOpts(seccompProfile, separator)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate seccomp security options for container: %v", err)
+	}
+
+	return seccompSecurityOpts, nil
+}
+
+func (ds *dockerService) getSandBoxSecurityOpts(separator rune) []string {
+	// run sandbox with no-new-privileges and using runtime/default
+	// sending no "seccomp=" means docker will use default profile
+	return []string{"no-new-privileges"}
+}
+
+func getSeccompDockerOpts(seccompProfile string) ([]DockerOpt, error) {
+	if seccompProfile == "" || seccompProfile == config.SeccompProfileNameUnconfined {
+		// return early the default
+		return defaultSeccompOpt, nil
+	}
+
+	if seccompProfile == config.SeccompProfileRuntimeDefault ||
+		seccompProfile == config.DeprecatedSeccompProfileDockerDefault {
+		// return nil so docker will load the default seccomp profile
+		return nil, nil
+	}
+
+	if !strings.HasPrefix(seccompProfile, config.SeccompLocalhostProfileNamePrefix) {
+		return nil, fmt.Errorf("unknown seccomp profile option: %s", seccompProfile)
+	}
+
+	// get the full path of seccomp profile when prefixed with 'localhost/'.
+	fname := strings.TrimPrefix(seccompProfile, config.SeccompLocalhostProfileNamePrefix)
+	if !filepath.IsAbs(fname) {
+		return nil, fmt.Errorf(
+			"seccomp profile path must be absolute, but got relative path %q",
+			fname,
+		)
+	}
+	file, err := ioutil.ReadFile(filepath.FromSlash(fname))
+	if err != nil {
+		return nil, fmt.Errorf("cannot load seccomp profile %q: %v", fname, err)
+	}
+
+	b := bytes.NewBuffer(nil)
+	if err := json.Compact(b, file); err != nil {
+		return nil, err
+	}
+	// Rather than the full profile, just put the filename & md5sum in the event log.
+	msg := fmt.Sprintf("%s(md5:%x)", fname, md5.Sum(file))
+
+	return []DockerOpt{{"seccomp", b.String(), msg}}, nil
+}
+
+// getSeccompSecurityOpts gets container seccomp options from container seccomp profile.
+// It is an experimental feature and may be promoted to official runtime api in the future.
+func getSeccompSecurityOpts(seccompProfile string, separator rune) ([]string, error) {
+	seccompOpts, err := getSeccompDockerOpts(seccompProfile)
+	if err != nil {
+		return nil, err
+	}
+	return FmtDockerOpts(seccompOpts, separator), nil
+}
+
+// getApparmorSecurityOpts gets apparmor options from container config.
+func getApparmorSecurityOpts(
+	sc *runtimeapi.LinuxContainerSecurityContext,
+	separator rune,
+) ([]string, error) {
+	if sc == nil || sc.Apparmor.String() == "" {
+		return nil, nil
+	}
+
+	appArmorOpts, err := getAppArmorOpts(sc.Apparmor.String())
+	if err != nil {
+		return nil, err
+	}
+
+	fmtOpts := FmtDockerOpts(appArmorOpts, separator)
+	return fmtOpts, nil
+}
+
+func getAppArmorOpts(profile string) ([]DockerOpt, error) {
+	if profile == "" || profile == config.AppArmorBetaProfileRuntimeDefault {
+		// The docker applies the default profile by default.
+		return nil, nil
+	}
+
+	// Return unconfined profile explicitly
+	if profile == config.AppArmorBetaProfileNameUnconfined {
+		return []DockerOpt{{"apparmor", config.AppArmorBetaProfileNameUnconfined, ""}}, nil
+	}
+
+	// Assume validation has already happened.
+	profileName := strings.TrimPrefix(profile, config.AppArmorBetaProfileNamePrefix)
+	return []DockerOpt{{"apparmor", profileName, ""}}, nil
+}
+
