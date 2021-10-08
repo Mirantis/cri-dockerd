@@ -8,11 +8,11 @@ require (
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/containernetworking/cni v0.8.0
 	github.com/coreos/go-systemd/v22 v22.1.0
-	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/davecgh/go-spew v1.1.1
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/docker/docker v17.12.0-ce-rc1.0.20200916142827-bd33bbf0497b+incompatible
 	github.com/docker/go-connections v0.4.0
-	github.com/emicklei/go-restful v2.9.5+incompatible // indirect
+	github.com/emicklei/go-restful v2.9.5+incompatible
 	github.com/golang/mock v1.4.1
 	github.com/imdario/mergo v0.3.7 // indirect
 	github.com/onsi/ginkgo v1.12.0 // indirect
