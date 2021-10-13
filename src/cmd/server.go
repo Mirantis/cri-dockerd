@@ -18,23 +18,19 @@ package cmd
 
 import (
 	"fmt"
-
 	"github.com/Mirantis/cri-dockerd/backend"
 	"github.com/Mirantis/cri-dockerd/cmd/cri/options"
 	"github.com/Mirantis/cri-dockerd/config"
 	"github.com/Mirantis/cri-dockerd/core"
 	"github.com/Mirantis/cri-dockerd/streaming"
 	"github.com/Mirantis/cri-dockerd/version"
+	"github.com/sirupsen/logrus"
 
 	"net/url"
 
-	"k8s.io/component-base/cli/flag"
-	utilflag "k8s.io/component-base/cli/flag"
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
-	"k8s.io/klog"
-
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 )
 
 const (
@@ -44,7 +40,6 @@ const (
 // NewDockerCRICommand creates a *cobra.Command object with default parameters
 func NewDockerCRICommand(stopCh <-chan struct{}) *cobra.Command {
 	cleanFlagSet := pflag.NewFlagSet(componentDockerCRI, pflag.ContinueOnError)
-	cleanFlagSet.SetNormalizeFunc(flag.WordSepNormalizeFunc)
 	kubeletFlags := options.NewDockerCRIFlags()
 
 	cmd := &cobra.Command{
@@ -59,20 +54,20 @@ func NewDockerCRICommand(stopCh <-chan struct{}) *cobra.Command {
 			// initial flag parse, since we disable cobra's flag parsing
 			if err := cleanFlagSet.Parse(args); err != nil {
 				cmd.Usage()
-				klog.Fatal(err)
+				logrus.Fatal(err)
 			}
 
 			// check if there are non-flag arguments in the command line
 			cmds := cleanFlagSet.Args()
 			if len(cmds) > 0 {
 				cmd.Usage()
-				klog.Fatalf("Unknown command: %s", cmds[0])
+				logrus.Fatalf("Unknown command: %s", cmds[0])
 			}
 
 			// short-circuit on help
 			help, err := cleanFlagSet.GetBool("help")
 			if err != nil {
-				klog.Fatal(`"help" flag is non-bool`)
+				logrus.Fatal(`"help" flag is non-bool`)
 			}
 			if help {
 				cmd.Help()
@@ -90,20 +85,27 @@ func NewDockerCRICommand(stopCh <-chan struct{}) *cobra.Command {
 				return
 			}
 
-			// short-circuit on verflag
-			utilflag.PrintFlags(cleanFlagSet)
+			var log = logrus.New()
+			logFlag, _ := cleanFlagSet.GetString("-v")
+			if logFlag != "" {
+				level, err := logrus.ParseLevel(logFlag)
+				if err != nil {
+					logrus.Fatalf("Unknown log level: %s", logFlag)
+				}
+				log.SetLevel(level)
+			}
 
 			if err := RunCriDockerd(kubeletFlags, stopCh); err != nil {
-				klog.Fatal(err)
+				logrus.Fatal(err)
 			}
 		},
 	}
 
 	// keep cleanFlagSet separate, so Cobra doesn't pollute it with the global flags
 	kubeletFlags.AddFlags(cleanFlagSet)
-	options.AddGlobalFlags(cleanFlagSet)
 	cleanFlagSet.BoolP("help", "h", false, fmt.Sprintf("Help for %s", cmd.Name()))
 	cleanFlagSet.Bool("version", false, "Prints the version of cri-dockerd")
+	cleanFlagSet.String("-v", "info", "The log level for cri-docker")
 
 	// ugly, but necessary, because Cobra's default UsageFunc and HelpFunc pollute the flagset with global flags
 	const usageFmt = "Usage:\n  %s\n\nFlags:\n%s"
@@ -179,7 +181,7 @@ func RunCriDockerd(f *options.DockerCRIFlags, stopCh <-chan struct{}) error {
 		return err
 	}
 
-	klog.Infof("Starting the GRPC backend for the Docker CRI interface.")
+	logrus.Info("Starting the GRPC backend for the Docker CRI interface.")
 	server := backend.NewCriDockerServer(f.RemoteRuntimeEndpoint, ds)
 	if err := server.Start(); err != nil {
 		return err
