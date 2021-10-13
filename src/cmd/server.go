@@ -30,7 +30,7 @@ import (
 
 	"k8s.io/component-base/cli/flag"
 	utilflag "k8s.io/component-base/cli/flag"
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
+	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 	"k8s.io/klog"
 
 	"github.com/spf13/cobra"

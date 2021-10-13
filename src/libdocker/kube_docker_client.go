@@ -175,7 +175,6 @@ func (d *kubeDockerClient) StartContainer(id string) error {
 	return err
 }
 
-// Stopping an already stopped container will not cause an error in dockerapi.
 func (d *kubeDockerClient) StopContainer(id string, timeout time.Duration) error {
 	ctx, cancel := d.getCustomTimeoutContext(timeout)
 	defer cancel()
@@ -363,23 +362,19 @@ func (p *progressReporter) start() {
 				progress, timestamp := p.progress.get()
 				// If there is no progress for p.imagePullProgressDeadline, cancel the operation.
 				if time.Since(timestamp) > p.imagePullProgressDeadline {
-					logrus.Error(
-						nil,
-						"Cancel pulling image because of exceed image pull deadline, record latest progress",
-						"image",
+					logrus.Errorf(
+						"Cancel pulling image %s because it exceeded image pull deadline %s. Latest progress %s",
 						p.image,
-						"deadline",
-						p.imagePullProgressDeadline,
-						"progress",
+						p.imagePullProgressDeadline.String(),
 						progress,
 					)
 					p.cancel()
 					return
 				}
-				logrus.Info("Pulling image", "image", p.image, "progress", progress)
+				logrus.Infof("Pulling image %s: %s", p.image,  progress)
 			case <-p.stopCh:
 				progress, _ := p.progress.get()
-				logrus.Info("Stop pulling image", "image", p.image, "progress", progress)
+				logrus.Infof("Stop pulling image %s: %s",p.image, progress)
 				return
 			}
 		}

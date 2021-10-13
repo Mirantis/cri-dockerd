@@ -93,7 +93,7 @@ func findPairInterfaceOfContainerInterface(
 }
 
 func setUpInterface(ifName string) error {
-	logrus.Info("Enabling hairpin on interface", "interfaceName", ifName)
+	logrus.Infof("Enabling hairpin on interface %s", ifName)
 	ifPath := path.Join(sysfsNetPath, ifName)
 	if _, err := os.Stat(ifPath); err != nil {
 		return err

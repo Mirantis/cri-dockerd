@@ -18,7 +18,7 @@ package core
 
 import (
 	"context"
-	"k8s.io/cri-api/pkg/apis/runtime/v1"
+	v1 "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 	"time"
 )
 

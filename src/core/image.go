@@ -28,7 +28,7 @@ import (
 	"github.com/docker/docker/pkg/jsonmessage"
 
 	"github.com/sirupsen/logrus"
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
+	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 
 	"github.com/Mirantis/cri-dockerd/libdocker"
 )
@@ -58,13 +58,7 @@ func (ds *dockerService) ListImages(
 	for _, i := range images {
 		apiImage, err := imageToRuntimeAPIImage(&i)
 		if err != nil {
-			logrus.Info(
-				"Failed to convert docker API image to runtime API image",
-				"image",
-				i,
-				"err",
-				err,
-			)
+			logrus.Infof("Failed to convert docker API image %v to runtime API image: %v", i, err)
 			continue
 		}
 		result = append(result, apiImage)
@@ -239,4 +233,3 @@ func getUserFromImageUser(imageUser string) (*int64, string) {
 	// If user is a numeric uid.
 	return &uid, ""
 }
-

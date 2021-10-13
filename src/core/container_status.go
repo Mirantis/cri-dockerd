@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"github.com/Mirantis/cri-dockerd/libdocker"
 	"github.com/sirupsen/logrus"
-	"k8s.io/cri-api/pkg/apis/runtime/v1"
+	v1 "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 )
 
 // ContainerStatus inspects the docker container and returns the status.
@@ -52,15 +52,7 @@ func (ds *dockerService) ContainerStatus(
 				err,
 			)
 		}
-		logrus.Info(
-			"Ignore error image not found while inspecting docker container",
-			"containerID",
-			containerID,
-			"image",
-			r.Image,
-			"err",
-			err,
-		)
+		logrus.Debugf("Image %s not found while inspecting docker container %s: %v", r.Image, containerID, err)
 	}
 	imageID := toPullableImageID(r.Image, ir)
 

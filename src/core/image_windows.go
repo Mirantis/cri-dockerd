@@ -24,7 +24,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
+	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 	"k8s.io/kubernetes/pkg/kubelet/winstats"
 )
 
@@ -42,7 +42,7 @@ func (ds *dockerService) ImageFsInfo(
 	statsClient := &winstats.StatsClient{}
 	fsinfo, err := statsClient.GetDirFsInfo(info.DockerRootDir)
 	if err != nil {
-		logrus.Error(err, "Failed to get fsInfo for dockerRootDir", "path", info.DockerRootDir)
+		logrus.Errorf("Failed to get fsInfo for dockerRootDir %s: %v", info.DockerRootDir, err)
 		return nil, err
 	}
 

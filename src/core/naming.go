@@ -24,7 +24,7 @@ import (
 
 	"github.com/Mirantis/cri-dockerd/config"
 
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
+	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 )
 
 // Container "names" are implementation details that do not concern

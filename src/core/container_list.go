@@ -21,7 +21,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/sirupsen/logrus"
-	"k8s.io/cri-api/pkg/apis/runtime/v1"
+	v1 "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 )
 
 // ListContainers lists all containers matching the filter.
@@ -65,7 +65,7 @@ func (ds *dockerService) ListContainers(
 
 		converted, err := toRuntimeAPIContainer(&c)
 		if err != nil {
-			logrus.Info("Unable to convert docker to runtime API container", "err", err)
+			logrus.Infof("Unable to convert docker container %v to runtime API container: %v", c, err)
 			continue
 		}
 

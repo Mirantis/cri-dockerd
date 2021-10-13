@@ -19,7 +19,7 @@ package libdocker
 import (
 	"fmt"
 	"github.com/docker/go-connections/nat"
-	"k8s.io/cri-api/pkg/apis/runtime/v1"
+	v1 "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 	"strconv"
 	"strings"
 	"time"
@@ -46,7 +46,7 @@ func matchImageTagOrSHA(inspected dockertypes.ImageInspect, image string) bool {
 	// https://github.com/docker/distribution/blob/master/reference/reference.go#L4
 	named, err := dockerref.ParseNormalizedNamed(image)
 	if err != nil {
-		logrus.Info("Couldn't parse image reference", "image", image, "err", err)
+		logrus.Errorf("Couldn't parse image (%s) reference: %v", image, err)
 		return false
 	}
 	_, isTagged := named.(dockerref.Tagged)
@@ -102,11 +102,9 @@ func matchImageTagOrSHA(inspected dockertypes.ImageInspect, image string) bool {
 		for _, repoDigest := range inspected.RepoDigests {
 			named, err := dockerref.ParseNormalizedNamed(repoDigest)
 			if err != nil {
-				logrus.Info(
-					"Couldn't parse image RepoDigest reference",
-					"digest",
+				logrus.Errorf(
+					"Couldn't parse image RepoDigest reference %s: %v",
 					repoDigest,
-					"err",
 					err,
 				)
 				continue
@@ -122,7 +120,7 @@ func matchImageTagOrSHA(inspected dockertypes.ImageInspect, image string) bool {
 		// process the ID as a digest
 		id, err := godigest.Parse(inspected.ID)
 		if err != nil {
-			logrus.Info("Couldn't parse image ID reference", "imageID", id, "err", err)
+			logrus.Errorf("Couldn't parse image ID %s reference: %v", id, err)
 			return false
 		}
 		if digest.Digest().Algorithm().String() == id.Algorithm().String() &&
@@ -130,11 +128,9 @@ func matchImageTagOrSHA(inspected dockertypes.ImageInspect, image string) bool {
 			return true
 		}
 	}
-	logrus.Info(
-		"Inspected image ID does not match image",
-		"inspectedImageID",
+	logrus.Infof(
+		"Inspected image ID %s does not match image %s",
 		inspected.ID,
-		"image",
 		image,
 	)
 	return false
@@ -153,19 +149,19 @@ func matchImageIDOnly(inspected dockertypes.ImageInspect, image string) bool {
 	// Otherwise, we should try actual parsing to be more correct
 	ref, err := dockerref.Parse(image)
 	if err != nil {
-		logrus.Info("Couldn't parse image reference", "image", image, "err", err)
+		logrus.Infof("Couldn't parse image reference %s: %v", image, err)
 		return false
 	}
 
 	digest, isDigested := ref.(dockerref.Digested)
 	if !isDigested {
-		logrus.Info("The image reference was not a digest reference", "image", image)
+		logrus.Infof("The image reference %s was not a digest reference", image)
 		return false
 	}
 
 	id, err := godigest.Parse(inspected.ID)
 	if err != nil {
-		logrus.Info("Couldn't parse image ID reference", "imageID", id, "err", err)
+		logrus.Infof("Couldn't parse image ID reference %s: %v", id, err)
 		return false
 	}
 
@@ -174,8 +170,8 @@ func matchImageIDOnly(inspected dockertypes.ImageInspect, image string) bool {
 		return true
 	}
 
-	logrus.Info("The image reference does not directly refer to the given image's ID",
-		"image", image, "inspectedImageID", inspected.ID)
+	logrus.Infof("The image reference %s does not directly refer to the given image's ID %s",
+		image, inspected.ID)
 	return false
 }
 
@@ -232,7 +228,7 @@ func GenerateMountBindings(mounts []*v1.Mount) []string {
 		case v1.MountPropagation_PROPAGATION_HOST_TO_CONTAINER:
 			attrs = append(attrs, "rslave")
 		default:
-			logrus.Info("Unknown propagation mode for hostPath", "path", m.HostPath)
+			logrus.Infof("Unknown propagation mode for hostPath %s", m.HostPath)
 			// Falls back to "private"
 		}
 
@@ -267,7 +263,7 @@ func MakePortsAndBindings(
 		case v1.Protocol_SCTP:
 			protocol = "/sctp"
 		default:
-			logrus.Info("Unknown protocol, defaulting to TCP", "protocol", port.Protocol)
+			logrus.Infof("Unknown protocol %s, defaulting to TCP", port.Protocol)
 			protocol = "/tcp"
 		}
 

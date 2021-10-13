@@ -192,7 +192,7 @@ func InitNetworkPlugin(
 				fmt.Errorf("network plugin %q failed init: %v", networkPluginName, err),
 			)
 		} else {
-			logrus.Info("Loaded network plugin", "networkPluginName", networkPluginName)
+			logrus.Infof("Loaded network plugin %s", networkPluginName)
 		}
 	} else {
 		allErrs = append(allErrs, fmt.Errorf("network plugin %q not found", networkPluginName))
@@ -224,12 +224,12 @@ func (plugin *NoopNetworkPlugin) Init(
 	// it was built-in.
 	utilexec.New().Command("modprobe", "br-netfilter").CombinedOutput()
 	if err := plugin.Sysctl.SetSysctl(sysctlBridgeCallIPTables, 1); err != nil {
-		logrus.Info("can't set sysctl bridge-nf-call-iptables", "err", err)
+		logrus.Errorf("can't set sysctl bridge-nf-call-iptables: %v", err)
 	}
 	if val, err := plugin.Sysctl.GetSysctl(sysctlBridgeCallIP6Tables); err == nil {
 		if val != 1 {
 			if err = plugin.Sysctl.SetSysctl(sysctlBridgeCallIP6Tables, 1); err != nil {
-				logrus.Info("can't set sysctl bridge-nf-call-ip6tables", "err", err)
+				logrus.Errorf("can't set sysctl bridge-nf-call-ip6tables: %v", err)
 			}
 		}
 	}
@@ -430,12 +430,12 @@ func (pm *PluginManager) podUnlock(fullPodName string) {
 
 	lock, ok := pm.pods[fullPodName]
 	if !ok {
-		logrus.Info("Unbalanced pod lock unref for the pod", "podFullName", fullPodName)
+		logrus.Debugf("Unbalanced pod lock unref for pod %s", fullPodName)
 		return
 	} else if lock.refcount == 0 {
 		// This should never ever happen, but handle it anyway
 		delete(pm.pods, fullPodName)
-		logrus.Info("Pod lock for the pod still in map with zero refcount", "podFullName", fullPodName)
+		logrus.Debugf("Pod lock for the pod still in map with zero refcount: %s", fullPodName)
 		return
 	}
 	lock.refcount--

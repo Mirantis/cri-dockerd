@@ -95,7 +95,6 @@ func (*NativeExecHandler) ExecInContainer(
 		Tty:          tty,
 	}
 	execObj, err := client.CreateExec(container.ID, createOpts)
-	logrus.Infof("GOT %+v", execObj)
 	if err != nil {
 		return fmt.Errorf("failed to exec in container - Exec setup failed - %v", err)
 	}
@@ -173,12 +172,9 @@ func (*NativeExecHandler) ExecInContainer(
 
 		retries++
 		if retries == maxRetries {
-			logrus.Error(
-				nil,
-				"Exec session in the container terminated but process still running!",
-				"execSession",
+			logrus.Errorf(
+				"Exec session in the container terminated but process still running! Session %s | Container %s",
 				execObj.ID,
-				"containerID",
 				container.ID,
 			)
 			return nil

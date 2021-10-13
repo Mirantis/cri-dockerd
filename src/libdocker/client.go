@@ -78,7 +78,7 @@ type DockerClientInterface interface {
 // DOCKER_HOST, DOCKER_TLS_VERIFY, and DOCKER_CERT path per their spec
 func getDockerClient(dockerEndpoint string) (*dockerapi.Client, error) {
 	if len(dockerEndpoint) > 0 {
-		logrus.Info("Connecting to docker on the dockerEndpoint", "endpoint", dockerEndpoint)
+		logrus.Infof("Connecting to docker on the Endpoint %s", dockerEndpoint)
 		return dockerapi.NewClientWithOpts(
 			dockerapi.WithHost(dockerEndpoint),
 			dockerapi.WithVersion(""),
@@ -99,10 +99,10 @@ func ConnectToDockerOrDie(
 ) DockerClientInterface {
 	client, err := getDockerClient(dockerEndpoint)
 	if err != nil {
-		logrus.Error(err, "Couldn't connect to docker")
+		logrus.Errorf("Couldn't connect to docker: %v", err)
 		os.Exit(1)
 
 	}
-	logrus.Info("Start docker client with request timeout", "timeout", requestTimeout)
+	logrus.Infof("Start docker client with request timeout %s", requestTimeout)
 	return newKubeDockerClient(client, requestTimeout, imagePullProgressDeadline)
 }

@@ -21,7 +21,7 @@ package core
 import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/sirupsen/logrus"
-	"k8s.io/cri-api/pkg/apis/runtime/v1"
+	v1 "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 )
 
 func (ds *core.dockerService) getSecurityOpts(

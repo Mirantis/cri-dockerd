@@ -28,8 +28,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Mirantis/cri-dockerd/containermanager"
 	"github.com/Mirantis/cri-dockerd/config"
+	"github.com/Mirantis/cri-dockerd/containermanager"
 	"github.com/Mirantis/cri-dockerd/libdocker"
 	"github.com/Mirantis/cri-dockerd/metrics"
 	"github.com/Mirantis/cri-dockerd/network"
@@ -42,7 +42,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	v1 "k8s.io/api/core/v1"
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
+	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 )
 
 const (
@@ -166,7 +166,7 @@ func NewDockerService(
 		// lead to retries of the same failure, so just fail hard.
 		return nil, err
 	}
-	logrus.Info("Hairpin mode is set", "hairpinMode", pluginSettings.HairpinMode)
+	logrus.Infof("Hairpin mode is set to %s", pluginSettings.HairpinMode)
 
 	// cri-dockerd currently only supports CNI plugins.
 	pluginSettings.PluginBinDirs = cni.SplitDirs(pluginSettings.PluginBinDirString)
@@ -199,9 +199,8 @@ func NewDockerService(
 		)
 	}
 	ds.network = network.NewPluginManager(plug)
-	logrus.Info(
-		"Docker cri networking managed by the network plugin",
-		"networkPluginName",
+	logrus.Infof(
+		"Docker cri networking managed by network plugin %s",
 		plug.Name(),
 	)
 
@@ -210,13 +209,13 @@ func NewDockerService(
 		// NOTE: cgroup driver is only detectable in docker 1.11+
 		cgroupDriver := defaultCgroupDriver
 		dockerInfo, err := ds.client.Info()
-		logrus.Info("Docker Info", "dockerInfo", dockerInfo)
+		logrus.Infof("Docker Info: %+v", dockerInfo)
 		if err != nil {
 			logrus.Error(err, "Failed to execute Info() call to the Docker client")
-			logrus.Info("Falling back to use the default driver", "cgroupDriver", cgroupDriver)
+			logrus.Infof("Falling back to use the default driver %s", cgroupDriver)
 		} else if len(dockerInfo.CgroupDriver) == 0 {
 			logrus.Info("No cgroup driver is set in Docker")
-			logrus.Info("Falling back to use the default driver", "cgroupDriver", cgroupDriver)
+			logrus.Infof("Falling back to use the default driver %s", cgroupDriver)
 		} else {
 			cgroupDriver = dockerInfo.CgroupDriver
 		}
@@ -227,7 +226,7 @@ func NewDockerService(
 				cgroupDriver,
 			)
 		}
-		logrus.Info("Setting cgroupDriver", "cgroupDriver", cgroupDriver)
+		logrus.Infof("Setting cgroupDriver %s", cgroupDriver)
 		ds.cgroupDriver = cgroupDriver
 	}
 
@@ -313,7 +312,7 @@ func (ds *dockerService) UpdateRuntimeConfig(
 		return &runtimeapi.UpdateRuntimeConfigResponse{}, nil
 	}
 
-	logrus.Info("Docker cri received runtime config", "runtimeConfig", runtimeConfig)
+	logrus.Infof("Docker cri received runtime config %+v", runtimeConfig)
 	if ds.network != nil && runtimeConfig.NetworkConfig.PodCidr != "" {
 		event := make(map[string]interface{})
 		event[network.NET_PLUGIN_EVENT_POD_CIDR_CHANGE_DETAIL_CIDR] = runtimeConfig.NetworkConfig.PodCidr
@@ -329,7 +328,7 @@ func (ds *dockerService) Start() error {
 
 	go func() {
 		if err := ds.streamingServer.Start(true); err != nil {
-			logrus.Error(err, "Streaming backend stopped unexpectedly")
+			logrus.Errorf("Streaming backend stopped unexpectedly: %v", err)
 			os.Exit(1)
 		}
 	}()
@@ -385,7 +384,7 @@ func (ds *dockerService) GenerateExpectedCgroupParent(cgroupParent string) (stri
 			cgroupParent = path.Base(cgroupParent)
 		}
 	}
-	logrus.Info("Setting cgroup parent", "cgroupParent", cgroupParent)
+	logrus.Debug("Setting cgroup parent to (%s)", cgroupParent)
 	return cgroupParent, nil
 }
 
@@ -416,7 +415,7 @@ func (ds *dockerService) initCleanup() {
 	errors := ds.platformSpecificContainerInitCleanup()
 
 	for _, err := range errors {
-		logrus.Info("Initialization error", "err", err)
+		logrus.Errorf("Initialization error: %v", err)
 	}
 }
 
@@ -453,4 +452,3 @@ func (ds *dockerService) getDockerVersionFromCache() (*dockertypes.Version, erro
 	}
 	return dv, nil
 }
-

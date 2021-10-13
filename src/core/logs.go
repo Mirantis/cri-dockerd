@@ -34,7 +34,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kubetypes "k8s.io/apimachinery/pkg/types"
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
+	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 
 	"github.com/Mirantis/cri-dockerd/libdocker"
 )
@@ -92,7 +92,7 @@ func (ds *dockerService) GetContainerLogs(
 	}
 	err = ds.client.Logs(containerID.ID, opts, sopts)
 	if errors.Is(err, errMaximumWrite) {
-		logrus.Info("Finished logs, hit byte limit", "byteLimit", *logOptions.LimitBytes)
+		logrus.Debugf("Finished logs, hit byte limit: %d", *logOptions.LimitBytes)
 		err = nil
 	}
 	return err
@@ -166,11 +166,7 @@ func (ds *dockerService) createContainerLogSymlink(containerID string) error {
 	}
 
 	if path == "" {
-		logrus.Debug(
-			"Container log path isn't specified, will not create the symlink",
-			"containerID",
-			containerID,
-		)
+		logrus.Debugf("Container log path for Container ID %s isn't specified, will not create symlink", containerID)
 		return nil
 	}
 
@@ -178,7 +174,7 @@ func (ds *dockerService) createContainerLogSymlink(containerID string) error {
 		// Only create the symlink when container log path is specified and log file exists.
 		// Delete possibly existing file first
 		if err = ds.os.Remove(path); err == nil {
-			logrus.Info("Deleted previously existing symlink file", "path", path)
+			logrus.Debugf("Deleted previously existing symlink file: %s", path)
 		}
 		if err = ds.os.Symlink(realPath, path); err != nil {
 			return fmt.Errorf(
@@ -192,7 +188,7 @@ func (ds *dockerService) createContainerLogSymlink(containerID string) error {
 	} else {
 		supported, err := ds.IsCRISupportedLogDriver()
 		if err != nil {
-			logrus.Info("Failed to check supported logging driver by CRI", "err", err)
+			logrus.Errorf("Failed to check supported logging driver for CRI: %v", err)
 			return nil
 		}
 
@@ -226,4 +222,3 @@ func (ds *dockerService) removeContainerLogSymlink(containerID string) error {
 	}
 	return nil
 }
-

@@ -20,7 +20,7 @@ import (
 	"context"
 	"github.com/Mirantis/cri-dockerd/libdocker"
 	"github.com/Mirantis/cri-dockerd/streaming"
-	"k8s.io/cri-api/pkg/apis/runtime/v1"
+	v1 "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 )
 
 // Attach prepares a streaming endpoint to attach to a running container, and returns the address.
