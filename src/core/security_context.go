@@ -29,7 +29,7 @@ import (
 
 	dockercontainer "github.com/docker/docker/api/types/container"
 
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
+	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 
 	knetwork "github.com/Mirantis/cri-dockerd/network"
 )
@@ -346,4 +346,3 @@ func getAppArmorOpts(profile string) ([]DockerOpt, error) {
 	profileName := strings.TrimPrefix(profile, config.AppArmorBetaProfileNamePrefix)
 	return []DockerOpt{{"apparmor", profileName, ""}}, nil
 }
-

@@ -63,7 +63,7 @@ func (r *StreamingRuntime) portForward(
 	}
 
 	commandString := fmt.Sprintf("%s %s", nsenterPath, strings.Join(args, " "))
-	logrus.Info("Executing port forwarding command", "command", commandString)
+	logrus.Debugf("Executing port forwarding command: %s", commandString)
 
 	command := exec.Command(nsenterPath, args...)
 	command.Stdout = stream

@@ -22,7 +22,7 @@ import (
 	"fmt"
 	"github.com/Mirantis/cri-dockerd/config"
 	"github.com/Mirantis/cri-dockerd/utils/errors"
-	"k8s.io/cri-api/pkg/apis/runtime/v1"
+	v1 "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 )
 
 // RunPodSandbox creates and starts a pod-level sandbox. Runtimes should ensure

@@ -25,7 +25,7 @@ import (
 	"github.com/Mirantis/cri-dockerd/store"
 	"github.com/Mirantis/cri-dockerd/streaming"
 	"github.com/sirupsen/logrus"
-	"k8s.io/cri-api/pkg/apis/runtime/v1"
+	v1 "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 )
 
 // portMappingGetter is a wrapper around the dockerService that implements

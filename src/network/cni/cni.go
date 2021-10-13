@@ -32,7 +32,7 @@ import (
 	cnitypes "github.com/containernetworking/cni/pkg/types"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/wait"
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
+	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 	"k8s.io/kubernetes/pkg/util/bandwidth"
 	utilslice "k8s.io/kubernetes/pkg/util/slice"
 	utilexec "k8s.io/utils/exec"
@@ -168,32 +168,31 @@ func getDefaultCNINetwork(confDir string, binDirs []string) (*cniNetwork, error)
 		if strings.HasSuffix(confFile, ".conflist") {
 			confList, err = libcni.ConfListFromFile(confFile)
 			if err != nil {
-				logrus.Info("Error loading CNI config list file", "path", confFile, "err", err)
+				logrus.Errorf("Error loading CNI config list file %s: %v", confFile, err)
 				continue
 			}
 		} else {
 			conf, err := libcni.ConfFromFile(confFile)
 			if err != nil {
-				logrus.Info("Error loading CNI config file", "path", confFile, "err", err)
+				logrus.Errorf("Error loading CNI config file %s: %v", confFile, err)
 				continue
 			}
 			// Ensure the config has a "type" so we know what plugin to run.
 			// Also catches the case where somebody put a conflist into a conf file.
 			if conf.Network.Type == "" {
-				logrus.Info("Error loading CNI config file: no 'type'; perhaps this is a .conflist?", "path", confFile)
+				logrus.Info("Error loading CNI config file: no 'type'; perhaps this is a .conflist?")
 				continue
 			}
 
 			confList, err = libcni.ConfListFromConf(conf)
 			if err != nil {
-				logrus.Info("Error converting CNI config file to list", "path", confFile, "err", err)
+				logrus.Errorf("Error converting CNI config file %s to list: %v", confFile, err)
 				continue
 			}
 		}
 		if len(confList.Plugins) == 0 {
-			logrus.Info(
-				"CNI config list has no networks, skipping",
-				"configList",
+			logrus.Infof(
+				"CNI config list (%s) has no networks, skipping",
 				string(confList.Bytes[:maxStringLengthInLog(len(confList.Bytes))]),
 			)
 			continue
@@ -203,17 +202,15 @@ func getDefaultCNINetwork(confDir string, binDirs []string) (*cniNetwork, error)
 		// all plugins of this config exist on disk
 		caps, err := cniConfig.ValidateNetworkList(context.TODO(), confList)
 		if err != nil {
-			logrus.Info(
-				"Error validating CNI config list",
-				"configList",
+			logrus.Errorf(
+				"Error validating CNI config list (%s): %v",
 				string(confList.Bytes[:maxStringLengthInLog(len(confList.Bytes))]),
-				"err",
 				err,
 			)
 			continue
 		}
 
-		logrus.Info("Using CNI configuration file", "path", confFile)
+		logrus.Infof("Using CNI configuration file %s", confFile)
 
 		return &cniNetwork{
 			name:          confList.Name,
@@ -249,7 +246,7 @@ func (plugin *cniNetworkPlugin) Init(
 func (plugin *cniNetworkPlugin) syncNetworkConfig() {
 	network, err := getDefaultCNINetwork(plugin.confDir, plugin.binDirs)
 	if err != nil {
-		logrus.Info("Unable to update cni config", "err", err)
+		logrus.Debugf("Unable to update cni config: %v", err)
 		return
 	}
 	plugin.setDefaultNetwork(network)
@@ -292,16 +289,15 @@ func (plugin *cniNetworkPlugin) Event(name string, details map[string]interface{
 
 	podCIDR, ok := details[network.NET_PLUGIN_EVENT_POD_CIDR_CHANGE_DETAIL_CIDR].(string)
 	if !ok {
-		logrus.Info(
-			"The event didn't contain pod CIDR",
-			"event",
+		logrus.Debugf(
+			"The event (%s) didn't contain pod CIDR",
 			network.NET_PLUGIN_EVENT_POD_CIDR_CHANGE,
 		)
 		return
 	}
 
 	if plugin.podCidr != "" {
-		logrus.Info("Ignoring subsequent pod CIDR update to new cidr", "podCIDR", podCIDR)
+		logrus.Debugf("Ignoring subsequent pod CIDR (%s) update to new cidr", podCIDR)
 		return
 	}
 
@@ -369,7 +365,7 @@ func (plugin *cniNetworkPlugin) TearDownPod(
 	// Lack of namespace should not be fatal on teardown
 	netnsPath, err := plugin.host.GetNetNS(id.ID)
 	if err != nil {
-		logrus.Info("CNI failed to retrieve network namespace path", "err", err)
+		logrus.Debugf("CNI failed to retrieve network namespace path: %v", err)
 	}
 
 	// Todo get the timeout from parent ctx
@@ -382,7 +378,7 @@ func (plugin *cniNetworkPlugin) TearDownPod(
 	if plugin.loNetwork != nil {
 		// Loopback network deletion failure should not be fatal on teardown
 		if err := plugin.deleteFromNetwork(cniTimeoutCtx, plugin.loNetwork, name, namespace, id, netnsPath, nil); err != nil {
-			logrus.Info("CNI failed to delete loopback network", "err", err)
+			logrus.Errorf("CNI failed to delete loopback network: %v", err)
 		}
 	}
 
@@ -415,7 +411,7 @@ func (plugin *cniNetworkPlugin) addToNetwork(
 		options,
 	)
 	if err != nil {
-		logrus.Error(err, "Error adding network when building cni runtime conf")
+		logrus.Errorf("Error adding network when building cni runtime conf: %v", err)
 		return nil, err
 	}
 
@@ -423,20 +419,15 @@ func (plugin *cniNetworkPlugin) addToNetwork(
 
 	res, err := cniNet.AddNetworkList(ctx, netConf, rt)
 	if err != nil {
-		logrus.Error(
-			err,
-			"Error adding pod to network",
-			"pod",
+		logrus.Errorf(
+			"Error adding pod %s/%s to network %s:%s:%s:%s: %v",
 			podNamespace,
 			podName,
-			"podSandboxID",
 			podSandboxID,
-			"podNetnsPath",
 			podNetnsPath,
-			"networkType",
 			netConf.Plugins[0].Network.Type,
-			"networkName",
 			netConf.Name,
+			err,
 		)
 		return nil, err
 	}
@@ -462,7 +453,7 @@ func (plugin *cniNetworkPlugin) deleteFromNetwork(
 		nil,
 	)
 	if err != nil {
-		logrus.Error(err, "Error deleting network when building cni runtime conf")
+		logrus.Errorf("Error deleting network when building cni runtime conf: %v", err)
 		return err
 	}
 	netConf, cniNet := network.NetworkConfig, network.CNIConfig
@@ -471,20 +462,15 @@ func (plugin *cniNetworkPlugin) deleteFromNetwork(
 	// The pod may not get deleted successfully at the first time.
 	// Ignore "no such file or directory" error in case the network has already been deleted in previous attempts.
 	if err != nil && !strings.Contains(err.Error(), "no such file or directory") {
-		logrus.Error(
-			err,
-			"Error deleting pod from network",
-			"pod",
+		logrus.Errorf(
+			"Error deleting pod %s/%s from network %s:%s:%s:%s: %v",
 			podNamespace,
 			podName,
-			"podSandboxID",
 			podSandboxID,
-			"podNetnsPath",
 			podNetnsPath,
-			"networkType",
 			netConf.Plugins[0].Network.Type,
-			"networkName",
 			netConf.Name,
+			err,
 		)
 		return err
 	}

@@ -19,7 +19,7 @@ package core
 import (
 	"context"
 	"fmt"
-	"k8s.io/cri-api/pkg/apis/runtime/v1"
+	v1 "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 )
 
 // PodSandboxStatus returns the status of the PodSandbox.

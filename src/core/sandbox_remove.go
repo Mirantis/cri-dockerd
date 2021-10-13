@@ -22,7 +22,7 @@ import (
 	"github.com/Mirantis/cri-dockerd/utils/errors"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
-	"k8s.io/cri-api/pkg/apis/runtime/v1"
+	v1 "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 )
 
 // RemovePodSandbox removes the sandbox. If there are running containers in the

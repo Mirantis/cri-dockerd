@@ -24,7 +24,7 @@ import (
 	"github.com/Mirantis/cri-dockerd/store"
 	"github.com/Mirantis/cri-dockerd/utils/errors"
 	"github.com/sirupsen/logrus"
-	"k8s.io/cri-api/pkg/apis/runtime/v1"
+	v1 "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 )
 
 // StopPodSandbox stops the sandbox. If there are any running containers in the
@@ -58,11 +58,13 @@ func (ds *dockerService) StopPodSandbox(
 			if checkpointErr != store.ErrCheckpointNotFound {
 				err := ds.checkpointManager.RemoveCheckpoint(podSandboxID)
 				if err != nil {
-					logrus.Error(err, "Failed to delete corrupt checkpoint for sandbox", "podSandboxID", podSandboxID)
+					logrus.Errorf("Failed to delete corrupt checkpoint for sandbox %s: %v", podSandboxID, err)
 				}
 			}
 			if libdocker.IsContainerNotFoundError(statusErr) {
-				logrus.Info("Both sandbox container and checkpoint could not be found. Proceed without further sandbox information.", "podSandboxID", podSandboxID)
+				logrus.Info(
+					"Both sandbox container and checkpoint could not be found with id %d. " +
+					"Proceed without further sandbox information.", podSandboxID)
 			} else {
 				return nil, errors.NewAggregate([]error{
 					fmt.Errorf("failed to get checkpoint for sandbox %q: %v", podSandboxID, checkpointErr),
@@ -96,7 +98,7 @@ func (ds *dockerService) StopPodSandbox(
 	if err := ds.client.StopContainer(podSandboxID, defaultSandboxGracePeriod); err != nil {
 		// Do not return error if the container does not exist
 		if !libdocker.IsContainerNotFoundError(err) {
-			logrus.Error(err, "Failed to stop sandbox", "podSandboxID", podSandboxID)
+			logrus.Errorf("Failed to stop sandbox %s: %v", podSandboxID, err)
 			errList = append(errList, err)
 		} else {
 			// remove the checkpoint for any sandbox that is not found in the runtime

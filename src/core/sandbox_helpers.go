@@ -30,7 +30,7 @@ import (
 	dockertypes "github.com/docker/docker/api/types"
 	dockercontainer "github.com/docker/docker/api/types/container"
 	"github.com/sirupsen/logrus"
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
+	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 )
 
 const (
@@ -326,7 +326,7 @@ func rewriteResolvFile(
 	dnsOptions []string,
 ) error {
 	if len(resolvFilePath) == 0 {
-		logrus.Error(nil, "ResolvConfPath is empty.")
+		logrus.Error("ResolvConfPath is empty.")
 		return nil
 	}
 
@@ -353,7 +353,7 @@ func rewriteResolvFile(
 
 		logrus.Infof("Will attempt to re-write config file %s as %v", resolvFilePath, resolvFileContent)
 		if err := rewriteFile(resolvFilePath, resolvFileContentStr); err != nil {
-			logrus.Error(err, "Resolv.conf could not be updated")
+			logrus.Errorf("Resolv.conf could not be updated: %v", err)
 			return err
 		}
 	}
@@ -397,11 +397,7 @@ func recoverFromCreationConflictIfNeeded(
 
 	// randomize the name to avoid conflict.
 	createConfig.Name = randomizeName(createConfig.Name)
-	logrus.Info(
-		"Create the container with the randomized name",
-		"containerName",
-		createConfig.Name,
-	)
+	logrus.Debugf("Creating a container with a randomized name: %s", createConfig.Name)
 	return client.CreateContainer(createConfig)
 }
 
@@ -447,4 +443,3 @@ func ensureSandboxImageExists(client libdocker.DockerClientInterface, image stri
 
 	return errors.NewAggregate(pullErrs)
 }
-

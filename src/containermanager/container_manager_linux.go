@@ -86,19 +86,19 @@ func (m *containerManager) Start() error {
 func (m *containerManager) doWork() {
 	v, err := m.client.Version()
 	if err != nil {
-		logrus.Error(err, "Unable to get docker version")
+		logrus.Errorf("Unable to get docker version: %v", err)
 		return
 	}
 	version, err := utilversion.ParseGeneric(v.APIVersion)
 	if err != nil {
-		logrus.Error(err, "Unable to parse docker version", "dockerVersion", v.APIVersion)
+		logrus.Errorf("Unable to parse docker version %v: %v", v.APIVersion, err)
 		return
 	}
 	// EnsureDockerInContainer does two things.
 	//   1. Ensure processes run in the cgroups if m.cgroupsManager is not nil.
 	//   2. Ensure processes have the OOM score applied.
 	if err := m.ensureDockerInContainer(version, dockerOOMScoreAdj, m.cgroupsManager); err != nil {
-		logrus.Error(err, "Unable to ensure the docker processes run in the desired containers")
+		logrus.Errorf("Unable to ensure the docker processes run in the desired containers: %v", err)
 	}
 }
 
@@ -107,7 +107,7 @@ func createCgroupManager(name string) (cgroups.Manager, error) {
 
 	memoryCapacity, err := getMemoryCapacity()
 	if err != nil {
-		logrus.Error(err, "Failed to get the memory capacity on machine")
+		logrus.Errorf("Failed to get the memory capacity on machine: %v", err)
 	} else {
 		memoryLimit = memoryCapacity * dockerMemoryLimitThresholdPercent / 100
 	}
@@ -115,13 +115,7 @@ func createCgroupManager(name string) (cgroups.Manager, error) {
 	if err != nil || memoryLimit < minDockerMemoryLimit {
 		memoryLimit = minDockerMemoryLimit
 	}
-	logrus.Info(
-		"Configure resource-only container with memory limit",
-		"containerName",
-		name,
-		"memoryLimit",
-		memoryLimit,
-	)
+	logrus.Infof("Configuring resource-only container %s with memory limit %d", name, memoryLimit)
 
 	cg := &configs.Cgroup{
 		Parent: "/",

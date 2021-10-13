@@ -19,7 +19,7 @@ package core
 import (
 	"context"
 
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
+	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 )
 
 // ContainerStats returns stats for a container stats request based on container id.

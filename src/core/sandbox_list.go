@@ -22,7 +22,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/sirupsen/logrus"
-	"k8s.io/cri-api/pkg/apis/runtime/v1"
+	v1 "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 )
 
 // ListPodSandbox returns a list of Sandbox.
@@ -73,7 +73,7 @@ func (ds *dockerService) ListPodSandbox(
 	if filter == nil {
 		checkpoints, err = ds.checkpointManager.ListCheckpoints()
 		if err != nil {
-			logrus.Error(err, "Failed to list checkpoints")
+			logrus.Errorf("Failed to list checkpoints: %v", err)
 		}
 	}
 
@@ -90,13 +90,7 @@ func (ds *dockerService) ListPodSandbox(
 		c := containers[i]
 		converted, err := containerToRuntimeAPISandbox(&c)
 		if err != nil {
-			logrus.Info(
-				"Unable to convert docker to runtime API sandbox",
-				"containerName",
-				c.Names,
-				"err",
-				err,
-			)
+			logrus.Infof("Unable to convert docker container(s) %v to runtime API sandbox: %v", c.Names, err)
 			continue
 		}
 		if filterOutReadySandboxes && converted.State == v1.PodSandboxState_SANDBOX_READY {
@@ -116,16 +110,11 @@ func (ds *dockerService) ListPodSandbox(
 		checkpoint := NewPodSandboxCheckpoint("", "", &CheckpointData{})
 		err := ds.checkpointManager.GetCheckpoint(id, checkpoint)
 		if err != nil {
-			logrus.Error(err, "Failed to retrieve checkpoint for sandbox", "sandboxID", id)
+			logrus.Errorf("Failed to retrieve checkpoint for sandbox %s: %v",id, err)
 			if err == store.ErrCorruptCheckpoint {
 				err = ds.checkpointManager.RemoveCheckpoint(id)
 				if err != nil {
-					logrus.Error(
-						err,
-						"Failed to delete corrupt checkpoint for sandbox",
-						"sandboxID",
-						id,
-					)
+					logrus.Errorf("Failed to delete corrupt checkpoint for sandbox %s: %v", id, err)
 				}
 			}
 			continue

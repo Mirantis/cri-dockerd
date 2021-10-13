@@ -151,7 +151,7 @@ func (plugin *kubenetNetworkPlugin) Init(
 			plugin.mtu = link.MTU
 		} else {
 			plugin.mtu = fallbackMTU
-			logrus.Info("Failed to find default bridge MTU, using default value", "mtuValue", fallbackMTU, "err", err)
+			logrus.Infof("Failed to find default bridge MTU, using default value %d", fallbackMTU)
 		}
 	} else {
 		plugin.mtu = mtu
@@ -166,7 +166,7 @@ func (plugin *kubenetNetworkPlugin) Init(
 	plugin.execer.Command("modprobe", "br-netfilter").CombinedOutput()
 	err := plugin.sysctl.SetSysctl(sysctlBridgeCallIPTables, 1)
 	if err != nil {
-		logrus.Info("can't set sysctl bridge-nf-call-iptables", "err", err)
+		logrus.Infof("can't set sysctl bridge-nf-call-iptables: %v", err)
 	}
 
 	plugin.loConfig, err = libcni.ConfFromBytes([]byte(`{
@@ -250,20 +250,18 @@ func (plugin *kubenetNetworkPlugin) Event(name string, details map[string]interf
 
 	podCIDR, ok := details[network.NET_PLUGIN_EVENT_POD_CIDR_CHANGE_DETAIL_CIDR].(string)
 	if !ok {
-		logrus.Info(
-			"The event didn't contain pod CIDR",
-			"event",
-			network.NET_PLUGIN_EVENT_POD_CIDR_CHANGE,
+		logrus.Debugf(
+			"Event %s didn't contain pod CIDR", network.NET_PLUGIN_EVENT_POD_CIDR_CHANGE,
 		)
 		return
 	}
 
 	if plugin.netConfig != nil {
-		logrus.Info("Ignoring subsequent pod CIDR update to new cidr", "podCIDR", podCIDR)
+		logrus.Infof("Ignoring subsequent pod CIDR update to new cidr %s", podCIDR)
 		return
 	}
 
-	logrus.Debug("Kubenet: PodCIDR is set to new value", "podCIDR", podCIDR)
+	logrus.Debugf("Kubenet: PodCIDR is set to new value %s", podCIDR)
 	podCIDRs := strings.Split(podCIDR, ",")
 
 	// reset to one cidr if dual stack is not enabled
@@ -277,13 +275,10 @@ func (plugin *kubenetNetworkPlugin) Event(name string, details map[string]interf
 	for idx, currentPodCIDR := range podCIDRs {
 		_, cidr, err := net.ParseCIDR(currentPodCIDR)
 		if nil != err {
-			logrus.Info(
-				"Failed to generate CNI network config with cidr at the index",
-				"podCIDR",
+			logrus.Debugf(
+				"Failed to generate CNI network config with cidr %s at index %d: %v",
 				currentPodCIDR,
-				"index",
 				idx,
-				"err",
 				err,
 			)
 			return
@@ -307,7 +302,7 @@ func (plugin *kubenetNetworkPlugin) Event(name string, details map[string]interf
 
 	plugin.netConfig, err = libcni.ConfFromBytes([]byte(json))
 	if err != nil {
-		logrus.Info("** failed to set up CNI with json format", "cniNetworkConfig", json, "err", err)
+		logrus.Debugf("** failed to set up CNI with json format (%+v): %v", json, err)
 		// just incase it was set by mistake
 		plugin.netConfig = nil
 		// we bail out by clearing the *entire* list
@@ -334,11 +329,9 @@ func (plugin *kubenetNetworkPlugin) clearUnusedBridgeAddresses() {
 
 	addrs, err := netlink.AddrList(bridge, unix.AF_INET)
 	if err != nil {
-		logrus.Error(
-			"Attempting to get address for the interface failed",
-			"interfaceName",
+		logrus.Errorf(
+			"Attempting to get address for interface %s failed: %v",
 			BridgeName,
-			"err",
 			err,
 		)
 		return
@@ -372,7 +365,7 @@ func (plugin *kubenetNetworkPlugin) setup(
 
 	// Disable DAD so we skip the kernel delay on bringing up new interfaces.
 	if err := plugin.disableContainerDAD(id); err != nil {
-		logrus.Error("Failed to disable DAD in container", "err", err)
+		logrus.Debugf("Failed to disable DAD in container: %v", err)
 	}
 
 	// Bring up container loopback interface
@@ -538,12 +531,10 @@ func (plugin *kubenetNetworkPlugin) SetUpPod(
 	if err := plugin.setup(namespace, name, id, annotations); err != nil {
 		if err := plugin.teardown(namespace, name, id); err != nil {
 			// Not a hard error or warning
-			logrus.Error(
-				"Failed to clean up pod after SetUpPod failure",
-				"pod",
+			logrus.Errorf(
+				"Failed to clean up pod %s/%s after SetUpPod failure: %v",
 				namespace,
 				name,
-				"err",
 				err,
 			)
 		}
@@ -552,7 +543,7 @@ func (plugin *kubenetNetworkPlugin) SetUpPod(
 
 	// Need to SNAT outbound traffic from cluster
 	if err := plugin.ensureMasqRule(); err != nil {
-		logrus.Error(err, "Failed to ensure MASQ rule")
+		logrus.Errorf("Failed to ensure MASQ rule: %v", err)
 	}
 
 	return nil
@@ -569,18 +560,16 @@ func (plugin *kubenetNetworkPlugin) teardown(
 
 	// Loopback network deletion failure should not be fatal on teardown
 	if err := plugin.delContainerFromNetwork(plugin.loConfig, "lo", namespace, name, id); err != nil {
-		logrus.Info("Failed to delete loopback network", "err", err)
+		logrus.Debugf("Failed to delete loopback network: %v", err)
 		errList = append(errList, err)
 
 	}
 
 	// no ip dependent actions
 	if err := plugin.delContainerFromNetwork(plugin.netConfig, network.DefaultInterfaceName, namespace, name, id); err != nil {
-		logrus.Info(
-			"Failed to delete the interface network",
-			"interfaceName",
+		logrus.Debugf(
+			"Failed to delete the interface network %s: %v",
 			network.DefaultInterfaceName,
-			"err",
 			err,
 		)
 		errList = append(errList, err)
@@ -631,7 +620,7 @@ func (plugin *kubenetNetworkPlugin) teardown(
 
 		if err := plugin.shaper().Reset(fmt.Sprintf("%s/%s", ip, mask)); err != nil {
 			// Possible bandwidth shaping wasn't enabled for this pod anyways
-			logrus.Error("Failed to remove pod IP from shaper", "IP", ip, "err", err)
+			logrus.Debugf("Failed to remove pod IP %s from shaper: %v", ip, err)
 		}
 
 		plugin.removePodIP(id, ip)
@@ -654,7 +643,7 @@ func (plugin *kubenetNetworkPlugin) TearDownPod(
 
 	// Need to SNAT outbound traffic from cluster
 	if err := plugin.ensureMasqRule(); err != nil {
-		logrus.Error(err, "Failed to ensure MASQ rule")
+		logrus.Errorf("Failed to ensure MASQ rule: %v", err)
 	}
 	return nil
 }
@@ -782,7 +771,7 @@ func (plugin *kubenetNetworkPlugin) buildCNIRuntimeConf(
 ) (*libcni.RuntimeConf, error) {
 	netnsPath, err := plugin.host.GetNetNS(id.ID)
 	if needNetNs && err != nil {
-		logrus.Error(err, "Kubenet failed to retrieve network namespace path")
+		logrus.Errorf("Kubenet failed to retrieve network namespace path: %v", err)
 	}
 
 	return &libcni.RuntimeConf{
@@ -862,19 +851,19 @@ func (plugin *kubenetNetworkPlugin) syncEbtablesDedupRules(
 	if plugin.ebtables == nil {
 		plugin.ebtables = utilebtables.New(plugin.execer)
 		if err := plugin.ebtables.FlushChain(utilebtables.TableFilter, dedupChain); err != nil {
-			logrus.Error(err, "Failed to flush dedup chain")
+			logrus.Errorf("Failed to flush dedup chain: %v", err)
 		}
 	}
 	_, err := plugin.ebtables.GetVersion()
 	if err != nil {
-		logrus.Info("Failed to get ebtables version. Skip syncing ebtables dedup rules", "err", err)
+		logrus.Info("Failed to get ebtables version. Skip syncing ebtables dedup rules.")
 		return
 	}
 
 	// ensure custom chain exists
 	_, err = plugin.ebtables.EnsureChain(utilebtables.TableFilter, dedupChain)
 	if err != nil {
-		logrus.Error(nil, "Failed to ensure filter table KUBE-DEDUP chain")
+		logrus.Error("Failed to ensure filter table KUBE-DEDUP chain")
 		return
 	}
 
@@ -887,7 +876,7 @@ func (plugin *kubenetNetworkPlugin) syncEbtablesDedupRules(
 		string(dedupChain),
 	)
 	if err != nil {
-		logrus.Error(err, "Failed to ensure filter table OUTPUT chain jump to KUBE-DEDUP chain")
+		logrus.Errorf("Failed to ensure filter table OUTPUT chain jump to KUBE-DEDUP chain: %v", err)
 		return
 	}
 
@@ -907,11 +896,10 @@ func (plugin *kubenetNetworkPlugin) syncEbtablesDedupRules(
 			dedupChain,
 			append(commonArgs, ipSrc, gw.String(), "-j", "ACCEPT")...)
 		if err != nil {
-			logrus.Error(
-				err,
-				"Failed to ensure packets from cbr0 gateway to be accepted with error",
-				"gateway",
+			logrus.Errorf(
+				"Failed to ensure packets from cbr0 gateway %s to be accepted with error: %v",
 				gw.String(),
+				err,
 			)
 			return
 
@@ -922,11 +910,10 @@ func (plugin *kubenetNetworkPlugin) syncEbtablesDedupRules(
 			dedupChain,
 			append(commonArgs, ipSrc, podCIDRs[idx].String(), "-j", "DROP")...)
 		if err != nil {
-			logrus.Error(
-				err,
-				"Failed to ensure packets from podCidr but has mac address of cbr0 to get dropped.",
-				"podCIDR",
+			logrus.Errorf(
+				"Failed to ensure packets from podCidr %s but has mac address of cbr0 to get dropped: %v",
 				podCIDRs[idx].String(),
+				err,
 			)
 			return
 		}

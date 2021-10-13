@@ -22,7 +22,7 @@ import (
 	"github.com/Mirantis/cri-dockerd/libdocker"
 	"github.com/docker/docker/api/types"
 	"github.com/sirupsen/logrus"
-	"k8s.io/cri-api/pkg/apis/runtime/v1"
+	v1 "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 	"time"
 )
 
@@ -147,13 +147,7 @@ func (ds *dockerService) performPlatformSpecificContainerCleanupAndLogErrors(
 
 	errors := ds.performPlatformSpecificContainerCleanup(cleanupInfo)
 	for _, err := range errors {
-		logrus.Info(
-			"Error when cleaning up after container",
-			"containerNameOrID",
-			containerNameOrID,
-			"err",
-			err,
-		)
+		logrus.Infof("Error when cleaning up after container %s: %v", containerNameOrID, err)
 	}
 
 	return errors
