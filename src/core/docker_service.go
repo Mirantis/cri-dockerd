@@ -384,7 +384,7 @@ func (ds *dockerService) GenerateExpectedCgroupParent(cgroupParent string) (stri
 			cgroupParent = path.Base(cgroupParent)
 		}
 	}
-	logrus.Debug("Setting cgroup parent to (%s)", cgroupParent)
+	logrus.Debugf("Setting cgroup parent to (%s)", cgroupParent)
 	return cgroupParent, nil
 }
 
