@@ -28,9 +28,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
-	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
 	"k8s.io/kubernetes/pkg/kubelet/types"
 
+	"github.com/Mirantis/cri-dockerd/config"
 	"github.com/Mirantis/cri-dockerd/libdocker"
 	"github.com/Mirantis/cri-dockerd/network"
 )
@@ -69,7 +69,7 @@ func makeSandboxConfigWithLabelsAndAnnotations(
 func TestListSandboxes(t *testing.T) {
 	ds, _, fakeClock := newTestDockerService()
 	name, namespace := "foo", "bar"
-	configs := []*runtimeapi.PodSandboxConfig{}
+	var configs []*runtimeapi.PodSandboxConfig
 	for i := 0; i < 3; i++ {
 		c := makeSandboxConfigWithLabelsAndAnnotations(fmt.Sprintf("%s%d", name, i),
 			fmt.Sprintf("%s%d", namespace, i), fmt.Sprintf("%d", i), 0,
@@ -79,9 +79,9 @@ func TestListSandboxes(t *testing.T) {
 		configs = append(configs, c)
 	}
 
-	expected := []*runtimeapi.PodSandbox{}
+	var expected []*runtimeapi.PodSandbox
 	state := runtimeapi.PodSandboxState_SANDBOX_READY
-	var createdAt int64 = fakeClock.Now().UnixNano()
+	var createdAt = fakeClock.Now().UnixNano()
 	for i := range configs {
 		runResp, err := ds.RunPodSandbox(
 			getTestCTX(),
@@ -111,7 +111,7 @@ func TestSandboxStatus(t *testing.T) {
 	ds, fDocker, fClock := newTestDockerService()
 	labels := map[string]string{"label": "foobar1"}
 	annotations := map[string]string{"annotation": "abc"}
-	config := makeSandboxConfigWithLabelsAndAnnotations("foo", "bar", "1", 0, labels, annotations)
+	containerConfig := makeSandboxConfigWithLabelsAndAnnotations("foo", "bar", "1", 0, labels, annotations)
 	r := rand.New(rand.NewSource(0)).Uint32()
 	podIP := fmt.Sprintf("10.%d.%d.%d", byte(r>>16), byte(r>>8), byte(r))
 
@@ -120,7 +120,7 @@ func TestSandboxStatus(t *testing.T) {
 	expected := &runtimeapi.PodSandboxStatus{
 		State:     state,
 		CreatedAt: ct,
-		Metadata:  config.Metadata,
+		Metadata:  containerConfig.Metadata,
 		Network: &runtimeapi.PodSandboxNetworkStatus{
 			Ip:            podIP,
 			AdditionalIps: []*runtimeapi.PodIP{},
@@ -139,7 +139,7 @@ func TestSandboxStatus(t *testing.T) {
 	// Create the sandbox.
 	fClock.SetTime(time.Now())
 	expected.CreatedAt = fClock.Now().UnixNano()
-	runResp, err := ds.RunPodSandbox(getTestCTX(), &runtimeapi.RunPodSandboxRequest{Config: config})
+	runResp, err := ds.RunPodSandbox(getTestCTX(), &runtimeapi.RunPodSandboxRequest{Config: containerConfig})
 	require.NoError(t, err)
 	id := runResp.PodSandboxId
 
@@ -188,10 +188,10 @@ func TestSandboxStatus(t *testing.T) {
 // and it uses runtime/default seccomp profile.
 func TestSandboxHasLeastPrivilegesConfig(t *testing.T) {
 	ds, _, _ := newTestDockerService()
-	config := makeSandboxConfig("foo", "bar", "1", 0)
+	sandboxConfig := makeSandboxConfig("foo", "bar", "1", 0)
 
 	// test the default
-	createConfig, err := ds.makeSandboxDockerConfig(config, defaultSandboxImage)
+	createConfig, err := ds.makeSandboxDockerConfig(sandboxConfig, defaultSandboxImage)
 	assert.NoError(t, err)
 	assert.Equal(
 		t,
@@ -212,7 +212,7 @@ func TestSandboxHasLeastPrivilegesConfig(t *testing.T) {
 // would happen on kubelet restart
 func TestSandboxStatusAfterRestart(t *testing.T) {
 	ds, _, fClock := newTestDockerService()
-	config := makeSandboxConfig("foo", "bar", "1", 0)
+	sandboxConfig := makeSandboxConfig("foo", "bar", "1", 0)
 	r := rand.New(rand.NewSource(0)).Uint32()
 	podIP := fmt.Sprintf("10.%d.%d.%d", byte(r>>16), byte(r>>8), byte(r))
 	state := runtimeapi.PodSandboxState_SANDBOX_READY
@@ -220,7 +220,7 @@ func TestSandboxStatusAfterRestart(t *testing.T) {
 	expected := &runtimeapi.PodSandboxStatus{
 		State:     state,
 		CreatedAt: ct,
-		Metadata:  config.Metadata,
+		Metadata:  sandboxConfig.Metadata,
 		Network: &runtimeapi.PodSandboxNetworkStatus{
 			Ip:            podIP,
 			AdditionalIps: []*runtimeapi.PodIP{},
@@ -240,7 +240,7 @@ func TestSandboxStatusAfterRestart(t *testing.T) {
 	fClock.SetTime(time.Now())
 	expected.CreatedAt = fClock.Now().UnixNano()
 
-	createConfig, err := ds.makeSandboxDockerConfig(config, defaultSandboxImage)
+	createConfig, err := ds.makeSandboxDockerConfig(sandboxConfig, defaultSandboxImage)
 	assert.NoError(t, err)
 
 	createResp, err := ds.client.CreateContainer(*createConfig)
@@ -274,7 +274,7 @@ func TestNetworkPluginInvocation(t *testing.T) {
 		map[string]string{"label": name},
 		map[string]string{"annotation": ns},
 	)
-	cID := kubecontainer.ContainerID{
+	cID := config.ContainerID{
 		Type: runtimeName,
 		ID:   libdocker.GetFakeContainerID(fmt.Sprintf("/%v", makeSandboxName(c))),
 	}
@@ -314,7 +314,7 @@ func TestHostNetworkPluginInvocation(t *testing.T) {
 			},
 		},
 	}
-	cID := kubecontainer.ContainerID{
+	cID := config.ContainerID{
 		Type: runtimeName,
 		ID:   libdocker.GetFakeContainerID(fmt.Sprintf("/%v", makeSandboxName(c))),
 	}
@@ -345,7 +345,7 @@ func TestSetUpPodFailure(t *testing.T) {
 		map[string]string{"label": name},
 		map[string]string{"annotation": ns},
 	)
-	cID := kubecontainer.ContainerID{
+	cID := config.ContainerID{
 		Type: runtimeName,
 		ID:   libdocker.GetFakeContainerID(fmt.Sprintf("/%v", makeSandboxName(c))),
 	}

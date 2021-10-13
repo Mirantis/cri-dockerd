@@ -28,7 +28,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Mirantis/cri-dockerd/cm"
+	"github.com/Mirantis/cri-dockerd/containermanager"
 	"github.com/Mirantis/cri-dockerd/config"
 	"github.com/Mirantis/cri-dockerd/libdocker"
 	"github.com/Mirantis/cri-dockerd/metrics"
@@ -140,7 +140,7 @@ func NewDockerService(
 			Client:      client,
 			ExecHandler: &NativeExecHandler{},
 		},
-		containerManager:      cm.NewContainerManager(cgroupsName, client),
+		containerManager:      containermanager.NewContainerManager(cgroupsName, client),
 		checkpointManager:     checkpointManager,
 		networkReady:          make(map[string]bool),
 		containerCleanupInfos: make(map[string]*containerCleanupInfo),
@@ -256,7 +256,7 @@ type dockerService struct {
 	networkReady     map[string]bool
 	networkReadyLock sync.Mutex
 
-	containerManager cm.ContainerManager
+	containerManager containermanager.ContainerManager
 	// cgroup driver used by Docker runtime.
 	cgroupDriver      string
 	checkpointManager store.CheckpointManager

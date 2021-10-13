@@ -19,6 +19,7 @@ package core
 import (
 	"context"
 	"fmt"
+	"github.com/Mirantis/cri-dockerd/config"
 	"github.com/Mirantis/cri-dockerd/libdocker"
 	"github.com/Mirantis/cri-dockerd/store"
 	"github.com/Mirantis/cri-dockerd/utils/errors"
@@ -84,7 +85,7 @@ func (ds *dockerService) StopPodSandbox(
 	ready, ok := ds.getNetworkReady(podSandboxID)
 	if !hostNetwork && (ready || !ok) {
 		// Only tear down the pod network if we haven't done so already
-		cID := BuildContainerID(runtimeName, podSandboxID)
+		cID := config.BuildContainerID(runtimeName, podSandboxID)
 		err := ds.network.TearDownPod(namespace, name, cID)
 		if err == nil {
 			ds.setNetworkReady(podSandboxID, false)

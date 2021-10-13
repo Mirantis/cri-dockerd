@@ -245,11 +245,10 @@ func TestModifyHostConfigWithGroups(t *testing.T) {
 }
 
 func TestModifyHostConfigAndNamespaceOptionsForContainer(t *testing.T) {
-	priv := true
 	sandboxID := "sandbox"
 	sandboxNSMode := fmt.Sprintf("container:%v", sandboxID)
 	setPrivSC := &runtimeapi.LinuxContainerSecurityContext{}
-	setPrivSC.Privileged = priv
+	setPrivSC.Privileged = true
 	setPrivHC := &dockercontainer.HostConfig{
 		Privileged:  true,
 		IpcMode:     dockercontainer.IpcMode(sandboxNSMode),

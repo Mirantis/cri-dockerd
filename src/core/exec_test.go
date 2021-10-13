@@ -26,9 +26,9 @@ import (
 	dockertypes "github.com/docker/docker/api/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"k8s.io/client-go/tools/remotecommand"
 
 	mockclient "github.com/Mirantis/cri-dockerd/libdocker/testing"
-	"github.com/Mirantis/cri-dockerd/streaming/remotecommand"
 )
 
 func TestExecInContainer(t *testing.T) {
@@ -112,20 +112,22 @@ func TestExecInContainer(t *testing.T) {
 	for _, tc := range testcases {
 		t.Logf("TestCase: %q", tc.description)
 
-		mockClient := mockclient.NewMockInterface(ctrl)
+		mockClient := mockclient.NewMockDockerClientInterface(ctrl)
 		mockClient.EXPECT().CreateExec(gomock.Any(), gomock.Any()).Return(
 			tc.returnCreateExec1,
 			tc.returnCreateExec2)
+
 		mockClient.EXPECT().StartExec(
 			gomock.Any(),
 			gomock.Any(),
 			gomock.Any(),
 		).Return(
 			tc.returnStartExec,
-		)
+		).AnyTimes()
+
 		mockClient.EXPECT().InspectExec(gomock.Any()).Return(
 			tc.returnInspectExec1,
-			tc.returnInspectExec2)
+			tc.returnInspectExec2).AnyTimes()
 
 		// use parent context of 2 minutes since that's the default backend
 		// runtime connection timeout used by cri-dockerd
@@ -146,6 +148,7 @@ func TestExecInContainer(t *testing.T) {
 		assert.Equal(t, tc.expectError, err)
 	}
 }
+
 
 func getFakeContainerJSON() *dockertypes.ContainerJSON {
 	return &dockertypes.ContainerJSON{

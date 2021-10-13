@@ -26,7 +26,6 @@ import (
 	"sync/atomic"
 
 	dockerfilters "github.com/docker/docker/api/types/filters"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -46,20 +45,6 @@ var (
 
 	errMaximumWrite = errors.New("maximum write")
 )
-
-// BuildContainerID returns the ContainerID given type and id.
-func BuildContainerID(typ, ID string) config.ContainerID {
-	return config.ContainerID{Type: typ, ID: ID}
-}
-
-// ParseContainerID is a convenience method for creating a ContainerID from an ID string.
-func ParseContainerID(containerID string) config.ContainerID {
-	var id config.ContainerID
-	if err := id.ParseString(containerID); err != nil {
-		logrus.Error(err)
-	}
-	return id
-}
 
 // makeLabels converts annotations to labels and merge them with the given
 // labels. This is necessary because docker does not support annotations;

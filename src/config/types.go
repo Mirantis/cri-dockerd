@@ -110,3 +110,9 @@ func (c *ContainerID) ParseString(data string) error {
 	c.Type, c.ID = parts[0], parts[1]
 	return nil
 }
+
+// BuildContainerID returns the ContainerID given type and id.
+func BuildContainerID(typ, ID string) ContainerID {
+	return ContainerID{Type: typ, ID: ID}
+}
+

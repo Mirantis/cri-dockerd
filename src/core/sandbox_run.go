@@ -20,6 +20,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/Mirantis/cri-dockerd/config"
 	"github.com/Mirantis/cri-dockerd/utils/errors"
 	"k8s.io/cri-api/pkg/apis/runtime/v1"
 )
@@ -138,7 +139,7 @@ func (ds *dockerService) RunPodSandbox(
 	// sandbox networking, but it might insert iptables rules or open ports
 	// on the host as well, to satisfy parts of the pod spec that aren't
 	// recognized by the CNI standard yet.
-	cID := BuildContainerID(runtimeName, createResp.ID)
+	cID := config.BuildContainerID(runtimeName, createResp.ID)
 	networkOptions := make(map[string]string)
 	if dnsConfig := containerConfig.GetDnsConfig(); dnsConfig != nil {
 		// Build DNS options.

@@ -18,6 +18,9 @@ package libdocker
 
 import (
 	"fmt"
+	"github.com/docker/go-connections/nat"
+	"k8s.io/cri-api/pkg/apis/runtime/v1"
+	"strconv"
 	"strings"
 	"time"
 
@@ -189,3 +192,104 @@ func CheckContainerStatus(
 	}
 	return container, nil
 }
+
+// generateEnvList converts KeyValue list to a list of strings, in the form of
+// '<key>=<value>', which can be understood by docker.
+func GenerateEnvList(envs []*v1.KeyValue) (result []string) {
+	for _, env := range envs {
+		result = append(result, fmt.Sprintf("%s=%s", env.Key, env.Value))
+	}
+	return
+}
+
+// generateMountBindings converts the mount list to a list of strings that
+// can be understood by docker.
+// '<HostPath>:<ContainerPath>[:options]', where 'options'
+// is a comma-separated list of the following strings:
+// 'ro', if the path is read only
+// 'Z', if the volume requires SELinux relabeling
+// propagation mode such as 'rslave'
+func GenerateMountBindings(mounts []*v1.Mount) []string {
+	result := make([]string, 0, len(mounts))
+	for _, m := range mounts {
+		bind := fmt.Sprintf("%s:%s", m.HostPath, m.ContainerPath)
+		var attrs []string
+		if m.Readonly {
+			attrs = append(attrs, "ro")
+		}
+		// Only request relabeling if the pod provides an SELinux context. If the pod
+		// does not provide an SELinux context relabeling will label the volume with
+		// the container's randomly allocated MCS label. This would restrict access
+		// to the volume to the container which mounts it first.
+		if m.SelinuxRelabel {
+			attrs = append(attrs, "Z")
+		}
+		switch m.Propagation {
+		case v1.MountPropagation_PROPAGATION_PRIVATE:
+			// noop, private is default
+		case v1.MountPropagation_PROPAGATION_BIDIRECTIONAL:
+			attrs = append(attrs, "rshared")
+		case v1.MountPropagation_PROPAGATION_HOST_TO_CONTAINER:
+			attrs = append(attrs, "rslave")
+		default:
+			logrus.Info("Unknown propagation mode for hostPath", "path", m.HostPath)
+			// Falls back to "private"
+		}
+
+		if len(attrs) > 0 {
+			bind = fmt.Sprintf("%s:%s", bind, strings.Join(attrs, ","))
+		}
+		result = append(result, bind)
+	}
+	return result
+}
+
+func MakePortsAndBindings(
+	pm []*v1.PortMapping,
+) (nat.PortSet, map[nat.Port][]nat.PortBinding) {
+	exposedPorts := nat.PortSet{}
+	portBindings := map[nat.Port][]nat.PortBinding{}
+	for _, port := range pm {
+		exteriorPort := port.HostPort
+		if exteriorPort == 0 {
+			// No need to do port binding when HostPort is not specified
+			continue
+		}
+		interiorPort := port.ContainerPort
+		// Some of this port stuff is under-documented voodoo.
+		// See http://stackoverflow.com/questions/20428302/binding-a-port-to-a-host-interface-using-the-rest-api
+		var protocol string
+		switch port.Protocol {
+		case v1.Protocol_UDP:
+			protocol = "/udp"
+		case v1.Protocol_TCP:
+			protocol = "/tcp"
+		case v1.Protocol_SCTP:
+			protocol = "/sctp"
+		default:
+			logrus.Info("Unknown protocol, defaulting to TCP", "protocol", port.Protocol)
+			protocol = "/tcp"
+		}
+
+		dockerPort := nat.Port(strconv.Itoa(int(interiorPort)) + protocol)
+		exposedPorts[dockerPort] = struct{}{}
+
+		hostBinding := nat.PortBinding{
+			HostPort: strconv.Itoa(int(exteriorPort)),
+			HostIP:   port.HostIp,
+		}
+
+		// Allow multiple host ports bind to same docker port
+		if existedBindings, ok := portBindings[dockerPort]; ok {
+			// If a docker port already map to a host port, just append the host ports
+			portBindings[dockerPort] = append(existedBindings, hostBinding)
+		} else {
+			// Otherwise, it's fresh new port binding
+			portBindings[dockerPort] = []nat.PortBinding{
+				hostBinding,
+			}
+		}
+	}
+	return exposedPorts, portBindings
+}
+

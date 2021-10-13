@@ -86,7 +86,7 @@ func (ds *dockerService) getIPsFromPlugin(sandbox *dockertypes.ContainerJSON) ([
 		metadata.Namespace,
 		metadata.Name,
 	)
-	cID := BuildContainerID(runtimeName, sandbox.ID)
+	cID := config.BuildContainerID(runtimeName, sandbox.ID)
 	networkStatus, err := ds.network.GetPodNetworkStatus(metadata.Namespace, metadata.Name, cID)
 	if err != nil {
 		return nil, err
@@ -144,8 +144,7 @@ func (ds *dockerService) getIPs(podSandboxID string, sandbox *dockertypes.Contai
 
 	// If all else fails, warn but don't return an error, as pod status
 	// should generally not return anything except fatal errors
-	// FIXME: handle network errors by restarting the pod somehow?
-	logrus.Info("Failed to read pod IP from plugin/docker", "err", err)
+	logrus.Infof("Failed to read pod IP from plugin/docker: %v", err)
 	return ips
 }
 
@@ -251,7 +250,7 @@ func (ds *dockerService) makeSandboxDockerConfig(
 	}
 
 	// Set security options.
-	securityOpts := ds.getSandBoxSecurityOpts(securityOptSeparator)
+	securityOpts := ds.getSandBoxSecurityOpts()
 	hc.SecurityOpt = append(hc.SecurityOpt, securityOpts...)
 
 	return createConfig, nil
@@ -315,7 +314,7 @@ func toCheckpointProtocol(protocol runtimeapi.Protocol) config.Protocol {
 	case runtimeapi.Protocol_SCTP:
 		return protocolSCTP
 	}
-	logrus.Info("Unknown protocol, defaulting to TCP", "protocol", protocol)
+	logrus.Infof("Unknown protocol, defaulting to TCP: %v", protocol)
 	return protocolTCP
 }
 
@@ -352,13 +351,7 @@ func rewriteResolvFile(
 		resolvFileContentStr := strings.Join(resolvFileContent, "\n")
 		resolvFileContentStr += "\n"
 
-		logrus.Info(
-			"Will attempt to re-write config file",
-			"path",
-			resolvFilePath,
-			"fileContent",
-			resolvFileContent,
-		)
+		logrus.Infof("Will attempt to re-write config file %s as %v", resolvFilePath, resolvFileContent)
 		if err := rewriteFile(resolvFilePath, resolvFileContentStr); err != nil {
 			logrus.Error(err, "Resolv.conf could not be updated")
 			return err
@@ -390,17 +383,13 @@ func recoverFromCreationConflictIfNeeded(
 	}
 
 	id := matches[1]
-	logrus.Info(
-		"Unable to create pod sandbox due to conflict. Attempting to remove sandbox",
-		"containerID",
-		id,
-	)
+	logrus.Infof("Unable to create pod sandbox due to conflict. Attempting to remove sandbox. Container %v", id)
 	rmErr := client.RemoveContainer(id, dockertypes.ContainerRemoveOptions{RemoveVolumes: true})
 	if rmErr == nil {
-		logrus.Info("Successfully removed conflicting container", "containerID", id)
+		logrus.Infof("Successfully removed conflicting container: %v", id)
 		return nil, err
 	}
-	logrus.Error(rmErr, "Failed to remove the conflicting container", "containerID", id)
+	logrus.Errorf("Failed to remove the conflicting container (%v): %v", id, rmErr)
 	// Return if the error is not container not found error.
 	if !libdocker.IsContainerNotFoundError(rmErr) {
 		return nil, err
@@ -434,7 +423,7 @@ func ensureSandboxImageExists(client libdocker.DockerClientInterface, image stri
 	keyring := credentialprovider.NewDockerKeyring()
 	creds, withCredentials := keyring.Lookup(repoToPull)
 	if !withCredentials {
-		logrus.Info("Pulling the image without credentials", "image", image)
+		logrus.Infof("Pulling the image without credentials. Image: %v", image)
 
 		err := client.PullImage(image, dockertypes.AuthConfig{}, dockertypes.ImagePullOptions{})
 		if err != nil {
