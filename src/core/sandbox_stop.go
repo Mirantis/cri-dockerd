@@ -62,7 +62,7 @@ func (ds *dockerService) StopPodSandbox(
 				}
 			}
 			if libdocker.IsContainerNotFoundError(statusErr) {
-				logrus.Info(
+				logrus.Infof(
 					"Both sandbox container and checkpoint could not be found with id %d. " +
 					"Proceed without further sandbox information.", podSandboxID)
 			} else {

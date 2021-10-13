@@ -85,14 +85,13 @@ func NewDockerCRICommand(stopCh <-chan struct{}) *cobra.Command {
 				return
 			}
 
-			var log = logrus.New()
-			logFlag, _ := cleanFlagSet.GetString("-v")
+			logFlag, _ := cleanFlagSet.GetString("log-level")
 			if logFlag != "" {
 				level, err := logrus.ParseLevel(logFlag)
 				if err != nil {
 					logrus.Fatalf("Unknown log level: %s", logFlag)
 				}
-				log.SetLevel(level)
+				logrus.SetLevel(level)
 			}
 
 			if err := RunCriDockerd(kubeletFlags, stopCh); err != nil {
@@ -105,7 +104,7 @@ func NewDockerCRICommand(stopCh <-chan struct{}) *cobra.Command {
 	kubeletFlags.AddFlags(cleanFlagSet)
 	cleanFlagSet.BoolP("help", "h", false, fmt.Sprintf("Help for %s", cmd.Name()))
 	cleanFlagSet.Bool("version", false, "Prints the version of cri-dockerd")
-	cleanFlagSet.String("-v", "info", "The log level for cri-docker")
+	cleanFlagSet.String("log-level", "info", "The log level for cri-docker")
 
 	// ugly, but necessary, because Cobra's default UsageFunc and HelpFunc pollute the flagset with global flags
 	const usageFmt = "Usage:\n  %s\n\nFlags:\n%s"
