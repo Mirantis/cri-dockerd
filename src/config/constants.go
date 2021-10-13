@@ -90,11 +90,9 @@ const (
 
 	// SeccompContainerAnnotationKeyPrefix represents the key of a seccomp profile applied
 	// to one container of a pod.
-	// Deprecated: set a container security context `seccompProfile` field.
 	SeccompContainerAnnotationKeyPrefix string = "container.seccomp.security.alpha.kubernetes.io/"
 
 	// SeccompProfileRuntimeDefault represents the default seccomp profile used by container runtime.
-	// Deprecated: set a pod or container security context `seccompProfile` of type "RuntimeDefault" instead.
 	SeccompProfileRuntimeDefault string = "runtime/default"
 
 	// SeccompProfileNameUnconfined is the unconfined seccomp profile.
@@ -120,7 +118,6 @@ const (
 	AppArmorBetaProfileNameUnconfined = "unconfined"
 
 	// DeprecatedSeccompProfileDockerDefault represents the default seccomp profile used by docker.
-	// Deprecated: set a pod or container security context `seccompProfile` of type "RuntimeDefault" instead.
 	DeprecatedSeccompProfileDockerDefault string = "docker/default"
 
 	// PreferAvoidPodsAnnotationKey represents the key of preferAvoidPods data (json serialized)

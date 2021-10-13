@@ -24,6 +24,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/sirupsen/logrus"
+
 	api "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -33,8 +35,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apiserver/pkg/util/wsstream"
 	"k8s.io/client-go/tools/remotecommand"
-
-	"k8s.io/klog/v2"
 )
 
 // Options contains details about which streams are required for
@@ -44,30 +44,6 @@ type Options struct {
 	Stdout bool
 	Stderr bool
 	TTY    bool
-}
-
-// NewOptions creates a new Options from the Request.
-func NewOptions(req *http.Request) (*Options, error) {
-	tty := req.FormValue(api.ExecTTYParam) == "1"
-	stdin := req.FormValue(api.ExecStdinParam) == "1"
-	stdout := req.FormValue(api.ExecStdoutParam) == "1"
-	stderr := req.FormValue(api.ExecStderrParam) == "1"
-	if tty && stderr {
-		// TODO: make this an error before we reach this method
-		klog.V(4).Infof("Access to exec with tty and stderr is not supported, bypassing stderr")
-		stderr = false
-	}
-
-	if !stdin && !stdout && !stderr {
-		return nil, fmt.Errorf("you must specify at least 1 of stdin, stdout, stderr")
-	}
-
-	return &Options{
-		Stdin:  stdin,
-		Stdout: stdout,
-		Stderr: stderr,
-		TTY:    tty,
-	}, nil
 }
 
 // context contains the connection and streams used when
@@ -155,7 +131,7 @@ func createHTTPStreamStreams(req *http.Request, w http.ResponseWriter, opts *Opt
 	case remotecommandconsts.StreamProtocolV2Name:
 		handler = &v2ProtocolHandler{}
 	case "":
-		klog.V(4).Infof("Client did not request protocol negotiation. Falling back to %q", remotecommandconsts.StreamProtocolV1Name)
+		logrus.Debugf("Client did not request protocol negotiation. Falling back to %q", remotecommandconsts.StreamProtocolV1Name)
 		fallthrough
 	case remotecommandconsts.StreamProtocolV1Name:
 		handler = &v1ProtocolHandler{}

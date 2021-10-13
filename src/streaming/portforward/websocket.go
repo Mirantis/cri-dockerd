@@ -26,10 +26,9 @@ import (
 	"sync"
 	"time"
 
-	"k8s.io/klog/v2"
+	"github.com/Mirantis/cri-dockerd/config"
 
 	api "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apiserver/pkg/server/httplog"
 	"k8s.io/apiserver/pkg/util/wsstream"
@@ -93,7 +92,7 @@ func BuildV4Options(ports []int32) (*V4Options, error) {
 // a PortForwarder. A pair of streams are created per port (DATA n,
 // ERROR n+1). The associated port is written to each stream as a unsigned 16
 // bit integer in little endian format.
-func handleWebSocketStreams(req *http.Request, w http.ResponseWriter, portForwarder PortForwarder, podName string, uid types.UID, opts *V4Options, supportedPortForwardProtocols []string, idleTimeout, streamCreationTimeout time.Duration) error {
+func handleWebSocketStreams(req *http.Request, w http.ResponseWriter, portForwarder PortForwarder, podName string, uid config.UID, opts *V4Options, supportedPortForwardProtocols []string, idleTimeout, streamCreationTimeout time.Duration) error {
 	channels := make([]wsstream.ChannelType, 0, len(opts.Ports)*2)
 	for i := 0; i < len(opts.Ports); i++ {
 		channels = append(channels, wsstream.ReadWriteChannel, wsstream.WriteChannel)
@@ -160,7 +159,7 @@ type websocketStreamHandler struct {
 	conn        *wsstream.Conn
 	streamPairs []*websocketStreamPair
 	pod         string
-	uid         types.UID
+	uid         config.UID
 	forwarder   PortForwarder
 }
 
@@ -185,9 +184,7 @@ func (h *websocketStreamHandler) portForward(p *websocketStreamPair) {
 	defer p.dataStream.Close()
 	defer p.errorStream.Close()
 
-	klog.V(5).Infof("(conn=%p) invoking forwarder.PortForward for port %d", h.conn, p.port)
 	err := h.forwarder.PortForward(h.pod, h.uid, p.port, p.dataStream)
-	klog.V(5).Infof("(conn=%p) done invoking forwarder.PortForward for port %d", h.conn, p.port)
 
 	if err != nil {
 		msg := fmt.Errorf("error forwarding port %d to pod %s, uid %v: %v", p.port, h.pod, h.uid, err)

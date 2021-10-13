@@ -46,7 +46,7 @@ func (ds *dockerService) ExecSync(
 
 	// kubelet's backend runtime expects a grpc error with status code DeadlineExceeded on time out.
 	if err == context.DeadlineExceeded {
-		return nil, fmt.Errorf(string(codes.DeadlineExceeded), err.Error())
+		return nil, fmt.Errorf("deadline exceeded (%q): %v", codes.DeadlineExceeded, err.Error())
 	}
 
 	var exitCode int32

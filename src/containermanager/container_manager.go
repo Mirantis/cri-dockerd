@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package cm
+package containermanager
 
 // ContainerManager is an interface that abstracts the basic operations of a
 // container manager.

@@ -13,7 +13,7 @@ require (
 	github.com/docker/docker v17.12.0-ce-rc1.0.20200916142827-bd33bbf0497b+incompatible
 	github.com/docker/go-connections v0.4.0
 	github.com/emicklei/go-restful v2.9.5+incompatible
-	github.com/golang/mock v1.4.1
+	github.com/golang/mock v1.6.0
 	github.com/imdario/mergo v0.3.7 // indirect
 	github.com/onsi/ginkgo v1.12.0 // indirect
 	github.com/onsi/gomega v1.8.1 // indirect

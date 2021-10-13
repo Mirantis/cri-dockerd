@@ -48,14 +48,14 @@ func (ds *dockerService) ReopenContainerLog(
 }
 
 // GetContainerLogs get container logs directly from docker daemon.
-func (d *dockerService) GetContainerLogs(
+func (ds *dockerService) GetContainerLogs(
 	_ context.Context,
 	pod *v1.Pod,
 	containerID config.ContainerID,
 	logOptions *v1.PodLogOptions,
 	stdout, stderr io.Writer,
 ) error {
-	container, err := d.client.InspectContainer(containerID.ID)
+	container, err := ds.client.InspectContainer(containerID.ID)
 	if err != nil {
 		return err
 	}
@@ -90,7 +90,7 @@ func (d *dockerService) GetContainerLogs(
 		ErrorStream:  stderr,
 		RawTerminal:  container.Config.Tty,
 	}
-	err = d.client.Logs(containerID.ID, opts, sopts)
+	err = ds.client.Logs(containerID.ID, opts, sopts)
 	if errors.Is(err, errMaximumWrite) {
 		logrus.Info("Finished logs, hit byte limit", "byteLimit", *logOptions.LimitBytes)
 		err = nil
@@ -101,7 +101,7 @@ func (d *dockerService) GetContainerLogs(
 // GetContainerLogTail attempts to read up to MaxContainerTerminationMessageLogLength
 // from the end of the log when docker is configured with a log driver other than json-log.
 // It reads up to MaxContainerTerminationMessageLogLines lines.
-func (d *dockerService) GetContainerLogTail(
+func (ds *dockerService) GetContainerLogTail(
 	uid config.UID,
 	name, namespace string,
 	containerID config.ContainerID,
@@ -116,7 +116,7 @@ func (d *dockerService) GetContainerLogTail(
 			Namespace: namespace,
 		},
 	}
-	err := d.GetContainerLogs(
+	err := ds.GetContainerLogs(
 		context.Background(),
 		pod,
 		containerID,
@@ -135,8 +135,8 @@ var criSupportedLogDrivers = []string{"json-file"}
 
 // IsCRISupportedLogDriver checks whether the logging driver used by docker is
 // supported by native CRI integration.
-func (d *dockerService) IsCRISupportedLogDriver() (bool, error) {
-	info, err := d.client.Info()
+func (ds *dockerService) IsCRISupportedLogDriver() (bool, error) {
+	info, err := ds.client.Info()
 	if err != nil {
 		return false, fmt.Errorf("failed to get docker info: %v", err)
 	}

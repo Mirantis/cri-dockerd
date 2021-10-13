@@ -95,6 +95,7 @@ func (*NativeExecHandler) ExecInContainer(
 		Tty:          tty,
 	}
 	execObj, err := client.CreateExec(container.ID, createOpts)
+	logrus.Infof("GOT %+v", execObj)
 	if err != nil {
 		return fmt.Errorf("failed to exec in container - Exec setup failed - %v", err)
 	}

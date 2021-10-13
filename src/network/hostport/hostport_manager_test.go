@@ -22,8 +22,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Mirantis/cri-dockerd/config"
+
 	"github.com/stretchr/testify/assert"
-	v1 "k8s.io/api/core/v1"
 	utiliptables "k8s.io/kubernetes/pkg/util/iptables"
 	"k8s.io/utils/exec"
 )
@@ -47,9 +48,9 @@ func TestOpenCloseHostports(t *testing.T) {
 				Namespace: "ns1",
 				Name:      "n1",
 				PortMappings: []*PortMapping{
-					{HostPort: 80, Protocol: v1.ProtocolTCP},
-					{HostPort: 8080, Protocol: v1.ProtocolTCP},
-					{HostPort: 443, Protocol: v1.ProtocolTCP},
+					{HostPort: 80, Protocol: config.ProtocolTCP},
+					{HostPort: 8080, Protocol: config.ProtocolTCP},
+					{HostPort: 443, Protocol: config.ProtocolTCP},
 				},
 			},
 			false,
@@ -60,7 +61,7 @@ func TestOpenCloseHostports(t *testing.T) {
 				Namespace: "ns1",
 				Name:      "n2",
 				PortMappings: []*PortMapping{
-					{HostPort: 80, Protocol: v1.ProtocolTCP},
+					{HostPort: 80, Protocol: config.ProtocolTCP},
 				},
 			},
 			true,
@@ -71,8 +72,8 @@ func TestOpenCloseHostports(t *testing.T) {
 				Namespace: "ns1",
 				Name:      "n3",
 				PortMappings: []*PortMapping{
-					{HostPort: 8081, Protocol: v1.ProtocolTCP},
-					{HostPort: 8080, Protocol: v1.ProtocolTCP},
+					{HostPort: 8081, Protocol: config.ProtocolTCP},
+					{HostPort: 8080, Protocol: config.ProtocolTCP},
 				},
 			},
 			true,
@@ -83,7 +84,7 @@ func TestOpenCloseHostports(t *testing.T) {
 				Namespace: "ns1",
 				Name:      "n3",
 				PortMappings: []*PortMapping{
-					{HostPort: 8081, Protocol: v1.ProtocolTCP},
+					{HostPort: 8081, Protocol: config.ProtocolTCP},
 				},
 			},
 			false,
@@ -94,7 +95,7 @@ func TestOpenCloseHostports(t *testing.T) {
 				Namespace: "ns1",
 				Name:      "n4",
 				PortMappings: []*PortMapping{
-					{HostPort: 7777, Protocol: v1.ProtocolSCTP},
+					{HostPort: 7777, Protocol: config.ProtocolSCTP},
 				},
 			},
 			false,
@@ -105,8 +106,8 @@ func TestOpenCloseHostports(t *testing.T) {
 				Namespace: "ns1",
 				Name:      "n5",
 				PortMappings: []*PortMapping{
-					{HostPort: 8888, Protocol: v1.ProtocolUDP, HostIP: "127.0.0.1"},
-					{HostPort: 8888, Protocol: v1.ProtocolUDP, HostIP: "127.0.0.2"},
+					{HostPort: 8888, Protocol: config.ProtocolUDP, HostIP: "127.0.0.1"},
+					{HostPort: 8888, Protocol: config.ProtocolUDP, HostIP: "127.0.0.2"},
 				},
 			},
 			false,
@@ -117,8 +118,8 @@ func TestOpenCloseHostports(t *testing.T) {
 				Namespace: "ns1",
 				Name:      "n6",
 				PortMappings: []*PortMapping{
-					{HostPort: 9999, Protocol: v1.ProtocolTCP},
-					{HostPort: 9999, Protocol: v1.ProtocolUDP},
+					{HostPort: 9999, Protocol: config.ProtocolTCP},
+					{HostPort: 9999, Protocol: config.ProtocolUDP},
 				},
 			},
 			false,
@@ -149,7 +150,7 @@ func TestOpenCloseHostports(t *testing.T) {
 		// SCTP ports are not allocated
 		countSctp := 0
 		for _, pm := range tc.podPortMapping.PortMappings {
-			if pm.Protocol == v1.ProtocolSCTP {
+			if pm.Protocol == config.ProtocolSCTP {
 				countSctp++
 			}
 		}
@@ -169,48 +170,48 @@ func TestOpenCloseHostports(t *testing.T) {
 		{
 
 			portMappings: []*PortMapping{
-				{HostPort: 80, Protocol: v1.ProtocolTCP},
-				{HostPort: 8080, Protocol: v1.ProtocolTCP},
-				{HostPort: 443, Protocol: v1.ProtocolTCP},
+				{HostPort: 80, Protocol: config.ProtocolTCP},
+				{HostPort: 8080, Protocol: config.ProtocolTCP},
+				{HostPort: 443, Protocol: config.ProtocolTCP},
 			},
 		},
 		{
 
 			portMappings: []*PortMapping{
-				{HostPort: 80, Protocol: v1.ProtocolTCP},
+				{HostPort: 80, Protocol: config.ProtocolTCP},
 			},
 		},
 		{
 			portMappings: []*PortMapping{
-				{HostPort: 8081, Protocol: v1.ProtocolTCP},
-				{HostPort: 8080, Protocol: v1.ProtocolTCP},
+				{HostPort: 8081, Protocol: config.ProtocolTCP},
+				{HostPort: 8080, Protocol: config.ProtocolTCP},
 			},
 		},
 		{
 			portMappings: []*PortMapping{
-				{HostPort: 8081, Protocol: v1.ProtocolTCP},
+				{HostPort: 8081, Protocol: config.ProtocolTCP},
 			},
 		},
 		{
 			portMappings: []*PortMapping{
-				{HostPort: 7070, Protocol: v1.ProtocolTCP},
+				{HostPort: 7070, Protocol: config.ProtocolTCP},
 			},
 		},
 		{
 			portMappings: []*PortMapping{
-				{HostPort: 7777, Protocol: v1.ProtocolSCTP},
+				{HostPort: 7777, Protocol: config.ProtocolSCTP},
 			},
 		},
 		{
 			portMappings: []*PortMapping{
-				{HostPort: 8888, Protocol: v1.ProtocolUDP, HostIP: "127.0.0.1"},
-				{HostPort: 8888, Protocol: v1.ProtocolUDP, HostIP: "127.0.0.2"},
+				{HostPort: 8888, Protocol: config.ProtocolUDP, HostIP: "127.0.0.1"},
+				{HostPort: 8888, Protocol: config.ProtocolUDP, HostIP: "127.0.0.2"},
 			},
 		},
 		{
 			portMappings: []*PortMapping{
-				{HostPort: 9999, Protocol: v1.ProtocolTCP},
-				{HostPort: 9999, Protocol: v1.ProtocolUDP},
+				{HostPort: 9999, Protocol: config.ProtocolTCP},
+				{HostPort: 9999, Protocol: config.ProtocolUDP},
 			},
 		},
 	}
@@ -253,17 +254,17 @@ func TestHostportManager(t *testing.T) {
 					{
 						HostPort:      8080,
 						ContainerPort: 80,
-						Protocol:      v1.ProtocolTCP,
+						Protocol:      config.ProtocolTCP,
 					},
 					{
 						HostPort:      8081,
 						ContainerPort: 81,
-						Protocol:      v1.ProtocolUDP,
+						Protocol:      config.ProtocolUDP,
 					},
 					{
 						HostPort:      8083,
 						ContainerPort: 83,
-						Protocol:      v1.ProtocolSCTP,
+						Protocol:      config.ProtocolSCTP,
 					},
 				},
 			},
@@ -280,17 +281,17 @@ func TestHostportManager(t *testing.T) {
 					{
 						HostPort:      8082,
 						ContainerPort: 80,
-						Protocol:      v1.ProtocolTCP,
+						Protocol:      config.ProtocolTCP,
 					},
 					{
 						HostPort:      8081,
 						ContainerPort: 81,
-						Protocol:      v1.ProtocolUDP,
+						Protocol:      config.ProtocolUDP,
 					},
 					{
 						HostPort:      8083,
 						ContainerPort: 83,
-						Protocol:      v1.ProtocolSCTP,
+						Protocol:      config.ProtocolSCTP,
 					},
 				},
 			},
@@ -307,7 +308,7 @@ func TestHostportManager(t *testing.T) {
 					{
 						HostPort:      8443,
 						ContainerPort: 443,
-						Protocol:      v1.ProtocolTCP,
+						Protocol:      config.ProtocolTCP,
 					},
 				},
 			},
@@ -324,7 +325,7 @@ func TestHostportManager(t *testing.T) {
 					{
 						HostPort:      8443,
 						ContainerPort: 443,
-						Protocol:      v1.ProtocolTCP,
+						Protocol:      config.ProtocolTCP,
 					},
 				},
 			},
@@ -341,7 +342,7 @@ func TestHostportManager(t *testing.T) {
 					{
 						HostPort:      8444,
 						ContainerPort: 444,
-						Protocol:      v1.ProtocolTCP,
+						Protocol:      config.ProtocolTCP,
 						HostIP:        "192.168.1.1",
 					},
 				},
@@ -360,13 +361,13 @@ func TestHostportManager(t *testing.T) {
 					{
 						HostPort:      8888,
 						ContainerPort: 443,
-						Protocol:      v1.ProtocolTCP,
+						Protocol:      config.ProtocolTCP,
 						HostIP:        "127.0.0.2",
 					},
 					{
 						HostPort:      8888,
 						ContainerPort: 443,
-						Protocol:      v1.ProtocolTCP,
+						Protocol:      config.ProtocolTCP,
 						HostIP:        "127.0.0.1",
 					},
 				},
@@ -384,12 +385,12 @@ func TestHostportManager(t *testing.T) {
 					{
 						HostPort:      9999,
 						ContainerPort: 443,
-						Protocol:      v1.ProtocolTCP,
+						Protocol:      config.ProtocolTCP,
 					},
 					{
 						HostPort:      9999,
 						ContainerPort: 443,
-						Protocol:      v1.ProtocolUDP,
+						Protocol:      config.ProtocolUDP,
 					},
 				},
 			},
@@ -568,17 +569,17 @@ func TestHostportManagerIPv6(t *testing.T) {
 					{
 						HostPort:      8080,
 						ContainerPort: 80,
-						Protocol:      v1.ProtocolTCP,
+						Protocol:      config.ProtocolTCP,
 					},
 					{
 						HostPort:      8081,
 						ContainerPort: 81,
-						Protocol:      v1.ProtocolUDP,
+						Protocol:      config.ProtocolUDP,
 					},
 					{
 						HostPort:      8083,
 						ContainerPort: 83,
-						Protocol:      v1.ProtocolSCTP,
+						Protocol:      config.ProtocolSCTP,
 					},
 				},
 			},
@@ -594,17 +595,17 @@ func TestHostportManagerIPv6(t *testing.T) {
 					{
 						HostPort:      8082,
 						ContainerPort: 80,
-						Protocol:      v1.ProtocolTCP,
+						Protocol:      config.ProtocolTCP,
 					},
 					{
 						HostPort:      8081,
 						ContainerPort: 81,
-						Protocol:      v1.ProtocolUDP,
+						Protocol:      config.ProtocolUDP,
 					},
 					{
 						HostPort:      8083,
 						ContainerPort: 83,
-						Protocol:      v1.ProtocolSCTP,
+						Protocol:      config.ProtocolSCTP,
 					},
 				},
 			},
@@ -620,7 +621,7 @@ func TestHostportManagerIPv6(t *testing.T) {
 					{
 						HostPort:      8443,
 						ContainerPort: 443,
-						Protocol:      v1.ProtocolTCP,
+						Protocol:      config.ProtocolTCP,
 					},
 				},
 			},
@@ -636,7 +637,7 @@ func TestHostportManagerIPv6(t *testing.T) {
 					{
 						HostPort:      8443,
 						ContainerPort: 443,
-						Protocol:      v1.ProtocolTCP,
+						Protocol:      config.ProtocolTCP,
 					},
 				},
 			},

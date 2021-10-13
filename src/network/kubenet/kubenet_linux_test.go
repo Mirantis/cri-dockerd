@@ -23,8 +23,6 @@ import (
 	"testing"
 
 	"github.com/Mirantis/cri-dockerd/config"
-	"github.com/Mirantis/cri-dockerd/core"
-
 	"github.com/containernetworking/cni/libcni"
 	"github.com/containernetworking/cni/pkg/types"
 	"github.com/stretchr/testify/assert"
@@ -195,7 +193,7 @@ func TestTeardownCallsShaper(t *testing.T) {
 	details[network.NET_PLUGIN_EVENT_POD_CIDR_CHANGE_DETAIL_CIDR] = "10.0.0.1/24"
 	kubenet.Event(network.NET_PLUGIN_EVENT_POD_CIDR_CHANGE, details)
 
-	existingContainerID := core.BuildContainerID("docker", "123")
+	existingContainerID := config.BuildContainerID("docker", "123")
 	kubenet.podIPs[existingContainerID] = utilsets.NewString("10.0.0.1")
 
 	if err := kubenet.TearDownPod("namespace", "name", existingContainerID); err != nil {
@@ -334,7 +332,7 @@ func TestTearDownWithoutRuntime(t *testing.T) {
 			}
 		}
 
-		existingContainerID := core.BuildContainerID("docker", "123")
+		existingContainerID := config.BuildContainerID("docker", "123")
 		kubenet.podIPs[existingContainerID] = utilsets.NewString(tc.ip)
 
 		mockcni.On(

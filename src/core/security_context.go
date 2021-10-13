@@ -258,7 +258,7 @@ func (ds *dockerService) getSecurityOpts(seccompProfile string, separator rune) 
 	return seccompSecurityOpts, nil
 }
 
-func (ds *dockerService) getSandBoxSecurityOpts(separator rune) []string {
+func (ds *dockerService) getSandBoxSecurityOpts() []string {
 	// run sandbox with no-new-privileges and using runtime/default
 	// sending no "seccomp=" means docker will use default profile
 	return []string{"no-new-privileges"}
@@ -318,11 +318,11 @@ func getApparmorSecurityOpts(
 	sc *runtimeapi.LinuxContainerSecurityContext,
 	separator rune,
 ) ([]string, error) {
-	if sc == nil || sc.Apparmor.String() == "" {
+	if sc == nil || sc.ApparmorProfile == "" {
 		return nil, nil
 	}
 
-	appArmorOpts, err := getAppArmorOpts(sc.Apparmor.String())
+	appArmorOpts, err := getAppArmorOpts(sc.ApparmorProfile)
 	if err != nil {
 		return nil, err
 	}

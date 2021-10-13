@@ -20,14 +20,13 @@ limitations under the License.
 package testing
 
 import (
-	gomock "github.com/golang/mock/gomock"
-	sets "k8s.io/apimachinery/pkg/util/sets"
+	"github.com/golang/mock/gomock"
+	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/Mirantis/cri-dockerd/config"
 	"github.com/Mirantis/cri-dockerd/network"
 )
 
-// Mock of NetworkPlugin interface
 type MockNetworkPlugin struct {
 	ctrl     *gomock.Controller
 	recorder *_MockNetworkPluginRecorder

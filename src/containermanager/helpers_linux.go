@@ -16,7 +16,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package cm
+package containermanager
 
 import (
 	"fmt"
@@ -37,12 +37,12 @@ func isProcessRunningInHost(pid int) (bool, error) {
 	if err != nil {
 		return false, fmt.Errorf("failed to find pid namespace of init process")
 	}
-	logrus.Debug("init pid ns is %q", initPidNs)
+	logrus.Debugf("init pid ns is %q", initPidNs)
 	processPidNs, err := os.Readlink(fmt.Sprintf("/proc/%d/ns/pid", pid))
 	if err != nil {
 		return false, fmt.Errorf("failed to find pid namespace of process %q", pid)
 	}
-	logrus.Debug("Pid %d pid ns is %q", pid, processPidNs)
+	logrus.Debugf("Pid %d pid ns is %q", pid, processPidNs)
 	return initPidNs == processPidNs, nil
 }
 
@@ -142,18 +142,18 @@ func ensureProcessInContainerWithOOMScore(pid int, oomScoreAdj int, manager cgro
 			errs = append(errs, fmt.Errorf("failed to find container of PID %d: %v", pid, err))
 		}
 
-		name := ""
-		cgroups, err := manager.GetCgroups()
+		path := ""
+		foundCgroups, err := manager.GetCgroups()
 		if err != nil {
 			errs = append(errs, fmt.Errorf("failed to get cgroups for %d: %v", pid, err))
 		} else {
-			name = cgroups.Name
+			path = foundCgroups.Path
 		}
 
-		if cont != name {
+		if cont != path {
 			err = manager.Apply(pid)
 			if err != nil {
-				errs = append(errs, fmt.Errorf("failed to move PID %d (in %q) to %q: %v", pid, cont, name, err))
+				errs = append(errs, fmt.Errorf("failed to move PID %d (in %q) to %q: %v", pid, cont, path, err))
 			}
 		}
 	}
