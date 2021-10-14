@@ -41,8 +41,8 @@ RUN?=$(RPMBUILD) rpmbuild-$@/$(ARCH) $(RPMBUILD_FLAGS)
 SOURCE_FILES=app.tgz cri-docker.service cri-docker.socket
 SOURCES=$(addprefix rpmbuild/SOURCES/, $(SOURCE_FILES))
 
-FEDORA_RELEASES := fedora-31 fedora-30 fedora-29
-CENTOS_RELEASES := centos-7
+FEDORA_RELEASES := fedora-34
+CENTOS_RELEASES := centos-8 centos-7
 
 .PHONY: help
 help: ## show make targets
