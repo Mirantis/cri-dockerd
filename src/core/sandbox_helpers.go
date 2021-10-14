@@ -250,7 +250,7 @@ func (ds *dockerService) makeSandboxDockerConfig(
 	}
 
 	// Set security options.
-	securityOpts := ds.getSandBoxSecurityOpts()
+	securityOpts := ds.getSandBoxSecurityOpts(securityOptSeparator)
 	hc.SecurityOpt = append(hc.SecurityOpt, securityOpts...)
 
 	return createConfig, nil

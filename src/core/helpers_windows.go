@@ -28,6 +28,7 @@ import (
 	"runtime"
 
 	"github.com/blang/semver"
+    "github.com/sirupsen/logrus"
 	dockertypes "github.com/docker/docker/api/types"
 	dockercontainer "github.com/docker/docker/api/types/container"
 	dockerfilters "github.com/docker/docker/api/types/filters"
@@ -39,7 +40,7 @@ func DefaultMemorySwap() int64 {
 	return 0
 }
 
-func (ds *core.dockerService) updateCreateConfig(
+func (ds *dockerService) updateCreateConfig(
 	createConfig *dockertypes.ContainerCreateConfig,
 	config *runtimeapi.ContainerConfig,
 	sandboxConfig *runtimeapi.PodSandboxConfig,
@@ -75,7 +76,7 @@ func (ds *core.dockerService) updateCreateConfig(
 	return nil
 }
 
-func (ds *core.dockerService) determinePodIPBySandboxID(sandboxID string) []string {
+func (ds *dockerService) determinePodIPBySandboxID(sandboxID string) []string {
 	opts := dockertypes.ContainerListOptions{
 		All:     true,
 		Filters: dockerfilters.NewArgs(),
@@ -363,4 +364,34 @@ func removeAllGMSARegistryValues() (errors []error) {
 	}
 
 	return
+}
+
+func (ds *dockerService) performPlatformSpecificContainerForContainer(
+	containerID string,
+) (errors []error) {
+	if cleanupInfo, present := ds.getContainerCleanupInfo(containerID); present {
+		errors = ds.performPlatformSpecificContainerCleanupAndLogErrors(containerID, cleanupInfo)
+
+		if len(errors) == 0 {
+			ds.clearContainerCleanupInfo(containerID)
+		}
+	}
+
+	return
+}
+
+func (ds *dockerService) performPlatformSpecificContainerCleanupAndLogErrors(
+	containerNameOrID string,
+	cleanupInfo *containerCleanupInfo,
+) []error {
+	if cleanupInfo == nil {
+		return nil
+	}
+
+	errors := ds.performPlatformSpecificContainerCleanup(cleanupInfo)
+	for _, err := range errors {
+		logrus.Infof("Error when cleaning up after container %s: %v", containerNameOrID, err)
+	}
+
+	return errors
 }

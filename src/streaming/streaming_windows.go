@@ -20,8 +20,11 @@ package streaming
 
 import (
 	"bytes"
+    "context"
 	"fmt"
 	"io"
+
+    "github.com/Mirantis/cri-dockerd/utils"
 )
 
 func (r *StreamingRuntime) portForward(
@@ -30,6 +33,7 @@ func (r *StreamingRuntime) portForward(
 	stream io.ReadWriteCloser,
 ) error {
 	stderr := new(bytes.Buffer)
+	err := r.ExecWithContext(context.TODO(), podSandboxID, []string{"wincat.exe", "127.0.0.1", fmt.Sprint(port)}, stream, stream, utils.WriteCloserWrapper(stderr), false, nil, 0)
 	if err != nil {
 		return fmt.Errorf("%v: %s", err, stderr.String())
 	}
