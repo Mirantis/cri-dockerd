@@ -248,22 +248,6 @@ func modifyHostOptionsForContainer(
 	}
 }
 
-func (ds *dockerService) getSecurityOpts(seccompProfile string, separator rune) ([]string, error) {
-	// Apply seccomp options.
-	seccompSecurityOpts, err := getSeccompSecurityOpts(seccompProfile, separator)
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate seccomp security options for container: %v", err)
-	}
-
-	return seccompSecurityOpts, nil
-}
-
-func (ds *dockerService) getSandBoxSecurityOpts() []string {
-	// run sandbox with no-new-privileges and using runtime/default
-	// sending no "seccomp=" means docker will use default profile
-	return []string{"no-new-privileges"}
-}
-
 func getSeccompDockerOpts(seccompProfile string) ([]DockerOpt, error) {
 	if seccompProfile == "" || seccompProfile == config.SeccompProfileNameUnconfined {
 		// return early the default

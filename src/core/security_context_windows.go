@@ -24,7 +24,7 @@ import (
 	v1 "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 )
 
-func (ds *core.dockerService) getSecurityOpts(
+func (ds *dockerService) getSecurityOpts(
 	seccompProfile string,
 	separator rune,
 ) ([]string, error) {
@@ -34,7 +34,7 @@ func (ds *core.dockerService) getSecurityOpts(
 	return nil, nil
 }
 
-func (ds *core.dockerService) getSandBoxSecurityOpts(separator rune) []string {
+func (ds *dockerService) getSandBoxSecurityOpts(separator rune) []string {
 	// Currently, Windows container does not support privileged mode, so no no-new-privileges flag can be returned directly like Linux
 	// If the future Windows container has new support for privileged mode, we can adjust it here
 	return nil

@@ -32,7 +32,7 @@ func DefaultMemorySwap() int64 {
 	return -1
 }
 
-func (ds *core.dockerService) getSecurityOpts(
+func (ds *dockerService) getSecurityOpts(
 	seccompProfile string,
 	separator rune,
 ) ([]string, error) {
@@ -40,12 +40,12 @@ func (ds *core.dockerService) getSecurityOpts(
 	return nil, nil
 }
 
-func (ds *core.dockerService) getSandBoxSecurityOpts(separator rune) []string {
+func (ds *dockerService) getSandBoxSecurityOpts(separator rune) []string {
 	logrus.Info("getSandBoxSecurityOpts is unsupported in this build")
 	return nil
 }
 
-func (ds *core.dockerService) updateCreateConfig(
+func (ds *dockerService) updateCreateConfig(
 	createConfig *dockertypes.ContainerCreateConfig,
 	config *runtimeapi.ContainerConfig,
 	sandboxConfig *runtimeapi.PodSandboxConfig,
@@ -54,11 +54,69 @@ func (ds *core.dockerService) updateCreateConfig(
 	return nil
 }
 
-func (ds *core.dockerService) determinePodIPBySandboxID(uid string) []string {
+func (ds *dockerService) determinePodIPBySandboxID(uid string) []string {
 	logrus.Info("determinePodIPBySandboxID is unsupported in this build")
 	return nil
 }
 
 func getNetworkNamespace(c *dockertypes.ContainerJSON) (string, error) {
 	return "", fmt.Errorf("unsupported platform")
+}
+
+type containerCleanupInfo struct{}
+
+// applyPlatformSpecificDockerConfig applies platform-specific configurations to a dockertypes.ContainerCreateConfig struct.
+// The containerCleanupInfo struct it returns will be passed as is to performPlatformSpecificContainerCleanup
+// after either the container creation has failed or the container has been removed.
+func (ds *dockerService) applyPlatformSpecificDockerConfig(
+	*runtimeapi.CreateContainerRequest,
+	*dockertypes.ContainerCreateConfig,
+) (*containerCleanupInfo, error) {
+	return nil, nil
+}
+
+// performPlatformSpecificContainerCleanup is responsible for doing any platform-specific cleanup
+// after either the container creation has failed or the container has been removed.
+func (ds *dockerService) performPlatformSpecificContainerCleanup(
+	cleanupInfo *containerCleanupInfo,
+) (errors []error) {
+	return
+}
+
+// platformSpecificContainerInitCleanup is called when cri-dockerd
+// is starting, and is meant to clean up any cruft left by previous runs
+// creating containers.
+// Errors are simply logged, but don't prevent cri-dockerd from starting.
+func (ds *dockerService) platformSpecificContainerInitCleanup() (errors []error) {
+	return
+}
+
+func (ds *dockerService) performPlatformSpecificContainerForContainer(
+	containerID string,
+) (errors []error) {
+	if cleanupInfo, present := ds.getContainerCleanupInfo(containerID); present {
+		errors = ds.performPlatformSpecificContainerCleanupAndLogErrors(containerID, cleanupInfo)
+
+		if len(errors) == 0 {
+			ds.clearContainerCleanupInfo(containerID)
+		}
+	}
+
+	return
+}
+
+func (ds *dockerService) performPlatformSpecificContainerCleanupAndLogErrors(
+	containerNameOrID string,
+	cleanupInfo *containerCleanupInfo,
+) []error {
+	if cleanupInfo == nil {
+		return nil
+	}
+
+	errors := ds.performPlatformSpecificContainerCleanup(cleanupInfo)
+	for _, err := range errors {
+		logrus.Infof("Error when cleaning up after container %s: %v", containerNameOrID, err)
+	}
+
+	return errors
 }
