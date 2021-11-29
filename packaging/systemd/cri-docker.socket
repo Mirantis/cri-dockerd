@@ -3,7 +3,7 @@ Description=CRI Docker Socket for the API
 PartOf=cri-docker.service
 
 [Socket]
-ListenStream=/var/run/cri-docker.sock
+ListenStream=%t/cri-docker.sock
 SocketMode=0660
 SocketUser=root
 SocketGroup=docker
