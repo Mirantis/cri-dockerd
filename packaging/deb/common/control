@@ -1,7 +1,7 @@
 Source: cri-docker
 Section: admin
 Priority: optional
-Maintainer: Docker <support@docker.com>
+Maintainer: Mirantis <support@mirantis.com>
 Build-Depends: bash,
                bash-completion,
                libbtrfs-dev | btrfs-tools,
@@ -21,9 +21,9 @@ Build-Depends: bash,
                make,
                pkg-config
 Standards-Version: 3.9.6
-Homepage: https://www.docker.com
-Vcs-Browser: https://github.com/docker/docker
-Vcs-Git: git://github.com/docker/docker.git
+Homepage: https://www.mirantis.com
+Vcs-Browser: https://github.com/Mirantis/cri-dockerd
+Vcs-Git: git://github.com/Mirantis/cri-dockerd.git
 
 Package: cri-docker
 Architecture: linux-any
@@ -36,5 +36,4 @@ Recommends: aufs-tools [amd64],
             xz-utils,
             libltdl7,
             ${apparmor:Recommends}
-Description: Docker: the open-source application container engine
- cri-docker is a lightweight implementation of the CRI specification which talks to docker.
+Description: cri-docker is a lightweight implementation of the CRI specification which talks to docker.
