@@ -59,7 +59,7 @@ func getListener(addr string) (net.Listener, error) {
 	listenAddr := addrSlice[1]
 	switch proto {
 	case "fd":
-		return listenFd(listenAddr)
+		return listenFD(listenAddr)
 	default:
 		return util.CreateListener(addr)
 	}
