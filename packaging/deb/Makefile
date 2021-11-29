@@ -1,13 +1,13 @@
 include ../common.mk
 
-APP_DIR:=$(realpath $(CURDIR)/../../cli)
+APP_DIR:=$(realpath $(CURDIR)/../../)
 GITCOMMIT?=$(shell cd $(APP_DIR) && git rev-parse --short HEAD)
 STATIC_VERSION:=$(shell ../static/gen-static-ver $(APP_DIR) $(VERSION))
 GO_BASE_IMAGE=golang
 GO_IMAGE=$(GO_BASE_IMAGE):$(GO_VERSION)-stretch
 DEB_VERSION=$(shell ./gen-deb-ver $(APP_DIR) "$(VERSION)")
 CHOWN:=docker run --rm -v $(CURDIR):/v -w /v alpine chown
-EPOCH?=5
+EPOCH?=0
 
 ifdef BUILD_IMAGE
 	BUILD_IMAGE_FLAG=--build-arg BUILD_IMAGE=$(BUILD_IMAGE)
@@ -27,7 +27,7 @@ RUN=docker run --rm -i \
 	-e EPOCH='$(EPOCH)' \
 	-e DEB_VERSION=$(word 1, $(DEB_VERSION)) \
 	-e VERSION=$(word 2, $(DEB_VERSION)) \
-	-e GITCOMMIT=$(ITCOMMIT) \
+	-e GITCOMMIT=$(GITCOMMIT) \
 	-e PLATFORM \
 	-v $(CURDIR)/debbuild/$@:/build \
 	$(RUN_FLAGS) \

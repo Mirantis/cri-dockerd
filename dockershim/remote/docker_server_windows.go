@@ -9,7 +9,7 @@ import (
 )
 
 func listenFD(addr string) (net.Listener, error) {
-	return nil, errors.New("listening server on fd not supported on windows")
+	return nil, errors.New("listening on a file descriptor is not supported on Windows")
 }
 
 func handleNotify() {

@@ -1,6 +1,6 @@
 include common.mk
 
-APP_DIR:=$(realpath $(CURDIR)/../app)
+APP_DIR:=$(realpath $(CURDIR)/../)
 STATIC_VERSION:=$(shell static/gen-static-ver $(VERSION))
 
 # Taken from: https://www.cmcrossroads.com/article/printing-value-makefile-variable

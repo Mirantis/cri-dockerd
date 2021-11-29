@@ -4,7 +4,7 @@ APP_DIR=$1
 VERSION=$2
 
 if [ -z "$APP_DIR" ] || [ -z "$VERSION" ]; then
-    echo 'usage: ./gen-static-ver ${ENGINE_DIR} ${VERSION}'
+    echo 'usage: ./gen-static-ver ${APP_DIR} ${VERSION}'
     exit 1
 fi
 
@@ -29,7 +29,7 @@ if [[ "$VERSION" == *-dev ]]; then
     gitDate="$($DATE_COMMAND --utc --date "@$gitUnix" +'%Y%m%d%H%M%S')"
     gitCommit="$($GIT_COMMAND log -1 --pretty='%h')"
     # staticVersion is now something like '0.0.0-20180719213702-cd5e2db'
-    staticVersion="0.0.0-${gitDate}-${gitCommit}"
+    staticVersion="${VERSION/-dev/}-${gitDate}-${gitCommit}"
 fi
 
 echo "$staticVersion"
