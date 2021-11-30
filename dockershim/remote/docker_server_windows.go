@@ -1,6 +1,6 @@
 // +build !dockerless windows
 
-package server
+package remote
 
 import (
 	"net"
