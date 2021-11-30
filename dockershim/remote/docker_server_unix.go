@@ -1,4 +1,4 @@
-// +build !dockerless !windows
+// +build !dockerless,!windows
 
 package remote
 
