@@ -23,7 +23,7 @@ static: static-linux cross-mac cross-win cross-arm ## create all static packages
 .PHONY: static-linux
 static-linux:
 	mkdir -p build/linux/cri-dockerd
-	cd $(APP_DIR) && go get && env GOOS=linux GOARCH=amd64 go build -o cri-dockerd
+	cd $(APP_DIR) && go get && env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o cri-dockerd
 	mv $(APP_DIR)/cri-dockerd build/linux/cri-dockerd/cri-dockerd
 	tar -C build/linux -c -z -f build/linux/cri-dockerd-$(STATIC_VERSION).tgz cri-dockerd
 
@@ -35,14 +35,14 @@ hash_files:
 .PHONY: cross-mac
 cross-mac:
 	mkdir -p build/mac/cri-dockerd
-	cd $(APP_DIR) && go get && env GOOS=darwin GOARCH=amd64 go build -o cri-dockerd-darwin-amd64
+	cd $(APP_DIR) && go get && env CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o cri-dockerd-darwin-amd64
 	mv $(APP_DIR)/cri-dockerd-darwin-amd64 build/mac/cri-dockerd/cri-dockerd
 	tar -C build/mac -c -z -f build/mac/cri-dockerd-$(STATIC_VERSION).tgz cri-dockerd
 
 .PHONY: cross-win
 cross-win:
 	mkdir -p build/win/cri-dockerd
-	cd $(APP_DIR) && go get && env GOOS=windows GOARCH=amd64 go build -o cri-dockerd-windows-amd64
+	cd $(APP_DIR) && go get && env CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o cri-dockerd-windows-amd64
 	mv $(APP_DIR)/cri-dockerd-windows-amd64 build/win/cri-dockerd/cri-dockerd.exe
 	if ! grep -sq 'docker\|lxc' /proc/1/cgroup; then \
 	    docker run --rm -v $(CURDIR)/build/win:/v -w /v alpine sh -c 'apk update && apk add zip && zip -r cri-dockerd-$(STATIC_VERSION).zip cri-dockerd'; \
@@ -52,6 +52,6 @@ cross-win:
 .PHONY: cross-arm
 cross-arm: ## create tgz with linux armhf client only
 	mkdir -p build/arm/cri-dockerd
-	cd $(APP_DIR) && go get && env GOOS=linux GOARCH=arm64 go build -o cri-dockerd-arm64
+	cd $(APP_DIR) && go get && env CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o cri-dockerd-arm64
 	mv $(APP_DIR)/cri-dockerd-arm64 build/arm/cri-dockerd/cri-dockerd
 	tar -C build/arm -c -z -f build/arm/cri-dockerd-$(STATIC_VERSION).tgz cri-dockerd

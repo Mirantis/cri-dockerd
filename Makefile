@@ -1,4 +1,4 @@
-APP_DIR:=$(CURDIR)
+APP_DIR:=$(CURDIR)/src
 PACKAGING_DIR:=$(CURDIR)/packaging
 VERSION=$(shell cat VERSION)
 
