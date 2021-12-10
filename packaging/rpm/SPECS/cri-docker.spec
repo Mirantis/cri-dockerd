@@ -34,7 +34,6 @@ Requires: xz
 Requires: device-mapper-libs >= 1.02.90-1
 
 BuildRequires: bash
-BuildRequires: btrfs-progs-devel
 BuildRequires: ca-certificates
 BuildRequires: cmake
 BuildRequires: device-mapper-devel
