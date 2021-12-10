@@ -11,7 +11,7 @@ kill timeout 20
 
 script
 	CRI_DOCKERD=/usr/bin/cri-dockerd
-	exec "$CRI_DOCKERD" --v=10 --networkplugin="" --logtostderr
+	exec "$CRI_DOCKERD" --container-runtime-endpoint fd:// --networkplugin=""
 end script
 
 # Don't emit "started" event until cri-docker.sock is ready.
