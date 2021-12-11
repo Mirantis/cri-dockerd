@@ -20,3 +20,23 @@ You can find more information about the context for this
 tool in [Don't Panic: Kubernetes and Docker](https://blog.k8s.io/2020/12/02/dont-panic-kubernetes-and-docker/)
 and on the Mirantis
 [blog](https://www.mirantis.com/blog/mirantis-to-take-over-support-of-kubernetes-dockershim-2/).
+
+## Build and install
+
+To build this code (in a POSIX environment):
+```shell
+mkdir bin
+cd src && go get && go build -o ../bin/cri-dockerd
+```
+
+To install, on a Linux system that uses systemd, and already has Docker Engine installed
+```shell
+# Run these commands as root
+mkdir -p /usr/local/bin
+install -o root -g root -m 0755 bin/cri-dockerd /usr/local/bin/cri-dockerd
+cp -a packaging/systemd/* /etc/systemd/system
+sed -i -e 's,/usr/bin/cri-dockerd,/usr/local/bin/cri-dockerd,' /etc/systemd/system/cri-dockerd.service
+systemctl daemon-reload
+systemctl enable cri-dockerd.service
+systemctl enable --now cri-dockerd.socket
+```
