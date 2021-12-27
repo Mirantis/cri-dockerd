@@ -1,8 +1,7 @@
 [Unit]
 Description=CRI Interface for Docker Application Container Engine
 Documentation=https://docs.mirantis.com
-BindsTo=containerd.service
-After=network-online.target firewalld.service containerd.service docker.service
+After=network-online.target firewalld.service docker.service
 Wants=network-online.target
 Requires=cri-docker.socket
 
