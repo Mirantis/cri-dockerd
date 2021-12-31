@@ -20,12 +20,6 @@ jobs:
           go-version: 1.16
         id: go
 
-      - name: Setup Go binary path
-        shell: bash
-        run: |
-          echo "GOPATH=${{ github.workspace }}" >> $GITHUB_ENV
-          echo "${{ github.workspace }}/bin" >> $GITHUB_PATH
-
       - name: Install docker
         shell: bash
         run: |
@@ -70,10 +64,10 @@ jobs:
       - name: Build cri-tools
         working-directory: src/sigs.k8s.io/cri-tools
         run: |
-          sudo make install.ginkgo critest crictl
+          make install.ginkgo critest crictl
           sudo mv $(pwd)/build/bin/ginkgo /usr/local/bin
-          sudo mv $(pwd)/_output/critest /usr/local/bin
-          sudo mv $(pwd)/_output/crictl /usr/local/bin
+          sudo mv $(pwd)/build/bin/critest /usr/local/bin
+          sudo mv $(pwd)/build/bin/crictl /usr/local/bin
 
       - name: Checkout cri-dockerd
         uses: actions/checkout@v2
@@ -89,10 +83,8 @@ jobs:
 
       - name: Start cri-dockerd and run critest
         working-directory: src/sigs.k8s.io/cri-tools
+        shell: bash
         run: |
-          set -o errexit
-          set -o nounset
-          set -o pipefail
           set -x
           export LANG=C
           export LC_ALL=C
@@ -117,6 +109,7 @@ jobs:
 
       - name: Run benchmark
         working-directory: src/sigs.k8s.io/cri-tools
+        shell: bash
         run: |
           set -o errexit
           set -o nounset
