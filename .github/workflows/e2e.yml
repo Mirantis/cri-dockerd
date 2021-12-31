@@ -11,10 +11,10 @@ jobs:
     runs-on: ubuntu-20.04
     timeout-minutes: 240
     steps:
-      - name: Set up Go 1.16
+      - name: Set up Go 1.17
         uses: actions/setup-go@v1
         with:
-          go-version: 1.16
+          go-version: 1.17
         id: go
 
       - name: Setup Go binary path
@@ -107,8 +107,7 @@ jobs:
           go install k8s.io/test-infra/kubetest
           sudo mv $GOPATH/bin/kubetest /usr/local/bin
 
-
-      - name: Start local-up-cluster
+      - name: Start up a cluster
         working-directory: src/k8s.io/kubernetes
         shell: bash
         run: |
@@ -131,24 +130,6 @@ jobs:
             CONTAINER_RUNTIME_ENDPOINT="unix:///var/run/cri-dockerd.sock" \
             hack/local-up-cluster.sh 2>&1 | tee ${{ github.workspace }}/logs/local-up-cluster.log
 
-      - name: Run kubetest
-        working-directory: src/k8s.io/kubernetes
-        shell: bash
-        run: |
-          set -x
-          export KUBECONFIG=/var/run/kubernetes/admin.kubeconfig
-          sudo env PATH=$PATH \
-            GOPATH=$GOPATH \
-            KUBECONFIG=$KUBECONFIG \
-            kubetest \
-            --dump=${{ github.workspace }}/logs \
-            --build=none --ginkgo-parallel=1 \
-            --deployment=local --provider=local \
-            --test \
-            --test_args='--ginkgo.focus=\[Conformance\] --ginkgo.skip=\[sig\-apps\]\sDaemon\sset\s\[Serial\]\sshould\srollback\swithout\sunnecessary\srestarts\s\[Conformance\]' \
-            --kubeconfig="$KUBECONFIG" \
-            --timeout=240m | tee ${{ github.workspace }}/logs/kubetest.log
-
       - name: Cleanup processes and containers
         if: always()
         shell: bash
@@ -157,16 +138,3 @@ jobs:
           (docker rmi -f $(docker images -q -a)) || true
           (docker system prune --all --volumes -f) || true
           (ps -ef | grep -i -e kube- -e etcd -e dockerd | grep -v grep | awk '{print $2}' | xargs sudo kill -9) || true
-
-      - name: Dump docker logs
-        if: always()
-        run: |
-          sudo journalctl -eu docker | sudo tee ${{ github.workspace }}/logs/docker.log >/dev/null
-          ls -atrl ${{ github.workspace }}/logs
-
-      - name: Upload logs
-        if: always()
-        uses: actions/upload-artifact@v1
-        with:
-          name: logs
-          path: logs
