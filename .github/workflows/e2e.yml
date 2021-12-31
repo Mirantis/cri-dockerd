@@ -19,12 +19,6 @@ jobs:
           go-version: 1.16
         id: go
 
-      - name: Setup Go binary path
-        shell: bash
-        run: |
-          echo "GOPATH=${{ github.workspace }}" >> $GITHUB_ENV
-          echo "${{ github.workspace }}/bin" >> $GITHUB_PATH
-
       - name: Install docker
         shell: bash
         run: |
@@ -73,10 +67,8 @@ jobs:
 
       - name: Start cri-dockerd
         working-directory: src/k8s.io/kubernetes
+        shell: bash
         run: |
-          set -o errexit
-          set -o nounset
-          set -o pipefail
           set -x
           export LANG=C
           export LC_ALL=C
@@ -106,10 +98,8 @@ jobs:
 
       - name: Build kubetest
         working-directory: src/k8s.io/test-infra
+        shell: bash
         run: |
-          set -o errexit
-          set -o nounset
-          set -o pipefail
           set -x
           go install k8s.io/test-infra/kubetest
           sudo mv $GOPATH/bin/kubetest /usr/local/bin
@@ -119,9 +109,6 @@ jobs:
         working-directory: src/k8s.io/kubernetes
         shell: bash
         run: |
-          set -o errexit
-          set -o nounset
-          set -o pipefail
           set -x
           make all WHAT="cmd/kubectl test/e2e/e2e.test vendor/github.com/onsi/ginkgo/ginkgo"
           hack/install-etcd.sh
@@ -145,9 +132,6 @@ jobs:
         working-directory: src/k8s.io/kubernetes
         shell: bash
         run: |
-          set -o errexit
-          set -o nounset
-          set -o pipefail
           set -x
           export KUBECONFIG=/var/run/kubernetes/admin.kubeconfig
           sudo env PATH=$PATH \
