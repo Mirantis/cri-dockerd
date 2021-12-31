@@ -2,18 +2,17 @@ name: Test local
 
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
   pull_request:
-    branches: [ main ]
+    branches: [ master ]
 
 jobs:
 
   build:
     name: k8s local-up CI
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     timeout-minutes: 240
     steps:
-
       - name: Set up Go 1.16
         uses: actions/setup-go@v1
         with:
@@ -24,41 +23,7 @@ jobs:
         shell: bash
         run: |
           echo "GOPATH=${{ github.workspace }}" >> $GITHUB_ENV
-          echo "${{ github.workspace }}/bin" >> $GITHUB_PATH  
-
-      - name: Check out kubernetes
-        uses: actions/checkout@v2
-        with:
-          repository: kubernetes/kubernetes
-          path: src/k8s.io/kubernetes
-
-      - name: Checkout cri-dockerd
-        uses: actions/checkout@v2
-        with:
-          repository: Mirantis/cri-dockerd
-          path: src/github.com/Mirantis/cri-dockerd
-
-      - name: Checkout test-infra for kubetest
-        uses: actions/checkout@v2
-        with:
-          repository: kubernetes/test-infra
-          path: src/k8s.io/test-infra
-
-      - name: Build cri-dockerd
-        working-directory: src/github.com/Mirantis/cri-dockerd
-        run: |
-          go install .
-          sudo mv $GOPATH/bin/cri-dockerd /usr/local/bin
-
-      - name: Build kubetest
-        working-directory: src/k8s.io/test-infra
-        run: |
-          set -o errexit
-          set -o nounset
-          set -o pipefail
-          set -x
-          go install k8s.io/test-infra/kubetest
-          sudo mv $GOPATH/bin/kubetest /usr/local/bin
+          echo "${{ github.workspace }}/bin" >> $GITHUB_PATH
 
       - name: Install docker
         shell: bash
@@ -94,6 +59,18 @@ jobs:
           # Restart docker daemon.
           sudo service docker restart
 
+      - name: Checkout cri-dockerd
+        uses: actions/checkout@v2
+        with:
+          repository: Mirantis/cri-dockerd
+          path: src/github.com/Mirantis/cri-dockerd
+
+      - name: Build cri-dockerd
+        working-directory: src/github.com/Mirantis/cri-dockerd/src
+        run: |
+          go build
+          sudo mv ./cri-dockerd /usr/local/bin
+
       - name: Start cri-dockerd
         working-directory: src/k8s.io/kubernetes
         run: |
@@ -107,13 +84,36 @@ jobs:
           # Install nsenter
           docker run --rm -v /usr/local/bin:/target jpetazzo/nsenter
 
-          # Start dockershim first
+          # Start cri-dockerd first
           logs_dir="${{ github.workspace }}/logs"
           mkdir -p $logs_dir
-          sudo /usr/local/bin/cri-dockerd --v=10 --network-plugin="" --logtostderr >$logs_dir/cri-dockerd.log 2>&1 &
+          sudo /usr/local/bin/cri-dockerd --log-level debug --network-plugin="" >$logs_dir/cri-dockerd.log 2>&1 &
 
-          # Wait a while for dockershim starting.
+          # Wait a while for cri-dockerd starting.
           sleep 10
+
+      - name: Check out kubernetes
+        uses: actions/checkout@v2
+        with:
+          repository: kubernetes/kubernetes
+          path: src/k8s.io/kubernetes
+
+      - name: Checkout test-infra for kubetest
+        uses: actions/checkout@v2
+        with:
+          repository: kubernetes/test-infra
+          path: src/k8s.io/test-infra
+
+      - name: Build kubetest
+        working-directory: src/k8s.io/test-infra
+        run: |
+          set -o errexit
+          set -o nounset
+          set -o pipefail
+          set -x
+          go install k8s.io/test-infra/kubetest
+          sudo mv $GOPATH/bin/kubetest /usr/local/bin
+
 
       - name: Start local-up-cluster
         working-directory: src/k8s.io/kubernetes
@@ -138,7 +138,7 @@ jobs:
             HOSTNAME_OVERRIDE=$IP \
             KUBELET_HOST=$IP \
             CONTAINER_RUNTIME=remote \
-            CONTAINER_RUNTIME_ENDPOINT="unix:///var/run/dockershim.sock" \
+            CONTAINER_RUNTIME_ENDPOINT="unix:///var/run/cri-dockerd.sock" \
             hack/local-up-cluster.sh 2>&1 | tee ${{ github.workspace }}/logs/local-up-cluster.log
 
       - name: Run kubetest

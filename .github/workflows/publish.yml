@@ -1,19 +1,38 @@
-name: Build
+name: Build and publish artifacts
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  release:
+    types: [created]
 
 jobs:
+  releases-matrix:
+    name: Build and publish static binaries
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        goos: [linux, darwin, windows]
+        goarch: [amd64, arm64]
+        exclude:
+          - goarch: "arm64"
+            goos: windows
 
-  build:
-    name: cri-tools CI
-    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: wangyoucao577/go-release-action@v1.16
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          goos: ${{ matrix.goos }}
+          goarch: ${{ matrix.goarch }}
+          project_path: "./src/"
+          binary_name: "cri-dockerd"
+          build_flags: "CGO_ENABLED=0"
+          extra_files: LICENSE Readme.md
+
+  build-packages:
+    name: Build and publish packages
+    runs-on: ubuntu-20.04
     timeout-minutes: 60
     steps:
-
       - name: Set up Go 1.16
         uses: actions/setup-go@v1
         with:
@@ -25,12 +44,6 @@ jobs:
         run: |
           echo "GOPATH=${{ github.workspace }}" >> $GITHUB_ENV
           echo "${{ github.workspace }}/bin" >> $GITHUB_PATH
-
-      - name: Checkout cri-dockerd
-        uses: actions/checkout@v2
-        with:
-          repository: Mirantis/cri-dockerd
-          path: src/github.com/Mirantis/cri-dockerd
 
       - name: Install docker
         shell: bash
@@ -64,18 +77,39 @@ jobs:
           sudo apt-get install docker-ce docker-ce-cli containerd.io
 
           # Restart docker daemon.
-          sudo service docker restart
+          sudo service docker Restart
 
-      - name: Build cri-dockerd
+      - name: Checkout cri-dockerd
+        uses: actions/checkout@v2
+        with:
+          repository: Mirantis/cri-dockerd
+          path: src/github.com/Mirantis/cri-dockerd
+
+      - name: Build packages
         working-directory: src/github.com/Mirantis/cri-dockerd
         run: |
-          # make deb
+          make deb
           make rpm
-          make static
+          mkdir pkg
+          find . -name "*.deb" -exec cp {} pkg/ \;
+          find . -name "*.rpm" -exec cp {} pkg/ \;
 
-      - name: Upload logs
-        if: always()
-        uses: actions/upload-artifact@v1
+      - name: Upload binaries to release
+        uses: svenstaro/upload-release-action@v2
         with:
-          name: artifacts
-          path: packaging/debs
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: pkg/*
+          tag: ${{ github.ref }}
+          overwrite: true
+          file_glob: true
+
+      - name: Cleanup processes and containers
+        if: always()
+        shell: bash
+        run: |
+          (docker rm -f $(docker ps -a -q)) || true
+          (docker rmi -f $(docker images -q -a)) || true
+          (docker system prune --all --volumes -f) || true
+          (ps -ef | grep -i -e kube- -e etcd -e dockerd | grep -v grep | awk '{print $2}' | xargs sudo kill -9) || true
+
+
