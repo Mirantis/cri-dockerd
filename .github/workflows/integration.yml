@@ -7,9 +7,7 @@ on:
     branches: [ master ]
 
 jobs:
-
-  build:
-    name: cri-tools CI
+  integration:
     runs-on: ubuntu-20.04
     timeout-minutes: 60
     steps:

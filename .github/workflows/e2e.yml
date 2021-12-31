@@ -1,4 +1,4 @@
-name: Test local
+name: End-to-End Tests
 
 on:
   push:
@@ -7,9 +7,7 @@ on:
     branches: [ master ]
 
 jobs:
-
-  build:
-    name: k8s local-up CI
+  e2e-test:
     runs-on: ubuntu-20.04
     timeout-minutes: 240
     steps:
@@ -66,7 +64,6 @@ jobs:
           sudo mv ./cri-dockerd /usr/local/bin
 
       - name: Start cri-dockerd
-        working-directory: src/k8s.io/kubernetes
         shell: bash
         run: |
           set -x
@@ -79,7 +76,7 @@ jobs:
           # Start cri-dockerd first
           logs_dir="${{ github.workspace }}/logs"
           mkdir -p $logs_dir
-          sudo /usr/local/bin/cri-dockerd --log-level debug --network-plugin="" >$logs_dir/cri-dockerd.log 2>&1 &
+          sudo /usr/local/bin/cri-dockerd --log-level warn --network-plugin="" >$logs_dir/cri-dockerd.log 2>&1 &
 
           # Wait a while for cri-dockerd starting.
           sleep 10
