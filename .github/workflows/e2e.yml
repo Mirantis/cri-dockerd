@@ -1,64 +1,27 @@
-name: Test local
+name: End-to-End Tests
 
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
   pull_request:
-    branches: [ main ]
+    branches: [ master ]
 
 jobs:
-
-  build:
-    name: k8s local-up CI
-    runs-on: ubuntu-18.04
+  e2e-test:
+    runs-on: ubuntu-20.04
     timeout-minutes: 240
     steps:
-
-      - name: Set up Go 1.16
+      - name: Set up Go 1.17
         uses: actions/setup-go@v1
         with:
-          go-version: 1.16
+          go-version: 1.17
         id: go
 
       - name: Setup Go binary path
         shell: bash
         run: |
           echo "GOPATH=${{ github.workspace }}" >> $GITHUB_ENV
-          echo "${{ github.workspace }}/bin" >> $GITHUB_PATH  
-
-      - name: Check out kubernetes
-        uses: actions/checkout@v2
-        with:
-          repository: kubernetes/kubernetes
-          path: src/k8s.io/kubernetes
-
-      - name: Checkout cri-dockerd
-        uses: actions/checkout@v2
-        with:
-          repository: Mirantis/cri-dockerd
-          path: src/github.com/Mirantis/cri-dockerd
-
-      - name: Checkout test-infra for kubetest
-        uses: actions/checkout@v2
-        with:
-          repository: kubernetes/test-infra
-          path: src/k8s.io/test-infra
-
-      - name: Build cri-dockerd
-        working-directory: src/github.com/Mirantis/cri-dockerd
-        run: |
-          go install .
-          sudo mv $GOPATH/bin/cri-dockerd /usr/local/bin
-
-      - name: Build kubetest
-        working-directory: src/k8s.io/test-infra
-        run: |
-          set -o errexit
-          set -o nounset
-          set -o pipefail
-          set -x
-          go install k8s.io/test-infra/kubetest
-          sudo mv $GOPATH/bin/kubetest /usr/local/bin
+          echo "${{ github.workspace }}/bin" >> $GITHUB_PATH
 
       - name: Install docker
         shell: bash
@@ -94,12 +57,21 @@ jobs:
           # Restart docker daemon.
           sudo service docker restart
 
-      - name: Start cri-dockerd
-        working-directory: src/k8s.io/kubernetes
+      - name: Checkout cri-dockerd
+        uses: actions/checkout@v2
+        with:
+          repository: Mirantis/cri-dockerd
+          path: src/github.com/Mirantis/cri-dockerd
+
+      - name: Build cri-dockerd
+        working-directory: src/github.com/Mirantis/cri-dockerd/src
         run: |
-          set -o errexit
-          set -o nounset
-          set -o pipefail
+          go build
+          sudo mv ./cri-dockerd /usr/local/bin
+
+      - name: Start cri-dockerd
+        shell: bash
+        run: |
           set -x
           export LANG=C
           export LC_ALL=C
@@ -107,21 +79,38 @@ jobs:
           # Install nsenter
           docker run --rm -v /usr/local/bin:/target jpetazzo/nsenter
 
-          # Start dockershim first
+          # Start cri-dockerd first
           logs_dir="${{ github.workspace }}/logs"
           mkdir -p $logs_dir
-          sudo /usr/local/bin/cri-dockerd --v=10 --network-plugin="" --logtostderr >$logs_dir/cri-dockerd.log 2>&1 &
+          sudo /usr/local/bin/cri-dockerd --log-level warn --network-plugin="" >$logs_dir/cri-dockerd.log 2>&1 &
 
-          # Wait a while for dockershim starting.
+          # Wait a while for cri-dockerd starting.
           sleep 10
 
-      - name: Start local-up-cluster
+      - name: Check out kubernetes
+        uses: actions/checkout@v2
+        with:
+          repository: kubernetes/kubernetes
+          path: src/k8s.io/kubernetes
+
+      - name: Checkout test-infra for kubetest
+        uses: actions/checkout@v2
+        with:
+          repository: kubernetes/test-infra
+          path: src/k8s.io/test-infra
+
+      - name: Build kubetest
+        working-directory: src/k8s.io/test-infra
+        shell: bash
+        run: |
+          set -x
+          go install k8s.io/test-infra/kubetest
+          sudo mv $GOPATH/bin/kubetest /usr/local/bin
+
+      - name: Start up a cluster
         working-directory: src/k8s.io/kubernetes
         shell: bash
         run: |
-          set -o errexit
-          set -o nounset
-          set -o pipefail
           set -x
           make all WHAT="cmd/kubectl test/e2e/e2e.test vendor/github.com/onsi/ginkgo/ginkgo"
           hack/install-etcd.sh
@@ -138,29 +127,8 @@ jobs:
             HOSTNAME_OVERRIDE=$IP \
             KUBELET_HOST=$IP \
             CONTAINER_RUNTIME=remote \
-            CONTAINER_RUNTIME_ENDPOINT="unix:///var/run/dockershim.sock" \
+            CONTAINER_RUNTIME_ENDPOINT="unix:///var/run/cri-dockerd.sock" \
             hack/local-up-cluster.sh 2>&1 | tee ${{ github.workspace }}/logs/local-up-cluster.log
-
-      - name: Run kubetest
-        working-directory: src/k8s.io/kubernetes
-        shell: bash
-        run: |
-          set -o errexit
-          set -o nounset
-          set -o pipefail
-          set -x
-          export KUBECONFIG=/var/run/kubernetes/admin.kubeconfig
-          sudo env PATH=$PATH \
-            GOPATH=$GOPATH \
-            KUBECONFIG=$KUBECONFIG \
-            kubetest \
-            --dump=${{ github.workspace }}/logs \
-            --build=none --ginkgo-parallel=1 \
-            --deployment=local --provider=local \
-            --test \
-            --test_args='--ginkgo.focus=\[Conformance\] --ginkgo.skip=\[sig\-apps\]\sDaemon\sset\s\[Serial\]\sshould\srollback\swithout\sunnecessary\srestarts\s\[Conformance\]' \
-            --kubeconfig="$KUBECONFIG" \
-            --timeout=240m | tee ${{ github.workspace }}/logs/kubetest.log
 
       - name: Cleanup processes and containers
         if: always()
@@ -170,16 +138,3 @@ jobs:
           (docker rmi -f $(docker images -q -a)) || true
           (docker system prune --all --volumes -f) || true
           (ps -ef | grep -i -e kube- -e etcd -e dockerd | grep -v grep | awk '{print $2}' | xargs sudo kill -9) || true
-
-      - name: Dump docker logs
-        if: always()
-        run: |
-          sudo journalctl -eu docker | sudo tee ${{ github.workspace }}/logs/docker.log >/dev/null
-          ls -atrl ${{ github.workspace }}/logs
-
-      - name: Upload logs
-        if: always()
-        uses: actions/upload-artifact@v1
-        with:
-          name: logs
-          path: logs

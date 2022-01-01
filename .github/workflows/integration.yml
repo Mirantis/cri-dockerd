@@ -1,42 +1,22 @@
-name: Benchmark
+name: Integration Tests
 
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
   pull_request:
-    branches: [ main ]
+    branches: [ master ]
 
 jobs:
-
-  build:
-    name: cri-tools CI
-    runs-on: ubuntu-18.04
+  integration:
+    runs-on: ubuntu-20.04
     timeout-minutes: 60
     steps:
 
-      - name: Set up Go 1.16
+      - name: Set up Go 1.17
         uses: actions/setup-go@v1
         with:
-          go-version: 1.16
+          go-version: 1.17
         id: go
-
-      - name: Setup Go binary path
-        shell: bash
-        run: |
-          echo "GOPATH=${{ github.workspace }}" >> $GITHUB_ENV
-          echo "${{ github.workspace }}/bin" >> $GITHUB_PATH  
-
-      - name: Check out cri-tools
-        uses: actions/checkout@v2
-        with:
-          repository: kubernetes-sigs/cri-tools
-          path: src/sigs.k8s.io/cri-tools
-
-      - name: Checkout cri-dockerd
-        uses: actions/checkout@v2
-        with:
-          repository: Mirantis/cri-dockerd
-          path: src/github.com/Mirantis/cri-dockerd
 
       - name: Install docker
         shell: bash
@@ -72,26 +52,37 @@ jobs:
           # Restart docker daemon.
           sudo service docker restart
 
+
+      - name: Check out cri-tools
+        uses: actions/checkout@v2
+        with:
+          repository: kubernetes-sigs/cri-tools
+          path: src/sigs.k8s.io/cri-tools
+
       - name: Build cri-tools
         working-directory: src/sigs.k8s.io/cri-tools
         run: |
-          sudo make install.ginkgo critest crictl
+          make install.ginkgo critest crictl
           sudo mv $(pwd)/build/bin/ginkgo /usr/local/bin
-          sudo mv $(pwd)/_output/critest /usr/local/bin
-          sudo mv $(pwd)/_output/crictl /usr/local/bin
+          sudo mv $(pwd)/build/bin/critest /usr/local/bin
+          sudo mv $(pwd)/build/bin/crictl /usr/local/bin
+
+      - name: Checkout cri-dockerd
+        uses: actions/checkout@v2
+        with:
+          repository: Mirantis/cri-dockerd
+          path: src/github.com/Mirantis/cri-dockerd
 
       - name: Build cri-dockerd
-        working-directory: src/github.com/Mirantis/cri-dockerd
+        working-directory: src/github.com/Mirantis/cri-dockerd/src
         run: |
-          go install .
-          sudo mv $GOPATH/bin/cri-dockerd /usr/local/bin
+          go build
+          sudo mv ./cri-dockerd /usr/local/bin
 
-      - name: Run critest
+      - name: Start cri-dockerd and run critest
         working-directory: src/sigs.k8s.io/cri-tools
+        shell: bash
         run: |
-          set -o errexit
-          set -o nounset
-          set -o pipefail
           set -x
           export LANG=C
           export LC_ALL=C
@@ -99,23 +90,24 @@ jobs:
           # Install nsenter
           docker run --rm -v /usr/local/bin:/target jpetazzo/nsenter
 
-          # Start dockershim first
+          # Start cri-dockerd first
           logs_dir="${{ github.workspace }}/logs"
           mkdir -p $logs_dir
-          sudo /usr/local/bin/cri-dockerd --v=10 --network-plugin="" --logtostderr >$logs_dir/cri-dockerd.log 2>&1 &
+          sudo /usr/local/bin/cri-dockerd --log-level warn --network-plugin="" >$logs_dir/cri-dockerd.log 2>&1 &
 
-          # Wait a while for dockershim starting.
+          # Wait a while for cri-dockerd starting.
           sleep 10
 
           # Run e2e test cases
           # Skip reopen container log test because docker doesn't support it.
           # Skip runtime should support execSync with timeout because docker doesn't
           # support it.
-          # Skip apparmor test as we don't enable apparmor yet in this CI job
-          sudo /usr/local/bin/critest -ginkgo.skip="runtime should support apparmor|runtime should support reopening container log|runtime should support execSync with timeout" -parallel 1
+          # Skip apparmor test as we don't enable apparmor yet in this CI job, or selinux
+          sudo /usr/local/bin/critest -runtime-endpoint=/var/run/cri-dockerd.sock -ginkgo.skip="runtime should support apparmor|runtime should support reopening container log|runtime should support execSync with timeout|runtime should support selinux" -parallel 1
 
       - name: Run benchmark
         working-directory: src/sigs.k8s.io/cri-tools
+        shell: bash
         run: |
           set -o errexit
           set -o nounset
@@ -125,7 +117,7 @@ jobs:
           export LC_ALL=C
 
           # Run benchmark test cases
-          sudo /usr/local/bin/critest -benchmark
+          sudo /usr/local/bin/critest -runtime-endpoint=/var/run/cri-dockerd.sock -benchmark
 
       - name: Dump docker logs
         if: always()
