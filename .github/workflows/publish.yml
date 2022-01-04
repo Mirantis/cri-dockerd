@@ -27,3 +27,4 @@ jobs:
           binary_name: "cri-dockerd"
           pre_command: "export CGO_ENABLED=0"
           extra_files: LICENSE README.md
+          overwrite: true
