@@ -2,7 +2,6 @@ include ../common.mk
 
 APP_DIR:=$(realpath $(CURDIR)/../../)
 GITCOMMIT?=$(shell cd $(APP_DIR) && git rev-parse --short HEAD)
-STATIC_VERSION:=$(shell ../static/gen-static-ver $(APP_DIR) $(VERSION))
 GO_BASE_IMAGE=golang
 GO_IMAGE=$(GO_BASE_IMAGE):$(GO_VERSION)-stretch
 DEB_VERSION=$(shell ./gen-deb-ver $(APP_DIR) "$(VERSION)")
