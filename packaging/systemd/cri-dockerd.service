@@ -3,7 +3,7 @@ Description=CRI Interface for Docker Application Container Engine
 Documentation=https://docs.mirantis.com
 After=network-online.target firewalld.service docker.service
 Wants=network-online.target
-Requires=cri-docker.socket
+Requires=cri-dockerd.socket
 
 [Service]
 Type=notify

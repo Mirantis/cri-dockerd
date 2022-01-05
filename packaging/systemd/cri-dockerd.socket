@@ -1,6 +1,6 @@
 [Unit]
 Description=CRI Docker Socket for the API
-PartOf=cri-docker.service
+PartOf=cri-dockerd.service
 
 [Socket]
 ListenStream=%t/cri-dockerd.sock
