@@ -14,9 +14,9 @@ script
 	exec "$CRI_DOCKERD" --container-runtime-endpoint fd:// --networkplugin=""
 end script
 
-# Don't emit "started" event until cri-docker.sock is ready.
+# Don't emit "started" event until cri-dockerd.sock is ready.
 post-start script
-	CRI_DOCKER_SOCKET=/var/run/cri-docker.sock
+	CRI_DOCKER_SOCKET=/var/run/cri-dockerd.sock
 
 	if [ -n "$CRI_DOCKER_SOCKET" ]; then
 		while ! [ -e "$CRI_DOCKER_SOCKET" ]; do
