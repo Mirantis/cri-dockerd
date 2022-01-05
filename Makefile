@@ -1,6 +1,11 @@
 APP_DIR:=$(CURDIR)/src
 PACKAGING_DIR:=$(CURDIR)/packaging
-VERSION=$(shell cat VERSION)
+
+export VERSION=$(shell (git describe --abbrev=0 --tags | sed -e 's/v//') || echo $(cat VERSION)-$(git log -1 --pretty='%h'))
+BUILDTIME=`date +%FT%T%z`
+PRERELEASE=`grep -q dev <<< "${VERSION}" && echo "pre" || echo ""`
+GITCOMMIT=`git log -1 --pretty='%h'`
+export LDFLAGS=-ldflags "-X github.com/Mirantis/cri-dockerd/version.Version=${VERSION} -X github.com/Mirantis/cri-dockerd/version.PreRelease=${PRERELEASE} -X github.com/Mirantis/cri-dockerd/version.BuildTime=${BUILDTIME} -X github.com/Mirantis/cri-dockerd/version.GitCommit=${GITCOMMIT}"
 
 .PHONY: help
 help: ## show make targets
@@ -8,27 +13,27 @@ help: ## show make targets
 
 .PHONY: deb
 deb: ## build deb packages
-	$(MAKE) VERSION=$(VERSION) APP_DIR=$(APP_DIR) -C $(PACKAGING_DIR) deb
+	$(MAKE) APP_DIR=$(APP_DIR) -C $(PACKAGING_DIR) deb
 
 .PHONY: rpm
 rpm: ## build rpm packages
-	$(MAKE) VERSION=$(VERSION) APP_DIR=$(APP_DIR)  -C $(PACKAGING_DIR) rpm
+	$(MAKE) APP_DIR=$(APP_DIR) -C $(PACKAGING_DIR) rpm
 
 .PHONY: static
 static: ## build static packages
-	$(MAKE) VERSION=$(VERSION) APP_DIR=$(APP_DIR) -C $(PACKAGING_DIR) static
+	$(MAKE) APP_DIR=$(APP_DIR) -C $(PACKAGING_DIR) static
 
 .PHONY: static-linux
 static-linux: ## build static packages
-	$(MAKE) VERSION=$(VERSION) APP_DIR=$(APP_DIR) -C $(PACKAGING_DIR) static-linux
+	$(MAKE) APP_DIR=$(APP_DIR) -C $(PACKAGING_DIR) static-linux
 
 .PHONY: cross-mac
 cross-mac: ## build static packages
-	$(MAKE) VERSION=$(VERSION) APP_DIR=$(APP_DIR) -C $(PACKAGING_DIR) cross-mac
+	$(MAKE) APP_DIR=$(APP_DIR) -C $(PACKAGING_DIR) cross-mac
 
 .PHONY: cross-win
 cross-win: ## build static packages
-	$(MAKE) VERSION=$(VERSION) APP_DIR=$(APP_DIR) -C $(PACKAGING_DIR) cross-win
+	$(MAKE) APP_DIR=$(APP_DIR) -C $(PACKAGING_DIR) cross-win
 
 .PHONY: clean
 clean: ## clean the build artifacts
