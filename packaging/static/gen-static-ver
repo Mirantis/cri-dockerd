@@ -15,7 +15,11 @@ fi
 GIT_COMMAND="git -C $APP_DIR"
 
 staticVersion="$VERSION"
-if [[ "$VERSION" == *-dev ]]; then
+
+gitTag=$($GIT_COMMAND describe --abbrev=0 --tags)
+if [[ $? -eq 0 ]]; then
+    staticVersion="${gitTag/v/}"
+else
     # based on golang's pseudo-version: https://groups.google.com/forum/#!topic/golang-dev/a5PqQuBljF4
     #
     # using a "pseudo-version" of the form v0.0.0-yyyymmddhhmmss-abcdefabcdef,
