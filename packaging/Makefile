@@ -1,7 +1,6 @@
 include common.mk
 
 APP_DIR:=$(realpath $(CURDIR)/../src)
-STATIC_VERSION:=$(shell static/gen-static-ver $(VERSION))
 
 # Taken from: https://www.cmcrossroads.com/article/printing-value-makefile-variable
 print-%  : ; @echo $($*)
@@ -18,27 +17,27 @@ clean: ## remove build artifacts
 
 .PHONY: rpm
 rpm: ## build rpm packages
-	$(MAKE) -C $@ VERSION=$(VERSION) APP_DIR=$(APP_DIR) GO_VERSION=$(GO_VERSION) rpm
+	$(MAKE) -C $@ APP_DIR=$(APP_DIR) GO_VERSION=$(GO_VERSION) rpm
 
 .PHONY: deb
 deb: ## build deb packages
-	$(MAKE) -C $@ VERSION=$(VERSION) APP_DIR=$(APP_DIR) GO_VERSION=$(GO_VERSION) deb
+	$(MAKE) -C $@ APP_DIR=$(APP_DIR) GO_VERSION=$(GO_VERSION) deb
 
 .PHONY: static
 static: DOCKER_BUILD_PKGS:=static-linux cross-mac cross-win cross-arm
 static: ## build static-compiled packages
 	for p in $(DOCKER_BUILD_PKGS); do \
-		$(MAKE) -C $@ VERSION=$(VERSION) APP_DIR=$(APP_DIR) GO_VERSION=$(GO_VERSION) $${p} || exit 1; \
+		$(MAKE) -C $@ APP_DIR=$(APP_DIR) GO_VERSION=$(GO_VERSION) $${p} || exit 1; \
 	done
 
 .PHONY: static-linux
 static-linux: ## build static-compiled packages
-	$(MAKE) -C static VERSION=$(VERSION) APP_DIR=$(APP_DIR) GO_VERSION=$(GO_VERSION) static-linux
+	$(MAKE) -C static APP_DIR=$(APP_DIR) GO_VERSION=$(GO_VERSION) static-linux
 
 .PHONY: cross-mac
 cross-mac: ## build static-compiled packages
-	$(MAKE) -C static VERSION=$(VERSION) APP_DIR=$(APP_DIR) GO_VERSION=$(GO_VERSION) cross-mac
+	$(MAKE) -C static APP_DIR=$(APP_DIR) GO_VERSION=$(GO_VERSION) cross-mac
 
 .PHONY: cross-win
 cross-win: ## build static-compiled packages
-	$(MAKE) -C static VERSION=$(VERSION) APP_DIR=$(APP_DIR) GO_VERSION=$(GO_VERSION) cross-win
+	$(MAKE) -C static APP_DIR=$(APP_DIR) GO_VERSION=$(GO_VERSION) cross-win
