@@ -32,7 +32,7 @@ RUN=docker run --rm -i \
 	$(RUN_FLAGS) \
 	debbuild-$@/$(ARCH)
 
-SOURCE_FILES=app.tgz cri-docker.service cri-docker.socket
+SOURCE_FILES=app.tgz cri-dockerd.service cri-dockerd.socket
 SOURCES=$(addprefix sources/, $(SOURCE_FILES))
 
 DEBIAN_VERSIONS := debian-stretch debian-buster
@@ -79,10 +79,10 @@ sources/app.tgz:
 		alpine \
 		tar -C / -c -z -f /v/app.tgz --exclude .git app
 
-sources/cri-docker.service: ../systemd/cri-docker.service
+sources/cri-dockerd.service: ../systemd/cri-dockerd.service
 	mkdir -p $(@D)
 	cp $< $@
 
-sources/cri-docker.socket: ../systemd/cri-docker.socket
+sources/cri-dockerd.socket: ../systemd/cri-dockerd.socket
 	mkdir -p $(@D)
 	cp $< $@

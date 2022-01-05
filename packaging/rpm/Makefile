@@ -38,7 +38,7 @@ RPMBUILD_FLAGS?=-ba\
 	$(SPECS)
 RUN?=$(RPMBUILD) rpmbuild-$@/$(ARCH) $(RPMBUILD_FLAGS)
 
-SOURCE_FILES=app.tgz cri-docker.service cri-docker.socket
+SOURCE_FILES=app.tgz cri-dockerd.service cri-dockerd.socket
 SOURCES=$(addprefix rpmbuild/SOURCES/, $(SOURCE_FILES))
 
 FEDORA_RELEASES := fedora-34
@@ -81,10 +81,10 @@ rpmbuild/SOURCES/app.tgz:
 		alpine \
 		tar -C / -c -z -f /v/app.tgz --exclude .git app
 
-rpmbuild/SOURCES/cri-docker.service: ../systemd/cri-docker.service
+rpmbuild/SOURCES/cri-dockerd.service: ../systemd/cri-dockerd.service
 	mkdir -p $(@D)
 	cp $< $@
 
-rpmbuild/SOURCES/cri-docker.socket: ../systemd/cri-docker.socket
+rpmbuild/SOURCES/cri-dockerd.socket: ../systemd/cri-dockerd.socket
 	mkdir -p $(@D)
 	cp $< $@

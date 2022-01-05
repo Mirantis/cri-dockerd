@@ -20,8 +20,8 @@ override_dh_strip:
 
 override_dh_auto_install:
 	install -D -m 0755 /go/src/github.com/Mirantis/cri-docker/cri-dockerd debian/cri-docker/usr/bin/cri-dockerd
-	install -D -m 0644 /sources/cri-docker.service debian/cri-docker/lib/systemd/system/cri-docker.service
-	install -D -m 0644 /sources/cri-docker.socket debian/cri-docker/lib/systemd/system/cri-docker.socket
+	install -D -m 0644 /sources/cri-dockerd.service debian/cri-docker/lib/systemd/system/cri-dockerd.service
+	install -D -m 0644 /sources/cri-dockerd.socket debian/cri-docker/lib/systemd/system/cri-dockerd.socket
 
 override_dh_installinit:
 	dh_installinit --name=cri-docker

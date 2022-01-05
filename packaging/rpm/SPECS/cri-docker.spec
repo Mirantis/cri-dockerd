@@ -6,8 +6,8 @@ Version: %{_version}
 Release: %{_release}%{?dist}
 Epoch: 3
 Source0: app.tgz
-Source1: cri-docker.service
-Source2: cri-docker.socket
+Source1: cri-dockerd.service
+Source2: cri-dockerd.socket
 Summary: A CRI interface for Docker
 Group: Tools/Docker
 License: ASL 2.0
@@ -73,21 +73,21 @@ app/cri-dockerd --version
 install -D -p -m 0755 $(readlink -f app/cri-dockerd) $RPM_BUILD_ROOT/%{_bindir}/cri-dockerd
 
 # install systemd scripts
-install -D -m 0644 %{_topdir}/SOURCES/cri-docker.service $RPM_BUILD_ROOT/%{_unitdir}/cri-docker.service
-install -D -m 0644 %{_topdir}/SOURCES/cri-docker.socket $RPM_BUILD_ROOT/%{_unitdir}/cri-docker.socket
+install -D -m 0644 %{_topdir}/SOURCES/cri-dockerd.service $RPM_BUILD_ROOT/%{_unitdir}/cri-dockerd.service
+install -D -m 0644 %{_topdir}/SOURCES/cri-dockerd.socket $RPM_BUILD_ROOT/%{_unitdir}/cri-dockerd.socket
 
 %files
 /%{_bindir}/cri-dockerd
-/%{_unitdir}/cri-docker.service
-/%{_unitdir}/cri-docker.socket
+/%{_unitdir}/cri-dockerd.service
+/%{_unitdir}/cri-dockerd.socket
 
 %post
-%systemd_post cri-docker.service
+%systemd_post cri-dockerd.service
 
 %preun
-%systemd_preun cri-docker.service
+%systemd_preun cri-dockerd.service
 
 %postun
-%systemd_postun_with_restart cri-docker.service
+%systemd_postun_with_restart cri-dockerd.service
 
 %changelog
