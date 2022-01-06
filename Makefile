@@ -1,11 +1,18 @@
 APP_DIR:=$(CURDIR)/src
 PACKAGING_DIR:=$(CURDIR)/packaging
 
-export VERSION=$(shell (git describe --abbrev=0 --tags | sed -e 's/v//') || echo $(cat VERSION)-$(git log -1 --pretty='%h'))
-BUILDTIME=`date +%FT%T%z`
+DATE_FMT=+%Y%m%d.%H%M%S
+SOURCE_DATE_EPOCH?=$(shell git log -1 --pretty=%ct)
+ifdef SOURCE_DATE_EPOCH
+    BUILD_DATE?=$(shell date -u -d "@$(SOURCE_DATE_EPOCH)" "$(DATE_FMT)" 2>/dev/null || date -u -r "$(SOURCE_DATE_EPOCH)" "$(DATE_FMT)" 2>/dev/null || date -u "$(DATE_FMT)")
+else
+    BUILD_DATE?=$(shell date "$(DATE_FMT)")
+endif
+
+export VERSION?=$(shell (git describe --abbrev=0 --tags | sed -e 's/v//') || echo $(cat VERSION)-$(git log -1 --pretty='%h'))
 PRERELEASE=`grep -q dev <<< "${VERSION}" && echo "pre" || echo ""`
-GITCOMMIT=`git log -1 --pretty='%h'`
-export LDFLAGS=-ldflags "-X github.com/Mirantis/cri-dockerd/version.Version=${VERSION} -X github.com/Mirantis/cri-dockerd/version.PreRelease=${PRERELEASE} -X github.com/Mirantis/cri-dockerd/version.BuildTime=${BUILDTIME} -X github.com/Mirantis/cri-dockerd/version.GitCommit=${GITCOMMIT}"
+REVISION?=`git log -1 --pretty='%h'`
+export LDFLAGS=-ldflags "-X github.com/Mirantis/cri-dockerd/version.Version=${VERSION} -X github.com/Mirantis/cri-dockerd/version.PreRelease=${PRERELEASE} -X github.com/Mirantis/cri-dockerd/version.BuildTime=${BUILD_DATE} -X github.com/Mirantis/cri-dockerd/version.GitCommit=${REVISION}"
 
 .PHONY: help
 help: ## show make targets
@@ -29,6 +36,7 @@ static-linux: ## build static packages
 
 .PHONY: cross-mac
 cross-mac: ## build static packages
+	echo ${SOURCE_DATE_EPOCH}
 	$(MAKE) APP_DIR=$(APP_DIR) -C $(PACKAGING_DIR) cross-mac
 
 .PHONY: cross-win
