@@ -85,6 +85,19 @@ func NewDockerCRICommand(stopCh <-chan struct{}) *cobra.Command {
 				return
 			}
 
+			infoflag, _ := cleanFlagSet.GetBool("buildinfo")
+			if infoflag {
+				fmt.Fprintf(
+					cmd.OutOrStderr(),
+					"Program: %s\nVersion: %s\nBuildTime: %s\nGitCommit: %s\n",
+					version.PlatformName,
+					version.FullVersion(),
+					version.BuildTime,
+					version.GitCommit,
+				)
+				return
+			}
+
 			logFlag, _ := cleanFlagSet.GetString("log-level")
 			if logFlag != "" {
 				level, err := logrus.ParseLevel(logFlag)
@@ -104,6 +117,7 @@ func NewDockerCRICommand(stopCh <-chan struct{}) *cobra.Command {
 	kubeletFlags.AddFlags(cleanFlagSet)
 	cleanFlagSet.BoolP("help", "h", false, fmt.Sprintf("Help for %s", cmd.Name()))
 	cleanFlagSet.Bool("version", false, "Prints the version of cri-dockerd")
+	cleanFlagSet.Bool("buildinfo", false, "Prints the build information about cri-dockerd")
 	cleanFlagSet.String("log-level", "info", "The log level for cri-docker")
 
 	// ugly, but necessary, because Cobra's default UsageFunc and HelpFunc pollute the flagset with global flags
