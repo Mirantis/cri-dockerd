@@ -34,8 +34,8 @@ To install, on a Linux system that uses systemd, and already has Docker Engine i
 mkdir -p /usr/local/bin
 install -o root -g root -m 0755 bin/cri-dockerd /usr/local/bin/cri-dockerd
 cp -a packaging/systemd/* /etc/systemd/system
-sed -i -e 's,/usr/bin/cri-dockerd,/usr/local/bin/cri-dockerd,' /etc/systemd/system/cri-dockerd.service
+sed -i -e 's,/usr/bin/cri-dockerd,/usr/local/bin/cri-dockerd,' /etc/systemd/system/cri-docker.service
 systemctl daemon-reload
-systemctl enable cri-dockerd.service
-systemctl enable --now cri-dockerd.socket
+systemctl enable cri-docker.service
+systemctl enable --now cri-docker.socket
 ```
