@@ -12,7 +12,7 @@ endif
 export VERSION?=$(shell (git describe --abbrev=0 --tags | sed -e 's/v//') || echo $(cat VERSION)-$(git log -1 --pretty='%h'))
 PRERELEASE=`grep -q dev <<< "${VERSION}" && echo "pre" || echo ""`
 REVISION?=`git log -1 --pretty='%h'`
-export LDFLAGS=-ldflags "-X github.com/Mirantis/cri-dockerd/version.Version=${VERSION} -X github.com/Mirantis/cri-dockerd/version.PreRelease=${PRERELEASE} -X github.com/Mirantis/cri-dockerd/version.BuildTime=${BUILD_DATE} -X github.com/Mirantis/cri-dockerd/version.GitCommit=${REVISION}"
+export CRI_DOCKERD_LDFLAGS=-ldflags "-X github.com/Mirantis/cri-dockerd/version.Version=${VERSION} -X github.com/Mirantis/cri-dockerd/version.PreRelease=${PRERELEASE} -X github.com/Mirantis/cri-dockerd/version.BuildTime=${BUILD_DATE} -X github.com/Mirantis/cri-dockerd/version.GitCommit=${REVISION}"
 
 .PHONY: help
 help: ## show make targets
