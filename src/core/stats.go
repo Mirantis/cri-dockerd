@@ -18,6 +18,7 @@ package core
 
 import (
 	"context"
+	"sync"
 
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 )
@@ -53,16 +54,21 @@ func (ds *dockerService) ListContainerStats(
 		return nil, err
 	}
 
-	var stats []*runtimeapi.ContainerStats
+	var mtx sync.Mutex
+	var wg sync.WaitGroup
+	var stats = make([]*runtimeapi.ContainerStats, 0, len(listResp.Containers))
 	for _, container := range listResp.Containers {
-		containerStats, err := ds.getContainerStats(container.Id)
-		if err != nil {
-			return nil, err
-		}
-		if containerStats != nil {
-			stats = append(stats, containerStats)
-		}
+		go func() {
+			wg.Add(1)
+			defer wg.Done()
+			if containerStats, err := ds.getContainerStats(container.Id); err == nil && containerStats != nil {
+				mtx.Lock()
+				stats = append(stats, containerStats)
+				mtx.Unlock()
+			}
+		}()
 	}
+	wg.Wait()
 
 	return &runtimeapi.ListContainerStatsResponse{Stats: stats}, nil
 }
