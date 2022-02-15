@@ -18,6 +18,7 @@ package core
 
 import (
 	"context"
+	"github.com/sirupsen/logrus"
 	"sync"
 
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
@@ -65,6 +66,8 @@ func (ds *dockerService) ListContainerStats(
 				mtx.Lock()
 				stats = append(stats, containerStats)
 				mtx.Unlock()
+			} else if err != nil {
+				logrus.Error(err, "Failed to get stats from container "+container.Id)
 			}
 		}()
 	}
