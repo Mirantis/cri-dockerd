@@ -70,11 +70,11 @@ jobs:
       - name: Checkout cri-dockerd
         uses: actions/checkout@v2
         with:
-          repository: Mirantis/cri-dockerd
+          repository: ${{ github.repository }}
           path: src/github.com/Mirantis/cri-dockerd
 
       - name: Build cri-dockerd
-        working-directory: src/github.com/Mirantis/cri-dockerd/src
+        working-directory: src/github.com/Mirantis/cri-dockerd
         run: |
           go build
           sudo mv ./cri-dockerd /usr/local/bin

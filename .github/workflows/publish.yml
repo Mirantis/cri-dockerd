@@ -23,7 +23,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           goos: ${{ matrix.goos }}
           goarch: ${{ matrix.goarch }}
-          project_path: "./src/"
+          project_path: "./"
           binary_name: "cri-dockerd"
           pre_command: "export CGO_ENABLED=0"
           extra_files: LICENSE README.md
