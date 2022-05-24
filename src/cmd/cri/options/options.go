@@ -113,5 +113,9 @@ func NewContainerRuntimeOptions() *config.ContainerRuntimeOptions {
 		CriDockerdRootDirectory:   "/var/lib/cri-dockerd",
 		PodSandboxImage:           defaultPodSandboxImage,
 		ImagePullProgressDeadline: metav1.Duration{Duration: 1 * time.Minute},
+
+		CNIBinDir:   "/opt/cni/bin",
+		CNIConfDir:  "/etc/cni/net.d",
+		CNICacheDir: "/var/lib/cni/cache",
 	}
 }
