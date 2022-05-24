@@ -34,7 +34,7 @@ import (
 )
 
 const (
-	defaultSandboxImage = "k8s.gcr.io/pause:3.4.1"
+	defaultSandboxImage = "k8s.gcr.io/pause:3.6"
 
 	// Various default sandbox resources requests/limits.
 	defaultSandboxCPUshares int64 = 2
