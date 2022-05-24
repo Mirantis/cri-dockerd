@@ -25,8 +25,12 @@ and on the Mirantis
 To build this code (in a POSIX environment):
 ```shell
 mkdir bin
-cd src && go get && go build -o ../bin/cri-dockerd
+VERSION=$((git describe --abbrev=0 --tags | sed -e 's/v//') || echo $(cat VERSION)-$(git log -1 --pretty='%h')) PRERELEASE=$(grep -q dev <<< "${VERSION}" && echo "pre" || echo "") REVISION=$(git log -1 --pretty='%h')
+export CRI_DOCKERD_LDFLAGS=-ldflags "-X github.com/Mirantis/cri-dockerd/version.Version=${VERSION} -X github.com/Mirantis/cri-dockerd/version.PreRelease=${PRERELEASE} -X github.com/Mirantis/cri-dockerd/version.BuildTime=${BUILD_DATE} -X github.com/Mirantis/cri-dockerd/version.GitCommit=${REVISION}"
+go get && go build ${CRI_DOCKERD_LDFLAGS} -o ../bin/cri-dockerd
 ```
+
+To build for a specific architecture, add `ARCH=` as an argument, where `ARCH` is a known build target for golang
 
 To install, on a Linux system that uses systemd, and already has Docker Engine installed
 ```shell
