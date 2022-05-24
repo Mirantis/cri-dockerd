@@ -94,7 +94,15 @@ func (ds *dockerService) ImageStatus(
 
 	res := runtimeapi.ImageStatusResponse{Image: imageStatus}
 	if r.GetVerbose() {
-		res.Info = imageInspect.Config.Labels
+		imageHistory, err := ds.client.ImageHistory(imageInspect.ID)
+		if err != nil {
+			return nil, err
+		}
+		imageInfo, err := imageInspectToRuntimeAPIImageInfo(imageInspect, imageHistory)
+		if err != nil {
+			return nil, err
+		}
+		res.Info = imageInfo
 	}
 	return &res, nil
 }
