@@ -20,10 +20,10 @@ import (
 	"fmt"
 	"github.com/Mirantis/cri-dockerd/backend"
 	"github.com/Mirantis/cri-dockerd/cmd/cri/options"
+	"github.com/Mirantis/cri-dockerd/cmd/version"
 	"github.com/Mirantis/cri-dockerd/config"
 	"github.com/Mirantis/cri-dockerd/core"
 	"github.com/Mirantis/cri-dockerd/streaming"
-	"github.com/Mirantis/cri-dockerd/version"
 	"github.com/sirupsen/logrus"
 
 	"net/url"

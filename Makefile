@@ -1,4 +1,4 @@
-APP_DIR:=$(CURDIR)/src
+APP_DIR:=$(CURDIR)
 PACKAGING_DIR:=$(CURDIR)/packaging
 
 DATE_FMT=+%Y%m%d.%H%M%S
