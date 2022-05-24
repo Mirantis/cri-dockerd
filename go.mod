@@ -25,17 +25,15 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.6.1
 	github.com/vishvananda/netlink v1.1.0
+	golang.org/x/net v0.0.0-20210805182204-aaa1db679c0d // indirect
 	golang.org/x/sys v0.0.0-20210809222454-d867a43fc93e
-	golang.org/x/tools v0.1.7 // indirect
 	google.golang.org/grpc v1.27.1
 	k8s.io/api v0.20.4
 	k8s.io/apimachinery v0.20.4
 	k8s.io/apiserver v0.20.4
 	k8s.io/client-go v0.20.4
 	k8s.io/component-base v0.20.4
-	k8s.io/component-helpers v0.20.4 // indirect
 	k8s.io/cri-api v0.20.4
-	k8s.io/klog v1.0.0
 	k8s.io/kubernetes v1.20.4
 	k8s.io/utils v0.0.0-20201110183641-67b214c5f920
 )
