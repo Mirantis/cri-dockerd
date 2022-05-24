@@ -8,6 +8,32 @@ DIR_TO_HASH:=build/linux
 GO_VERSION=$(shell grep "ARG GO_VERSION" $(APP_DIR)/dockerfiles/Dockerfile.dev | awk -F'=' '{print $$2}')
 APP_GOLANG_IMG=golang:$(GO_VERSION)
 
+# BUILDARCH is the host architecture
+# ARCH is the target architecture
+BUILDARCH ?= $(shell uname -m)
+
+# golang names for host architecture
+ifeq ($(BUILDARCH),aarch64)
+        BUILDARCH=arm64
+endif
+ifeq ($(BUILDARCH),x86_64)
+        BUILDARCH=amd64
+endif
+ifeq ($(BUILDARCH),armv7l)
+        BUILDARCH=armv7
+endif
+
+ARCH ?= $(BUILDARCH)
+ifeq ($(ARCH),aarch64)
+        override ARCH=arm64
+endif
+ifeq ($(ARCH),armv7l)
+        override ARCH=armv7
+endif
+ifeq ($(ARCH),x86_64)
+        override ARCH=amd64
+endif
+
 .PHONY: help
 help: ## show make targets
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {sub("\\\\n",sprintf("\n%22c"," "), $$2);printf " \033[36m%-20s\033[0m  %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -23,7 +49,7 @@ static: static-linux cross-mac cross-win cross-arm ## create all static packages
 .PHONY: static-linux
 static-linux:
 	mkdir -p build/linux/cri-dockerd
-	cd $(APP_DIR) && go get && env CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GOARCH=amd64 go build ${CRI_DOCKERD_LDFLAGS} -o cri-dockerd
+	cd $(APP_DIR) && go get && env CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GOARCH=$(ARCH) go build ${CRI_DOCKERD_LDFLAGS} -o cri-dockerd
 	mv $(APP_DIR)/cri-dockerd build/linux/cri-dockerd/cri-dockerd
 	tar -C build/linux -c -z -f build/linux/cri-dockerd-$(VERSION).tgz cri-dockerd
 
@@ -35,14 +61,14 @@ hash_files:
 .PHONY: cross-mac
 cross-mac:
 	mkdir -p build/mac/cri-dockerd
-	cd $(APP_DIR) && go get && env CGO_ENABLED=$(CGO_ENABLED) GOOS=darwin GOARCH=amd64 go build ${CRI_DOCKERD_LDFLAGS} -o cri-dockerd-darwin-amd64
+	cd $(APP_DIR) && go get && env CGO_ENABLED=$(CGO_ENABLED) GOOS=darwin GOARCH=$(ARCH) go build ${CRI_DOCKERD_LDFLAGS} -o cri-dockerd-darwin-amd64
 	mv $(APP_DIR)/cri-dockerd-darwin-amd64 build/mac/cri-dockerd/cri-dockerd
 	tar -C build/mac -c -z -f build/mac/cri-dockerd-$(VERSION).tgz cri-dockerd
 
 .PHONY: cross-win
 cross-win:
 	mkdir -p build/win/cri-dockerd
-	cd $(APP_DIR) && go get && env CGO_ENABLED=$(CGO_ENABLED) GOOS=windows GOARCH=amd64 go build ${CRI_DOCKERD_LDFLAGS} -o cri-dockerd-windows-amd64
+	cd $(APP_DIR) && go get && env CGO_ENABLED=$(CGO_ENABLED) GOOS=windows GOARCH=$(ARCH) go build ${CRI_DOCKERD_LDFLAGS} -o cri-dockerd-windows-amd64
 	mv $(APP_DIR)/cri-dockerd-windows-amd64 build/win/cri-dockerd/cri-dockerd.exe
 	if ! grep -sq 'docker\|lxc' /proc/1/cgroup; then \
 	    docker run --rm -v $(CURDIR)/build/win:/v -w /v alpine sh -c 'apk update && apk add zip && zip -r cri-dockerd-$(VERSION).zip cri-dockerd'; \
@@ -50,7 +76,7 @@ cross-win:
 	fi
 
 .PHONY: cross-arm
-cross-arm: ## create tgz with linux armhf client only
+cross-arm: ## create tgz with linux arm64 client only
 	mkdir -p build/arm/cri-dockerd
 	cd $(APP_DIR) && go get && env CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GOARCH=arm64 go build ${CRI_DOCKERD_LDFLAGS} -o cri-dockerd-arm64
 	mv $(APP_DIR)/cri-dockerd-arm64 build/arm/cri-dockerd/cri-dockerd

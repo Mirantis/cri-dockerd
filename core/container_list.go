@@ -74,4 +74,3 @@ func (ds *dockerService) ListContainers(
 
 	return &v1.ListContainersResponse{Containers: result}, nil
 }
-
