@@ -17,13 +17,19 @@ limitations under the License.
 package core
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
 
 	dockertypes "github.com/docker/docker/api/types"
+	dockercontainer "github.com/docker/docker/api/types/container"
+	dockerimagetypes "github.com/docker/docker/api/types/image"
 
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
+
+	digest "github.com/opencontainers/go-digest"
+	imagespec "github.com/opencontainers/image-spec/specs-go/v1"
 
 	"github.com/Mirantis/cri-dockerd/libdocker"
 )
@@ -64,6 +70,92 @@ func imageInspectToRuntimeAPIImage(image *dockertypes.ImageInspect) (*runtimeapi
 	}
 	runtimeImage.Username = username
 	return runtimeImage, nil
+}
+
+type verboseImageInfo struct {
+	Labels    map[string]string `json:"labels,omitempty"`
+	ImageSpec imagespec.Image   `json:"imageSpec"`
+}
+
+func imageInspectToRuntimeAPIImageInfo(image *dockertypes.ImageInspect, history []dockerimagetypes.HistoryResponseItem) (map[string]string, error) {
+	info := make(map[string]string)
+
+	createdAt, err := libdocker.ParseDockerTimestamp(image.Created)
+	if err != nil {
+		return nil, err
+	}
+
+	imageSpec := imagespec.Image{
+		Created:      &createdAt,
+		Author:       image.Author,
+		Architecture: image.Architecture,
+		OS:           image.Os,
+		Config:       toRuntimeAPIConfig(image.Config),
+		RootFS:       toRuntimeAPIRootFS(image.RootFS),
+		History:      toRuntimeAPIHistory(history),
+	}
+
+	imi := &verboseImageInfo{
+		Labels:    image.Config.Labels,
+		ImageSpec: imageSpec,
+	}
+
+	m, err := json.Marshal(imi)
+	if err == nil {
+		info["info"] = string(m)
+	} else {
+		return nil, err
+	}
+
+	return info, nil
+}
+
+func toRuntimeAPIConfig(config *dockercontainer.Config) imagespec.ImageConfig {
+	ports := make(map[string]struct{})
+	for k, v := range config.ExposedPorts {
+		ports[string(k)] = v
+	}
+	return imagespec.ImageConfig{
+		User:         config.User,
+		ExposedPorts: ports,
+		Env:          config.Env,
+		Entrypoint:   config.Entrypoint,
+		Cmd:          config.Cmd,
+		Volumes:      config.Volumes,
+		WorkingDir:   config.WorkingDir,
+		Labels:       config.Labels,
+		StopSignal:   config.StopSignal,
+	}
+}
+
+func toRuntimeAPIRootFS(rootfs dockertypes.RootFS) imagespec.RootFS {
+	digests := []digest.Digest{}
+	for _, l := range rootfs.Layers {
+		digest, _ := digest.Parse(l)
+		digests = append(digests, digest)
+	}
+	return imagespec.RootFS{
+		Type:    rootfs.Type,
+		DiffIDs: digests,
+	}
+}
+
+func toRuntimeAPIHistory(history []dockerimagetypes.HistoryResponseItem) []imagespec.History {
+	result := []imagespec.History{}
+	for _, h := range history {
+		created := time.Unix(h.Created, 0).UTC()
+		result = append(result, imagespec.History{
+			Created:    &created,
+			CreatedBy:  h.CreatedBy,
+			Comment:    h.Comment,
+			EmptyLayer: h.Size == 0,
+		})
+	}
+	// reverse order
+	for left, right := 0, len(result)-1; left < right; left, right = left+1, right-1 {
+		result[left], result[right] = result[right], result[left]
+	}
+	return result
 }
 
 func toPullableImageID(id string, image *dockertypes.ImageInspect) string {
