@@ -12,10 +12,10 @@ jobs:
     timeout-minutes: 60
     steps:
 
-      - name: Set up Go 1.17
+      - name: Set up Go 1.18
         uses: actions/setup-go@v1
         with:
-          go-version: 1.17
+          go-version: 1.18
         id: go
 
       - name: Install docker
@@ -70,11 +70,11 @@ jobs:
       - name: Checkout cri-dockerd
         uses: actions/checkout@v2
         with:
-          repository: Mirantis/cri-dockerd
+          repository: ${{ github.repository }}
           path: src/github.com/Mirantis/cri-dockerd
 
       - name: Build cri-dockerd
-        working-directory: src/github.com/Mirantis/cri-dockerd/src
+        working-directory: src/github.com/Mirantis/cri-dockerd
         run: |
           go build
           sudo mv ./cri-dockerd /usr/local/bin
@@ -103,7 +103,7 @@ jobs:
           # Skip runtime should support execSync with timeout because docker doesn't
           # support it.
           # Skip apparmor test as we don't enable apparmor yet in this CI job, or selinux
-          sudo /usr/local/bin/critest -runtime-endpoint=/var/run/cri-dockerd.sock -ginkgo.skip="runtime should support apparmor|runtime should support reopening container log|runtime should support execSync with timeout|runtime should support selinux" -parallel 1
+          sudo /usr/local/bin/critest -runtime-endpoint=/var/run/cri-dockerd.sock -ginkgo.skip="runtime should support apparmor|runtime should support reopening container log|runtime should support execSync with timeout|runtime should support selinux"
 
       - name: Run benchmark
         working-directory: src/sigs.k8s.io/cri-tools
