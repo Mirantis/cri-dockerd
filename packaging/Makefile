@@ -1,6 +1,6 @@
 include common.mk
 
-APP_DIR:=$(realpath $(CURDIR)/../src)
+APP_DIR:=$(realpath $(CURDIR)/..)
 
 # Taken from: https://www.cmcrossroads.com/article/printing-value-makefile-variable
 print-%  : ; @echo $($*)
