@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 
 
-Name: cri-docker
+Name: cri-dockerd
 Version: %{_version}
 Release: %{_release}%{?dist}
 Epoch: 3
@@ -53,7 +53,7 @@ BuildRequires: tar
 BuildRequires: which
 
 %description
-cri-docker is a lightweight implementation of the CRI specification which talks to docker.
+cri-dockerd is a lightweight implementation of the CRI specification which talks to docker.
 
 %prep
 %setup -q -c -n src -a 0
@@ -61,7 +61,7 @@ cri-docker is a lightweight implementation of the CRI specification which talks 
 %build
 export CRI_DOCKER_GITCOMMIT=%{_gitcommit}
 mkdir -p /go/src/github.com/Mirantis
-ln -s /root/rpmbuild/BUILD/src/app /go/src/github.com/Mirantis/cri-docker
+ln -s /root/rpmbuild/BUILD/src/app /go/src/github.com/Mirantis/cri-dockerd
 cd /root/rpmbuild/BUILD/src/app
 GOPROXY="https://proxy.golang.org" GO111MODULE=on go get && go build
 

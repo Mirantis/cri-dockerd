@@ -4,7 +4,7 @@ VERSION ?= $(shell cat app/VERSION)
 
 override_dh_gencontrol:
 	# if we're on Ubuntu, we need to Recommends: apparmor
-	echo 'apparmor:Recommends=$(shell dpkg-vendor --is Ubuntu && echo apparmor)' >> debian/cri-docker.substvars
+	echo 'apparmor:Recommends=$(shell dpkg-vendor --is Ubuntu && echo apparmor)' >> debian/cri-dockerd.substvars
 	dh_gencontrol
 
 override_dh_auto_build:
@@ -19,12 +19,12 @@ override_dh_strip:
 	# Go has lots of problems with stripping, so just don't
 
 override_dh_auto_install:
-	install -D -m 0755 /go/src/github.com/Mirantis/cri-docker/cri-dockerd debian/cri-docker/usr/bin/cri-dockerd
+	install -D -m 0755 /go/src/github.com/Mirantis/cri-dockerd/cri-dockerd debian/cri-docker/usr/bin/cri-dockerd
 	install -D -m 0644 /sources/cri-docker.service debian/cri-docker/lib/systemd/system/cri-docker.service
 	install -D -m 0644 /sources/cri-docker.socket debian/cri-docker/lib/systemd/system/cri-docker.socket
 
 override_dh_installinit:
-	dh_installinit --name=cri-docker
+	dh_installinit --name=cri-dockerd
 
 override_dh_shlibdeps:
 	dh_shlibdeps --dpkg-shlibdeps-params=--ignore-missing-info
