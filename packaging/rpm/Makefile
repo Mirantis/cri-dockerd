@@ -23,7 +23,7 @@ BUILD?=DOCKER_BUILDKIT=1 \
 	-f $@/$(DOCKERFILE) \
 	.
 
-SPEC_FILES?=cri-docker.spec
+SPEC_FILES?=cri-dockerd.spec
 SPECS?=$(addprefix SPECS/, $(SPEC_FILES))
 RPMBUILD=docker run --privileged --rm -i \
 	-e PLATFORM \

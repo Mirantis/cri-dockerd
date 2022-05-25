@@ -8,7 +8,7 @@ tar -C /root/build-deb -xzf /sources/app.tgz
 
 # link them to their canonical path
 mkdir -p /go/src/github.com/Mirantis
-ln -snf /root/build-deb/app /go/src/github.com/Mirantis/cri-docker
+ln -snf /root/build-deb/app /go/src/github.com/Mirantis/cri-dockerd
 
 EPOCH="${EPOCH:-}"
 EPOCH_SEP=""
