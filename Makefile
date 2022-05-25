@@ -43,6 +43,10 @@ cross-mac: ## build static packages
 cross-win: ## build static packages
 	$(MAKE) APP_DIR=$(APP_DIR) -C $(PACKAGING_DIR) cross-win
 
+.PHONY: cross-arm
+cross-arm: ## build static packages
+	$(MAKE) APP_DIR=$(APP_DIR) -C $(PACKAGING_DIR) cross-arm
+
 .PHONY: clean
 clean: ## clean the build artifacts
 	-$(MAKE) -C $(PACKAGING_DIR) clean

@@ -371,10 +371,10 @@ func (p *progressReporter) start() {
 					p.cancel()
 					return
 				}
-				logrus.Infof("Pulling image %s: %s", p.image,  progress)
+				logrus.Infof("Pulling image %s: %s", p.image, progress)
 			case <-p.stopCh:
 				progress, _ := p.progress.get()
-				logrus.Infof("Stop pulling image %s: %s",p.image, progress)
+				logrus.Infof("Stop pulling image %s: %s", p.image, progress)
 				return
 			}
 		}
@@ -610,6 +610,7 @@ func (d *kubeDockerClient) GetContainerStats(id string) (*dockertypes.StatsJSON,
 	defer cancel()
 
 	response, err := d.client.ContainerStats(ctx, id, false)
+	logrus.Error("ContainerStats resp: ", response)
 	if err != nil {
 		return nil, err
 	}
