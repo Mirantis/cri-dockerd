@@ -1,6 +1,6 @@
 include ../common.mk
 
-APP_DIR:=$(realpath $(CURDIR)/../../app)
+APP_DIR:=$(realpath $(CURDIR)/../../)
 STATIC_VERSION:=$(shell ../static/gen-static-ver $(APP_DIR) $(VERSION))
 GO_BASE_IMAGE=golang
 GO_IMAGE?=$(GO_BASE_IMAGE):$(GO_VERSION)-stretch
@@ -41,8 +41,8 @@ RUN?=$(RPMBUILD) rpmbuild-$@/$(ARCH) $(RPMBUILD_FLAGS)
 SOURCE_FILES=app.tgz cri-docker.service cri-docker.socket
 SOURCES=$(addprefix rpmbuild/SOURCES/, $(SOURCE_FILES))
 
-FEDORA_RELEASES := fedora-34
-CENTOS_RELEASES := centos-8 centos-7
+FEDORA_RELEASES := fedora-36 fedora-35
+CENTOS_RELEASES := centos-stream centos-7
 
 .PHONY: help
 help: ## show make targets
