@@ -61,8 +61,9 @@ func (ds *dockerService) ListContainerStats(
 	var wg sync.WaitGroup
 	var stats = make([]*runtimeapi.ContainerStats, 0, len(listResp.Containers))
 	for _, container := range listResp.Containers {
+		container := container
+		wg.Add(1)
 		go func() {
-			wg.Add(1)
 			defer wg.Done()
 			if containerStats, err := ds.getContainerStats(container.Id); err == nil && containerStats != nil {
 				mtx.Lock()

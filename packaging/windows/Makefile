@@ -1,6 +1,6 @@
 include ../common.mk
 
-APP_DIR:=$(realpath $(CURDIR)/../../app)
+APP_DIR:=$(realpath $(CURDIR)/../../)
 GO_BASE_IMAGE=golang
 WINDOWS_BUILDER?=windows-engine-builder
 GOPATH=C:\go
