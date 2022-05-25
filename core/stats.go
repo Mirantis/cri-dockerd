@@ -52,6 +52,8 @@ func (ds *dockerService) ListContainerStats(
 
 	listResp, err := ds.ListContainers(ctx, &runtimeapi.ListContainersRequest{Filter: filter})
 	if err != nil {
+		logrus.Errorf("Error listing containers with filter: %+v", filter)
+		logrus.Errorf("Error listing containers error: ", err)
 		return nil, err
 	}
 
@@ -67,7 +69,7 @@ func (ds *dockerService) ListContainerStats(
 				stats = append(stats, containerStats)
 				mtx.Unlock()
 			} else if err != nil {
-				logrus.Error(err, "Failed to get stats from container "+container.Id)
+				logrus.Error(err, " Failed to get stats from container "+container.Id)
 			}
 		}()
 	}

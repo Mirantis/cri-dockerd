@@ -41,3 +41,7 @@ cross-mac: ## build static-compiled packages
 .PHONY: cross-win
 cross-win: ## build static-compiled packages
 	$(MAKE) -C static APP_DIR=$(APP_DIR) GO_VERSION=$(GO_VERSION) cross-win
+
+.PHONY: cross-arm
+cross-arm: ## build static-compiled packages
+	$(MAKE) -C static APP_DIR=$(APP_DIR) GO_VERSION=$(GO_VERSION) cross-arm
