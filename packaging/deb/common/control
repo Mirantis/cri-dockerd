@@ -1,4 +1,4 @@
-Source: cri-docker
+Source: cri-dockerd
 Section: admin
 Priority: optional
 Maintainer: Mirantis <support@mirantis.com>
@@ -8,7 +8,6 @@ Build-Depends: bash,
                ca-certificates,
                cmake,
                dh-apparmor,
-               dh-systemd,
                gcc,
                git,
                libc-dev,
@@ -25,7 +24,7 @@ Homepage: https://www.mirantis.com
 Vcs-Browser: https://github.com/Mirantis/cri-dockerd
 Vcs-Git: git://github.com/Mirantis/cri-dockerd.git
 
-Package: cri-docker
+Package: cri-dockerd
 Architecture: linux-any
 Depends: containerd.io (>= 1.2.2-3), iptables, libseccomp2 (>= 2.3.0), ${shlibs:Depends}
 Recommends: aufs-tools [amd64],
@@ -36,4 +35,4 @@ Recommends: aufs-tools [amd64],
             xz-utils,
             libltdl7,
             ${apparmor:Recommends}
-Description: cri-docker is a lightweight implementation of the CRI specification which talks to docker.
+Description: cri-dockerd is a lightweight implementation of the CRI specification which talks to docker.
