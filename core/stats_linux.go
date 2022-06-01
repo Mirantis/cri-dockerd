@@ -69,7 +69,7 @@ func (ds *dockerService) getContainerStats(containerID string) (*runtimeapi.Cont
 		Memory: &runtimeapi.MemoryUsage{
 			Timestamp: timestamp,
 			WorkingSetBytes: &runtimeapi.UInt64Value{
-				Value: dockerStats.MemoryStats.PrivateWorkingSet,
+				Value: dockerStats.MemoryStats.Usage,
 			},
 		},
 		WritableLayer: &runtimeapi.FilesystemUsage{
