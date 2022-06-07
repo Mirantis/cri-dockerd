@@ -19,7 +19,7 @@ Requires: container-selinux >= 2:2.74
 Requires: libseccomp >= 2.3
 Requires: systemd
 %if 0%{?rhel} >= 8
-Requires: iptables or nftables
+Requires: (iptables or nftables)
 %else
 Requires: iptables
 %endif
