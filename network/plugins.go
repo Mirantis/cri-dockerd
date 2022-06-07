@@ -35,9 +35,6 @@ import (
 	"github.com/Mirantis/cri-dockerd/network/hostport"
 	"github.com/Mirantis/cri-dockerd/network/metrics"
 	utilerrors "github.com/Mirantis/cri-dockerd/utils/errors"
-
-	utilfeature "k8s.io/apiserver/pkg/util/feature"
-	kubefeatures "k8s.io/kubernetes/pkg/features"
 )
 
 const (
@@ -323,7 +320,7 @@ func GetPodIPs(
 	execer utilexec.Interface,
 	nsenterPath, netnsPath, interfaceName string,
 ) ([]net.IP, error) {
-	if !utilfeature.DefaultFeatureGate.Enabled(kubefeatures.IPv6DualStack) {
+	if !config.IPv6DualStackEnabled {
 		ip, err := getOnePodIP(execer, nsenterPath, netnsPath, interfaceName, "-4")
 		if err != nil {
 			// Fall back to IPv6 address if no IPv4 address is present
