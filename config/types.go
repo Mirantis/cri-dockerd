@@ -53,6 +53,9 @@ type NetworkPluginSettings struct {
 	MTU int
 }
 
+// enableIPv6DualStack allows dual-homed pods
+var IPv6DualStackEnabled bool
+
 // ClientConfig is parameters used to initialize docker client
 type ClientConfig struct {
 	DockerEndpoint            string
@@ -115,4 +118,3 @@ func (c *ContainerID) ParseString(data string) error {
 func BuildContainerID(typ, ID string) ContainerID {
 	return ContainerID{Type: typ, ID: ID}
 }
-
