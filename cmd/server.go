@@ -18,6 +18,7 @@ package cmd
 
 import (
 	"fmt"
+
 	"github.com/Mirantis/cri-dockerd/backend"
 	"github.com/Mirantis/cri-dockerd/cmd/cri/options"
 	"github.com/Mirantis/cri-dockerd/cmd/version"
@@ -151,7 +152,7 @@ func RunCriDockerd(f *options.DockerCRIFlags, stopCh <-chan struct{}) error {
 
 	// Initialize network plugin settings.
 	pluginSettings := config.NetworkPluginSettings{
-		HairpinMode:        "none",
+		HairpinMode:        config.HairpinModeVar.Mode(),
 		PluginName:         f.NetworkPluginName,
 		PluginConfDir:      f.CNIConfDir,
 		PluginBinDirString: f.CNIBinDir,
