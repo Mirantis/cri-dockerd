@@ -1,3 +1,4 @@
+//go:build linux
 // +build linux
 
 /*
@@ -47,8 +48,6 @@ import (
 	"github.com/Mirantis/cri-dockerd/network"
 	"github.com/Mirantis/cri-dockerd/network/hostport"
 
-	utilfeature "k8s.io/apiserver/pkg/util/feature"
-	kubefeatures "k8s.io/kubernetes/pkg/features"
 	netutils "k8s.io/utils/net"
 )
 
@@ -265,7 +264,7 @@ func (plugin *kubenetNetworkPlugin) Event(name string, details map[string]interf
 	podCIDRs := strings.Split(podCIDR, ",")
 
 	// reset to one cidr if dual stack is not enabled
-	if !utilfeature.DefaultFeatureGate.Enabled(kubefeatures.IPv6DualStack) && len(podCIDRs) > 1 {
+	if !config.IPv6DualStackEnabled && len(podCIDRs) > 1 {
 		logrus.Warning(
 			"This node has multiple pod cidrs assigned and dual stack is not enabled. ignoring all except first cidr",
 		)
