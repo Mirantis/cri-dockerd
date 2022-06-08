@@ -160,6 +160,8 @@ func RunCriDockerd(f *options.DockerCRIFlags, stopCh <-chan struct{}) error {
 		NonMasqueradeCIDR:  f.NonMasqueradeCIDR,
 	}
 
+	config.IPv6DualStackEnabled = f.IPv6DualStackEnabled
+
 	// Initialize streaming configuration. (Not using TLS now)
 	streamingConfig := &streaming.Config{
 		// Use a relative redirect (no scheme or host).

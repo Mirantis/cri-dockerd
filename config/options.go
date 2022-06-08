@@ -58,6 +58,8 @@ type ContainerRuntimeOptions struct {
 	// The CIDR to use for pod IP addresses, only used in standalone mode.
 	// In cluster mode, this is obtained from the master.
 	PodCIDR string
+	// enableIPv6DualStack allows dual-homed pods
+	IPv6DualStackEnabled bool
 	// networkPluginName is the name of the network plugin to be invoked for
 	// various events in kubelet/pod lifecycle
 	NetworkPluginName string
@@ -120,6 +122,12 @@ func (s *ContainerRuntimeOptions) AddFlags(fs *pflag.FlagSet) {
 		"pod-cidr",
 		s.PodCIDR,
 		"The CIDR to use for pod IP addresses, only used in standalone mode.  In cluster mode, this is obtained from the master. For IPv6, the maximum number of IP's allocated is 65536",
+	)
+	fs.BoolVar(
+		&s.IPv6DualStackEnabled,
+		"ipv6-dual-stack",
+		s.IPv6DualStackEnabled,
+		fmt.Sprintf("Enable IPv6 dual stack support"),
 	)
 	fs.StringVar(
 		&s.NetworkPluginName,
