@@ -76,6 +76,9 @@ type ContainerRuntimeOptions struct {
 	// CNICacheDir is the full path of the directory in which CNI should store
 	// cache files
 	CNICacheDir string
+	// HairpinMode is the mode used to allow endpoints of a Service to load
+	// balance back to themselves if they should try to access their own Service
+	HairpinMode HairpinMode
 }
 
 // AddFlags has the set of flags needed by cri-dockerd
@@ -167,6 +170,13 @@ func (s *ContainerRuntimeOptions) AddFlags(fs *pflag.FlagSet) {
 		s.NetworkPluginMTU,
 		fmt.Sprintf(
 			"<Warning: Alpha feature> The MTU to be passed to the network plugin, to override the default. Set to 0 to use the default 1460 MTU.",
+		),
+	)
+	fs.Var(
+		&HairpinModeVar,
+		"hairpin-mode",
+		fmt.Sprintf(
+			"<Warning: Alpha feature> The mode of hairpin to use.",
 		),
 	)
 }

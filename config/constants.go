@@ -19,9 +19,6 @@ package config
 // Protocol is the type of port mapping protocol
 type Protocol string
 
-// HairpinMode is the type of network hairpin modes
-type HairpinMode string
-
 // UID represents a UID
 type UID string
 
@@ -38,12 +35,9 @@ const (
 
 // Networking contstants
 const (
-	PromiscuousBridge HairpinMode = "promiscuous-bridge"
-	HairpinVeth       HairpinMode = "hairpin-veth"
-	HairpinNone       HairpinMode = "none"
-	ProtocolTCP       Protocol    = "TCP"
-	ProtocolUDP       Protocol    = "UDP"
-	ProtocolSCTP      Protocol    = "SCTP"
+	ProtocolTCP  Protocol = "TCP"
+	ProtocolUDP  Protocol = "UDP"
+	ProtocolSCTP Protocol = "SCTP"
 )
 
 // Container logging constants
