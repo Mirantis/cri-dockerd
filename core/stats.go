@@ -53,7 +53,7 @@ func (ds *dockerService) ListContainerStats(
 	listResp, err := ds.ListContainers(ctx, &runtimeapi.ListContainersRequest{Filter: filter})
 	if err != nil {
 		logrus.Errorf("Error listing containers with filter: %+v", filter)
-		logrus.Errorf("Error listing containers error: ", err)
+		logrus.Errorf("Error listing containers error: %s", err)
 		return nil, err
 	}
 
