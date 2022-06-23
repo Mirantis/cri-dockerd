@@ -22,7 +22,16 @@ and on the Mirantis
 
 ## Build and install
 
+To begin following the build process for this code, clone this repository in your local environment:
+
+```shell
+git clone https://github.com/Mirantis/cri-dockerd.git
+```
+
+The above step creates a local directory called ```cri-dockerd``` which you will need for the following steps.
+
 To build this code (in a POSIX environment):
+
 ```shell
 mkdir bin
 VERSION=$((git describe --abbrev=0 --tags | sed -e 's/v//') || echo $(cat VERSION)-$(git log -1 --pretty='%h')) PRERELEASE=$(grep -q dev <<< "${VERSION}" && echo "pre" || echo "") REVISION=$(git log -1 --pretty='%h')
@@ -33,6 +42,7 @@ go get && go build ${CRI_DOCKERD_LDFLAGS} -o cri-dockerd
 To build for a specific architecture, add `ARCH=` as an argument, where `ARCH` is a known build target for golang
 
 To install, on a Linux system that uses systemd, and already has Docker Engine installed
+
 ```shell
 # Run these commands as root
 ###Install GO###
