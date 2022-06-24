@@ -35,7 +35,7 @@ RUN=docker run --rm -i \
 SOURCE_FILES=app.tgz cri-docker.service cri-docker.socket
 SOURCES=$(addprefix sources/, $(SOURCE_FILES))
 
-DEBIAN_VERSIONS := debian-stretch debian-buster
+DEBIAN_VERSIONS := debian-stretch debian-buster debian-bullseye
 #UBUNTU_VERSIONS := ubuntu-xenial ubuntu-bionic ubuntu-cosmic ubuntu-disco ubuntu-eoan
 UBUNTU_VERSIONS := ubuntu-bionic ubuntu-focal ubuntu-jammy
 RASPBIAN_VERSIONS := raspbian-stretch raspbian-buster
