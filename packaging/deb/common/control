@@ -26,7 +26,10 @@ Vcs-Git: git://github.com/Mirantis/cri-dockerd.git
 
 Package: cri-dockerd
 Architecture: linux-any
-Depends: containerd.io (>= 1.2.2-3), iptables, libseccomp2 (>= 2.3.0), ${shlibs:Depends}
+Depends: containerd (>= 1.2.2-3) | containerd.io (>= 1.2.2-3),
+         iptables,
+         libseccomp2 (>= 2.3.0),
+         ${shlibs:Depends}
 Recommends: aufs-tools [amd64],
             ca-certificates,
             cgroupfs-mount | cgroup-lite,
