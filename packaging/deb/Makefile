@@ -38,7 +38,7 @@ SOURCES=$(addprefix sources/, $(SOURCE_FILES))
 DEBIAN_VERSIONS := debian-stretch debian-buster debian-bullseye
 #UBUNTU_VERSIONS := ubuntu-xenial ubuntu-bionic ubuntu-cosmic ubuntu-disco ubuntu-eoan
 UBUNTU_VERSIONS := ubuntu-bionic ubuntu-focal ubuntu-jammy
-RASPBIAN_VERSIONS := raspbian-stretch raspbian-buster
+RASPBIAN_VERSIONS := raspbian-stretch raspbian-buster raspbian-bullseye
 DISTROS := $(DEBIAN_VERSIONS) $(UBUNTU_VERSIONS) $(RASPBIAN_VERSIONS)
 
 .PHONY: help
