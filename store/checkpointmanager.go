@@ -81,6 +81,9 @@ func (manager *checkPointImpl) GetCheckpoint(checkpointKey string, checkpoint Ch
 	defer manager.mutex.Unlock()
 	blob, err := manager.store.Read(checkpointKey)
 	if err != nil {
+		if err == ErrKeyNotFound {
+			return ErrCheckpointNotFound
+		}
 		return err
 	}
 	err = checkpoint.UnmarshalCheckpoint(blob)
