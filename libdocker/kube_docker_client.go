@@ -610,7 +610,6 @@ func (d *kubeDockerClient) GetContainerStats(id string) (*dockertypes.StatsJSON,
 	defer cancel()
 
 	response, err := d.client.ContainerStats(ctx, id, false)
-	logrus.Error("ContainerStats resp: ", response)
 	if err != nil {
 		return nil, err
 	}
