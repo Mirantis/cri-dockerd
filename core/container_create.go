@@ -64,7 +64,7 @@ func (ds *dockerService) CreateContainer(
 		image = iSpec.Image
 	}
 	containerName := makeContainerName(sandboxConfig, config)
-	terminationMessagePath, _ := config.Annotations["io.kubernetes.terminationMessagePath"]
+	terminationMessagePath, _ := config.Annotations["io.kubernetes.container.terminationMessagePath"]
 	createConfig := types.ContainerCreateConfig{
 		Name: containerName,
 		Config: &container.Config{
