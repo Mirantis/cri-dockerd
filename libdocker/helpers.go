@@ -20,6 +20,8 @@ import (
 	"fmt"
 	"github.com/docker/go-connections/nat"
 	v1 "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
+	"k8s.io/kubernetes/pkg/apis/core"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -29,6 +31,8 @@ import (
 	godigest "github.com/opencontainers/go-digest"
 	"github.com/sirupsen/logrus"
 )
+
+const windowsEtcHostsPath = "C:\\Windows\\System32\\drivers\\etc\\hosts"
 
 // ParseDockerTimestamp parses the timestamp returned by DockerClientInterface from string to time.Time
 func ParseDockerTimestamp(s string) (time.Time, error) {
@@ -208,6 +212,10 @@ func GenerateEnvList(envs []*v1.KeyValue) (result []string) {
 func GenerateMountBindings(mounts []*v1.Mount) []string {
 	result := make([]string, 0, len(mounts))
 	for _, m := range mounts {
+		if runtime.GOOS == "windows" && isSingleFileMount(m.HostPath, m.ContainerPath) {
+			logrus.Debugf("skipping mount :%s:%s", m.HostPath, m.ContainerPath)
+			continue
+		}
 		bind := fmt.Sprintf("%s:%s", m.HostPath, m.ContainerPath)
 		var attrs []string
 		if m.Readonly {
@@ -238,6 +246,16 @@ func GenerateMountBindings(mounts []*v1.Mount) []string {
 		result = append(result, bind)
 	}
 	return result
+}
+
+func isSingleFileMount(hostPath string, containerPath string) bool {
+	if strings.Contains(containerPath, core.TerminationMessagePathDefault) {
+		return true
+	}
+	if strings.Contains(hostPath, windowsEtcHostsPath) {
+		return true
+	}
+	return false
 }
 
 func MakePortsAndBindings(
@@ -288,4 +306,3 @@ func MakePortsAndBindings(
 	}
 	return exposedPorts, portBindings
 }
-
