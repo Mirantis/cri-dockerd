@@ -209,10 +209,13 @@ func GenerateEnvList(envs []*v1.KeyValue) (result []string) {
 // 'ro', if the path is read only
 // 'Z', if the volume requires SELinux relabeling
 // propagation mode such as 'rslave'
-func GenerateMountBindings(mounts []*v1.Mount) []string {
+func GenerateMountBindings(mounts []*v1.Mount, terminationMessagePath string) []string {
+	if terminationMessagePath == "" {
+		terminationMessagePath = core.TerminationMessagePathDefault
+	}
 	result := make([]string, 0, len(mounts))
 	for _, m := range mounts {
-		if runtime.GOOS == "windows" && isSingleFileMount(m.HostPath, m.ContainerPath) {
+		if runtime.GOOS == "windows" && isSingleFileMount(m.HostPath, m.ContainerPath, terminationMessagePath) {
 			logrus.Debugf("skipping mount :%s:%s", m.HostPath, m.ContainerPath)
 			continue
 		}
@@ -248,8 +251,8 @@ func GenerateMountBindings(mounts []*v1.Mount) []string {
 	return result
 }
 
-func isSingleFileMount(hostPath string, containerPath string) bool {
-	if strings.Contains(containerPath, core.TerminationMessagePathDefault) {
+func isSingleFileMount(hostPath string, containerPath string, terminationMessagePath string) bool {
+	if strings.Contains(containerPath, terminationMessagePath) {
 		return true
 	}
 	if strings.Contains(hostPath, windowsEtcHostsPath) {
