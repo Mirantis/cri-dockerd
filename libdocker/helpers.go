@@ -255,7 +255,7 @@ func isSingleFileMount(hostPath string, containerPath string, terminationMessage
 	if strings.Contains(containerPath, terminationMessagePath) {
 		return true
 	}
-	if strings.Contains(hostPath, windowsEtcHostsPath) {
+	if strings.Contains(hostPath, windowsEtcHostsPath) || strings.Contains(containerPath, windowsEtcHostsPath) {
 		return true
 	}
 	return false
