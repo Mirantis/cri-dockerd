@@ -113,7 +113,7 @@ jobs:
           # Skip runtime should support execSync with timeout because docker doesn't
           # support it.
           # Skip apparmor test as we don't enable apparmor yet in this CI job, or selinux
-          sudo /usr/local/bin/critest -runtime-endpoint=unix:///var/run/cri-dockerd.sock -ginkgo.skip="runtime should support apparmor|runtime should support reopening container log|runtime should support execSync with timeout|runtime should support selinux"
+          sudo /usr/local/bin/critest -runtime-endpoint=unix:///var/run/cri-dockerd.sock -ginkgo.skip="runtime should support apparmor|runtime should support reopening container log|runtime should support execSync with timeout|runtime should support selinux|runtime should support propagation.*"
 
       - name: Run benchmark
         working-directory: src/sigs.k8s.io/cri-tools
