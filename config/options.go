@@ -118,6 +118,14 @@ func (s *ContainerRuntimeOptions) AddFlags(fs *pflag.FlagSet) {
 			"If no pulling progress is made before this deadline, the image pulling will be cancelled.",
 		),
 	)
+	fs.DurationVar(
+		&s.RuntimeRequestTimeout.Duration,
+		"runtime-request-timeout",
+		s.RuntimeRequestTimeout.Duration,
+		fmt.Sprintf(
+			"If no runtime progress is made before this deadline, the operation will be cancelled.",
+		),
+	)
 
 	// Network plugin settings for Docker.
 	fs.StringVar(
@@ -137,7 +145,7 @@ func (s *ContainerRuntimeOptions) AddFlags(fs *pflag.FlagSet) {
 		"network-plugin",
 		s.NetworkPluginName,
 		fmt.Sprintf(
-			"<Warning: Alpha feature> The name of the network plugin to be invoked for various events in kubelet/pod lifecycle.",
+			"The name of the network plugin to be invoked for various events in kubelet/pod lifecycle.",
 		),
 	)
 	fs.StringVar(
@@ -145,7 +153,7 @@ func (s *ContainerRuntimeOptions) AddFlags(fs *pflag.FlagSet) {
 		"cni-conf-dir",
 		s.CNIConfDir,
 		fmt.Sprintf(
-			"<Warning: Alpha feature> The full path of the directory in which to search for CNI config files",
+			"The full path of the directory in which to search for CNI config files",
 		),
 	)
 	fs.StringVar(
@@ -153,7 +161,7 @@ func (s *ContainerRuntimeOptions) AddFlags(fs *pflag.FlagSet) {
 		"cni-bin-dir",
 		s.CNIBinDir,
 		fmt.Sprintf(
-			"<Warning: Alpha feature> A comma-separated list of full paths of directories in which to search for CNI plugin binaries.",
+			"A comma-separated list of full paths of directories in which to search for CNI plugin binaries.",
 		),
 	)
 	fs.StringVar(
@@ -161,7 +169,7 @@ func (s *ContainerRuntimeOptions) AddFlags(fs *pflag.FlagSet) {
 		"cni-cache-dir",
 		s.CNICacheDir,
 		fmt.Sprintf(
-			"<Warning: Alpha feature> The full path of the directory in which CNI should store cache files.",
+			"The full path of the directory in which CNI should store cache files.",
 		),
 	)
 	fs.Int32Var(
