@@ -103,9 +103,17 @@ var (
 // NewContainerRuntimeOptions will create a new ContainerRuntimeOptions with
 // default values.
 func NewContainerRuntimeOptions() *config.ContainerRuntimeOptions {
-	dockerEndpoint := ""
+	var dockerEndpoint, cniBinDir, cniConfDir, networkPluginName string
+
 	if runtime.GOOS != "windows" {
 		dockerEndpoint = "unix:///var/run/docker.sock"
+		cniBinDir = "/opt/cni/bin"
+		cniConfDir = "/etc/cni/net.d"
+		networkPluginName = "kubenet"
+	} else {
+		cniBinDir = "C:\\k\\cni\\bin"
+		cniConfDir = "C:\\k\\cni\\config"
+		networkPluginName = "cni"
 	}
 
 	runtimeOptions := &config.ContainerRuntimeOptions{
@@ -113,10 +121,10 @@ func NewContainerRuntimeOptions() *config.ContainerRuntimeOptions {
 		CriDockerdRootDirectory:   "/var/lib/cri-dockerd",
 		PodSandboxImage:           defaultPodSandboxImage,
 		ImagePullProgressDeadline: metav1.Duration{Duration: 1 * time.Minute},
-		NetworkPluginName:         "cni",
+		NetworkPluginName:         networkPluginName,
 
-		CNIBinDir:   "/opt/cni/bin",
-		CNIConfDir:  "/etc/cni/net.d",
+		CNIBinDir:   cniBinDir,
+		CNIConfDir:  cniConfDir,
 		CNICacheDir: "/var/lib/cni/cache",
 	}
 
