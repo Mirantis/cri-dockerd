@@ -4,6 +4,15 @@ This adapter provides a shim for [Docker Engine](https://docs.docker.com/engine/
 that lets you control Docker via the
 Kubernetes [Container Runtime Interface](https://github.com/kubernetes/cri-api#readme).
 
+## IMPORTANT
+
+For users running `0.2.5` or above, the default network plugin is `cni`. Kubernetes 1.24+ has removed `kubenet` and
+other network plumbing from upstream as part of the `dockershim` removal/deprecation. In order for a cluster to become
+operational, Calico, Flannel, Weave, or another CNI should be used.
+
+For CI workflows, basic functionality can be provided via [`containernetworking/plugins`](
+https://github.com/containernetworking/plugins).
+
 ## Motivation
 
 Mirantis and Docker have agreed to partner to maintain the shim code standalone outside Kubernetes, as a conformant CRI
@@ -26,7 +35,7 @@ To begin following the build process for this code, clone this repository in you
 
 ## To use with Kubernetes
 
-The default network plugin for `cri-dockerd` is set to `kubenet` on Linux. To change this, `--network-plugin=cni`
+The default network plugin for `cri-dockerd` is set to `cni` on Linux. To change this, `--network-plugin=${plugin}`
 can be passed in as a command line argument if invoked manually, or the systemd unit file
 (`/usr/lib/systemd/system/cri-docker.service` if not enabled yet,
 or `/etc/systemd/system/multi-user.target.wants/cri-docker.service` as a symlink if it is enabled) should be

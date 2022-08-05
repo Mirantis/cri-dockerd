@@ -143,7 +143,7 @@ func InitNetworkPlugin(
 	nonMasqueradeCIDR string,
 	mtu int,
 ) (NetworkPlugin, error) {
-	if networkPluginName == "" {
+	if networkPluginName == "" || networkPluginName == "no-op" {
 		// default to the no_op plugin
 		plug := &NoopNetworkPlugin{}
 		plug.Sysctl = utilsysctl.New()
