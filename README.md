@@ -4,6 +4,15 @@ This adapter provides a shim for [Docker Engine](https://docs.docker.com/engine/
 that lets you control Docker via the
 Kubernetes [Container Runtime Interface](https://github.com/kubernetes/cri-api#readme).
 
+## IMPORTANT
+
+For users running `0.2.5` or above, the default network plugin is `cni`. Kubernetes 1.24+ has removed `kubenet` and
+other network plumbing from upstream as part of the `dockershim` removal/deprecation. In order for a cluster to become
+operational, Calico, Flannel, Weave, or another CNI should be used.
+
+For CI workflows, basic functionality can be provided via [`containernetworking/plugins`](
+https://github.com/containernetworking/plugins).
+
 ## Motivation
 
 Mirantis and Docker have agreed to partner to maintain the shim code standalone outside Kubernetes, as a conformant CRI
