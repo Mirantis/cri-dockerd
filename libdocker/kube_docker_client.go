@@ -610,7 +610,7 @@ func (d *kubeDockerClient) GetContainerStats(id string) (*dockertypes.StatsJSON,
 	ctx, cancel := context.WithTimeout(context.Background(), d.timeout)
 	defer cancel()
 
-	response, err := d.client.ContainerStats(ctx, id, false)
+	response, err := d.client.ContainerStatsOneShot(ctx, id)
 	if err != nil {
 		return nil, err
 	}
