@@ -397,7 +397,7 @@ func (d *kubeDockerClient) PullImage(
 		return err
 	}
 	opts.RegistryAuth = base64Auth
-	ctx, cancel := context.WithTimeout(context.Background(), d.timeout)
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	resp, err := d.client.ImagePull(ctx, image, opts)
 	if err != nil {
@@ -446,7 +446,7 @@ func (d *kubeDockerClient) Logs(
 	opts dockertypes.ContainerLogsOptions,
 	sopts StreamOptions,
 ) error {
-	ctx, cancel := context.WithTimeout(context.Background(), d.timeout)
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	resp, err := d.client.ContainerLogs(ctx, id, opts)
 	if ctxErr := contextError(ctx); ctxErr != nil {
@@ -511,7 +511,7 @@ func (d *kubeDockerClient) StartExec(
 	opts dockertypes.ExecStartCheck,
 	sopts StreamOptions,
 ) error {
-	ctx, cancel := context.WithTimeout(context.Background(), d.timeout)
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	if opts.Detach {
 		err := d.client.ContainerExecStart(ctx, startExec, opts)
@@ -567,7 +567,7 @@ func (d *kubeDockerClient) AttachToContainer(
 	opts dockertypes.ContainerAttachOptions,
 	sopts StreamOptions,
 ) error {
-	ctx, cancel := context.WithTimeout(context.Background(), d.timeout)
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	resp, err := d.client.ContainerAttach(ctx, id, opts)
 	if ctxErr := contextError(ctx); ctxErr != nil {
@@ -587,7 +587,7 @@ func (d *kubeDockerClient) AttachToContainer(
 }
 
 func (d *kubeDockerClient) ResizeExecTTY(id string, height, width uint) error {
-	ctx, cancel := context.WithTimeout(context.Background(), d.timeout)
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	return d.client.ContainerExecResize(ctx, id, dockertypes.ResizeOptions{
 		Height: height,
@@ -596,7 +596,7 @@ func (d *kubeDockerClient) ResizeExecTTY(id string, height, width uint) error {
 }
 
 func (d *kubeDockerClient) ResizeContainerTTY(id string, height, width uint) error {
-	ctx, cancel := context.WithTimeout(context.Background(), d.timeout)
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	return d.client.ContainerResize(ctx, id, dockertypes.ResizeOptions{
 		Height: height,
@@ -606,7 +606,7 @@ func (d *kubeDockerClient) ResizeContainerTTY(id string, height, width uint) err
 
 // GetContainerStats is currently only used for Windows container stats
 func (d *kubeDockerClient) GetContainerStats(id string) (*dockertypes.StatsJSON, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), d.timeout)
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	response, err := d.client.ContainerStats(ctx, id, false)
