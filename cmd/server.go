@@ -27,6 +27,8 @@ import (
 	"github.com/Mirantis/cri-dockerd/streaming"
 	"github.com/sirupsen/logrus"
 
+	"net"
+	"net/netip"
 	"net/url"
 
 	"github.com/spf13/cobra"
@@ -163,10 +165,26 @@ func RunCriDockerd(f *options.DockerCRIFlags, stopCh <-chan struct{}) error {
 
 	config.IPv6DualStackEnabled = f.IPv6DualStackEnabled
 
+	var resolvedAddr string
+	if r.StreamingBindAddr != "" {
+		// See whether a port was specified as part of the declaration
+		addrPort, err := netip.ParseAddrPort(r.StreamingBindAddr)
+		if err != nil {
+			addr, err := netip.ParseAddr(r.StreamingBindAddr)
+			if err != nil {
+				logrus.Fatalf("Could not parse the given streaming bind address: %s", r.StreamingBindAddr, err)
+			}
+			resolvedAddr = net.JoinHostPort(addr.String(), "0")
+		} else {
+			resolvedAddr = addrPort.String()
+		}
+	}
+
 	// Initialize streaming configuration. (Not using TLS now)
 	streamingConfig := &streaming.Config{
 		// Use a relative redirect (no scheme or host).
 		BaseURL:                         &url.URL{Path: "/cri/"},
+		Addr:                            resolvedAddr,
 		StreamIdleTimeout:               r.StreamingConnectionIdleTimeout.Duration,
 		StreamCreationTimeout:           streaming.DefaultConfig.StreamCreationTimeout,
 		SupportedRemoteCommandProtocols: streaming.DefaultConfig.SupportedRemoteCommandProtocols,
