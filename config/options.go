@@ -53,6 +53,10 @@ type ContainerRuntimeOptions struct {
 	// can be idle before the connection is automatically closed.
 	StreamingConnectionIdleTimeout v1.Duration
 
+	// StreamingBindAddr is the address to bind the CRI streaming server to.
+	// If not specified, it will bind to all addresses
+	StreamingBindAddr string
+
 	// Network plugin options.
 
 	// The CIDR to use for pod IP addresses, only used in standalone mode.
@@ -127,6 +131,14 @@ func (s *ContainerRuntimeOptions) AddFlags(fs *pflag.FlagSet) {
 		),
 	)
 
+	fs.StringVar(
+		&s.StreamingBindAddr,
+		"streaming-bind-addr",
+		s.StreamingBindAddr,
+		fmt.Sprintf(
+			"The address to bind the CRI streaming server to. If not specified, it will bind to all addresses.",
+		),
+	)
 	// Network plugin settings for Docker.
 	fs.StringVar(
 		&s.PodCIDR,
