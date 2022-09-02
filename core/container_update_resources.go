@@ -34,6 +34,7 @@ func (ds *dockerService) UpdateContainerResources(
 			CPUQuota:   resources.CpuQuota,
 			CPUShares:  resources.CpuShares,
 			Memory:     resources.MemoryLimitInBytes,
+			MemorySwap: resources.MemoryLimitInBytes,
 			CpusetCpus: resources.CpusetCpus,
 			CpusetMems: resources.CpusetMems,
 		},
@@ -45,4 +46,3 @@ func (ds *dockerService) UpdateContainerResources(
 	}
 	return &v1.UpdateContainerResourcesResponse{}, nil
 }
-
