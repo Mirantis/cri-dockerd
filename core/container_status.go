@@ -136,6 +136,14 @@ func (ds *dockerService) ContainerStatus(
 		Annotations: annotations,
 		LogPath:     r.Config.Labels[containerLogPathLabelKey],
 	}
-	return &v1.ContainerStatusResponse{Status: status}, nil
+	res := v1.ContainerStatusResponse{Status: status}
+	if req.GetVerbose() {
+		containerInfo, err := containerInspectToRuntimeAPIContainerInfo(r)
+		if err != nil {
+			return nil, err
+		}
+		res.Info = containerInfo
+	}
+	return &res, nil
 }
 

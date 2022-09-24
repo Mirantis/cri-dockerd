@@ -110,6 +110,29 @@ func imageInspectToRuntimeAPIImageInfo(image *dockertypes.ImageInspect, history 
 	return info, nil
 }
 
+type verboseContainerInfo struct {
+	SandboxID string `json:"sandboxID"`
+	Pid       int    `json:"pid"`
+}
+
+func containerInspectToRuntimeAPIContainerInfo(container *dockertypes.ContainerJSON) (map[string]string, error) {
+	info := make(map[string]string)
+
+	cti := &verboseContainerInfo{
+		SandboxID: container.Config.Labels[sandboxIDLabelKey],
+		Pid:       container.State.Pid,
+	}
+
+	m, err := json.Marshal(cti)
+	if err == nil {
+		info["info"] = string(m)
+	} else {
+		return nil, err
+	}
+
+	return info, nil
+}
+
 func toRuntimeAPIConfig(config *dockercontainer.Config) imagespec.ImageConfig {
 	ports := make(map[string]struct{})
 	for k, v := range config.ExposedPorts {
