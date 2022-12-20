@@ -27,14 +27,14 @@ import (
 	"sync"
 	"testing"
 
-	"k8s.io/client-go/tools/remotecommand"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"k8s.io/client-go/tools/remotecommand"
 
 	api "k8s.io/api/core/v1"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/transport/spdy"
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
+	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 	kubeletportforward "k8s.io/kubernetes/pkg/kubelet/cri/streaming/portforward"
 )
 
@@ -304,7 +304,6 @@ func TestServePortForward(t *testing.T) {
 	doClientStreams(t, "portforward", stream, stream, nil)
 }
 
-//
 // Run the remote command test.
 // commandType is either "exec" or "attach".
 func runRemoteCommandTest(t *testing.T, commandType string) {

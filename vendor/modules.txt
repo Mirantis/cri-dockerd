@@ -889,6 +889,7 @@ k8s.io/component-base/metrics/testutil
 k8s.io/component-base/version
 # k8s.io/cri-api v0.20.4 => k8s.io/cri-api v0.20.4
 ## explicit; go 1.15
+k8s.io/cri-api/pkg/apis/runtime/v1
 k8s.io/cri-api/pkg/apis/runtime/v1alpha2
 # k8s.io/klog/v2 v2.4.0
 ## explicit; go 1.13

@@ -19,7 +19,7 @@ package libdocker
 import (
 	"fmt"
 	"github.com/docker/go-connections/nat"
-	v1 "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
+	v1 "k8s.io/cri-api/pkg/apis/runtime/v1"
 	"k8s.io/kubernetes/pkg/apis/core"
 	"runtime"
 	"strconv"

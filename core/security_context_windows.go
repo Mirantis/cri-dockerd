@@ -1,3 +1,4 @@
+//go:build windows
 // +build windows
 
 /*
@@ -21,7 +22,7 @@ package core
 import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/sirupsen/logrus"
-	v1 "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
+	v1 "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
 func (ds *dockerService) getSecurityOpts(
@@ -74,4 +75,3 @@ func (ds *dockerService) performPlatformSpecificContainerCleanup(
 func (ds *dockerService) platformSpecificContainerInitCleanup() (errors []error) {
 	return removeAllGMSARegistryValues()
 }
-

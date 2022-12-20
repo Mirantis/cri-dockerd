@@ -1,3 +1,4 @@
+//go:build windows
 // +build windows
 
 /*
@@ -28,11 +29,11 @@ import (
 	"runtime"
 
 	"github.com/blang/semver"
-    "github.com/sirupsen/logrus"
 	dockertypes "github.com/docker/docker/api/types"
 	dockercontainer "github.com/docker/docker/api/types/container"
 	dockerfilters "github.com/docker/docker/api/types/filters"
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
+	"github.com/sirupsen/logrus"
+	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
 // DefaultMemorySwap always returns 0 for no memory swap in a sandbox

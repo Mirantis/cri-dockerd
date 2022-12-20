@@ -1,3 +1,4 @@
+//go:build windows
 // +build windows
 
 /*
@@ -24,7 +25,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
+	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 	"k8s.io/kubernetes/pkg/kubelet/winstats"
 )
 

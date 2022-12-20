@@ -57,7 +57,7 @@ const (
 	MaxContainerTerminationMessageLogLines = 80
 )
 
-//Security constants
+// Security constants
 const (
 	// ImagePolicyFailedOpenKey is added to pods created by failing open when the image policy
 	// webhook backend fails.
@@ -165,4 +165,9 @@ const (
 	// This annotation is used by the Attach Detach Controller to determine whether to use the in-tree or
 	// CSI Backend for a volume plugin on a specific node.
 	MigratedPluginsAnnotationKey = "storage.alpha.kubernetes.io/migrated-plugins"
+
+	// CRIVersion is the latest CRI version supported by the CRI plugin.
+	CRIVersion = "v1"
+	// CRIVersionAlpha is the alpha version of CRI supported by the CRI plugin.
+	CRIVersionAlpha = "v1alpha2"
 )
