@@ -28,7 +28,7 @@ import (
 	"github.com/docker/docker/pkg/jsonmessage"
 
 	"github.com/sirupsen/logrus"
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
+	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 
 	"github.com/Mirantis/cri-dockerd/libdocker"
 )

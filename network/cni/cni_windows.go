@@ -1,3 +1,4 @@
+//go:build windows
 // +build windows
 
 /*
@@ -26,7 +27,7 @@ import (
 
 	cniTypes020 "github.com/containernetworking/cni/pkg/types/020"
 	"github.com/sirupsen/logrus"
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
+	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 
 	"github.com/Mirantis/cri-dockerd/config"
 	"github.com/Mirantis/cri-dockerd/network"

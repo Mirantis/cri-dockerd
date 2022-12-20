@@ -22,7 +22,7 @@ import (
 	"fmt"
 	"github.com/Mirantis/cri-dockerd/config"
 	"github.com/Mirantis/cri-dockerd/utils/errors"
-	v1 "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
+	v1 "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
 // RunPodSandbox creates and starts a pod-level sandbox. Runtimes should ensure
@@ -203,4 +203,3 @@ func (ds *dockerService) RunPodSandbox(
 
 	return resp, nil
 }
-

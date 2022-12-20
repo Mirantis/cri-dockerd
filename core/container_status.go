@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"github.com/Mirantis/cri-dockerd/libdocker"
 	"github.com/sirupsen/logrus"
-	v1 "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
+	v1 "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
 // ContainerStatus inspects the docker container and returns the status.
@@ -146,4 +146,3 @@ func (ds *dockerService) ContainerStatus(
 	}
 	return &res, nil
 }
-

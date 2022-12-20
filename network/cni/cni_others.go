@@ -1,3 +1,4 @@
+//go:build !windows
 // +build !windows
 
 /*
@@ -24,7 +25,7 @@ import (
 	"github.com/Mirantis/cri-dockerd/config"
 
 	"github.com/containernetworking/cni/libcni"
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
+	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 
 	"github.com/Mirantis/cri-dockerd/network"
 )

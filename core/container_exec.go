@@ -24,7 +24,7 @@ import (
 	"github.com/Mirantis/cri-dockerd/streaming"
 	"github.com/Mirantis/cri-dockerd/utils"
 	"google.golang.org/grpc/codes"
-	v1 "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
+	v1 "k8s.io/cri-api/pkg/apis/runtime/v1"
 	"time"
 )
 
@@ -79,4 +79,3 @@ func (ds *dockerService) Exec(
 	}
 	return ds.streamingServer.GetExec(req)
 }
-

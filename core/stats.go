@@ -21,7 +21,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"sync"
 
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
+	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
 // ContainerStats returns stats for a container stats request based on container id.

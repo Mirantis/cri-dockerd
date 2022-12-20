@@ -18,13 +18,14 @@ package backend
 
 import (
 	"fmt"
+	runtimeapi_alpha "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 	"net"
 	"os"
 	"strings"
 
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
+	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 	"k8s.io/kubernetes/pkg/kubelet/util"
 
 	"github.com/Mirantis/cri-dockerd/core"
@@ -34,19 +35,19 @@ import (
 // grpc library default is 4MB
 const maxMsgSize = 1024 * 1024 * 16
 
-// CriDockerServer is the grpc backend of cri-dockerd.
-type CriDockerServer struct {
+// CriDockerService is the grpc backend of cri-dockerd.
+type CriDockerService struct {
 	// endpoint is the endpoint to serve on.
 	endpoint string
 	// service is the docker service which implements runtime and image services.
-	service core.CRIService
+	service core.DockerService
 	// server is the grpc server.
 	server *grpc.Server
 }
 
 // NewCriDockerServer creates the cri-dockerd grpc backend.
-func NewCriDockerServer(endpoint string, s core.CRIService) *CriDockerServer {
-	return &CriDockerServer{
+func NewCriDockerServer(endpoint string, s core.DockerService) *CriDockerService {
+	return &CriDockerService{
 		endpoint: endpoint,
 		service:  s,
 	}
@@ -65,7 +66,7 @@ func getListener(addr string) (net.Listener, error) {
 }
 
 // Start starts the cri-dockerd grpc backend.
-func (s *CriDockerServer) Start() error {
+func (s *CriDockerService) Start() error {
 	// Start the internal service.
 	if err := s.service.Start(); err != nil {
 		logrus.Error(err, "Unable to start cri-dockerd service")
@@ -82,6 +83,7 @@ func (s *CriDockerServer) Start() error {
 		grpc.MaxRecvMsgSize(maxMsgSize),
 		grpc.MaxSendMsgSize(maxMsgSize),
 	)
+
 	runtimeapi.RegisterRuntimeServiceServer(s.server, s.service)
 	runtimeapi.RegisterImageServiceServer(s.server, s.service)
 	go func() {
@@ -90,6 +92,11 @@ func (s *CriDockerServer) Start() error {
 			os.Exit(1)
 		}
 	}()
+
+	as := core.NewDockerServiceAlpha(s.service)
+	runtimeapi_alpha.RegisterRuntimeServiceServer(s.server, as)
+	runtimeapi_alpha.RegisterImageServiceServer(s.server, as)
+
 	handleNotify()
 	return nil
 }

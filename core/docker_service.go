@@ -42,7 +42,8 @@ import (
 	"github.com/sirupsen/logrus"
 
 	v1 "k8s.io/api/core/v1"
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
+	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
+	runtimeapi_alpha "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 )
 
 const (
@@ -71,19 +72,20 @@ const (
 	defaultCgroupDriver = "cgroupfs"
 )
 
+// v1AlphaCRIService provides the interface necessary for cri.v1alpha2
+type v1AlphaCRIService interface {
+	runtimeapi_alpha.RuntimeServiceServer
+	runtimeapi_alpha.ImageServiceServer
+}
+
 // CRIService includes all methods necessary for a CRI backend.
 type CRIService interface {
 	runtimeapi.RuntimeServiceServer
 	runtimeapi.ImageServiceServer
-	Start() error
 }
 
-// DockerService is an interface that embeds the new RuntimeService and
-// ImageService interfaces.
-type DockerService interface {
-	CRIService
-
-	// For serving streaming calls.
+type serviceCommon interface {
+	Start() error
 	http.Handler
 
 	// GetContainerLogs gets logs for a specific container.
@@ -108,9 +110,16 @@ type DockerService interface {
 	) (string, error)
 }
 
+// DockerService is an interface that embeds the new RuntimeService and
+// ImageService interfaces.
+type DockerService interface {
+	CRIService
+	serviceCommon
+}
+
 var internalLabelKeys = []string{containerTypeLabelKey, containerLogPathLabelKey, sandboxIDLabelKey}
 
-// NewDockerService creates a new `DockerService` struct.
+// NewDockerService creates a new `DockerService`
 func NewDockerService(
 	clientConfig *config.ClientConfig,
 	podSandboxImage string,
@@ -273,6 +282,14 @@ type dockerService struct {
 	cleanupInfosLock      sync.RWMutex
 }
 
+type dockerServiceAlpha struct {
+	ds DockerService
+}
+
+func NewDockerServiceAlpha(ds DockerService) v1AlphaCRIService {
+	return &dockerServiceAlpha{ds: ds}
+}
+
 // Version returns the runtime name, runtime version and runtime API version
 func (ds *dockerService) Version(
 	_ context.Context,
@@ -286,7 +303,24 @@ func (ds *dockerService) Version(
 		Version:           kubeAPIVersion,
 		RuntimeName:       dockerRuntimeName,
 		RuntimeVersion:    v.Version,
-		RuntimeApiVersion: v.APIVersion,
+		RuntimeApiVersion: config.CRIVersion,
+	}, nil
+}
+
+// Version returns the runtime name, runtime version and runtime API version
+func (ds *dockerService) AlphaVersion(
+	_ context.Context,
+	r *runtimeapi.VersionRequest,
+) (*runtimeapi_alpha.VersionResponse, error) {
+	v, err := ds.getDockerVersion()
+	if err != nil {
+		return nil, err
+	}
+	return &runtimeapi_alpha.VersionResponse{
+		Version:           kubeAPIVersion,
+		RuntimeName:       dockerRuntimeName,
+		RuntimeVersion:    v.Version,
+		RuntimeApiVersion: config.CRIVersionAlpha,
 	}, nil
 }
 

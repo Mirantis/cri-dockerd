@@ -32,7 +32,7 @@ import (
 	cnitypes "github.com/containernetworking/cni/pkg/types"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/wait"
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
+	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 	"k8s.io/kubernetes/pkg/util/bandwidth"
 	utilslice "k8s.io/kubernetes/pkg/util/slice"
 	utilexec "k8s.io/utils/exec"

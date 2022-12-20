@@ -22,7 +22,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/sirupsen/logrus"
-	v1 "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
+	v1 "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
 // ListPodSandbox returns a list of Sandbox.
@@ -110,7 +110,7 @@ func (ds *dockerService) ListPodSandbox(
 		checkpoint := NewPodSandboxCheckpoint("", "", &CheckpointData{})
 		err := ds.checkpointManager.GetCheckpoint(id, checkpoint)
 		if err != nil {
-			logrus.Errorf("Failed to retrieve checkpoint for sandbox %s: %v",id, err)
+			logrus.Errorf("Failed to retrieve checkpoint for sandbox %s: %v", id, err)
 			if err == store.ErrCorruptCheckpoint {
 				err = ds.checkpointManager.RemoveCheckpoint(id)
 				if err != nil {
@@ -124,4 +124,3 @@ func (ds *dockerService) ListPodSandbox(
 
 	return &v1.ListPodSandboxResponse{Items: result}, nil
 }
-

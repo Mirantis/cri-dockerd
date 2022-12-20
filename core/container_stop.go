@@ -18,7 +18,7 @@ package core
 
 import (
 	"context"
-	v1 "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
+	v1 "k8s.io/cri-api/pkg/apis/runtime/v1"
 	"time"
 )
 
@@ -33,4 +33,3 @@ func (ds *dockerService) StopContainer(
 	}
 	return &v1.StopContainerResponse{}, nil
 }
-

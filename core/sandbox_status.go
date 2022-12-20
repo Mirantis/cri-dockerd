@@ -19,7 +19,7 @@ package core
 import (
 	"context"
 	"fmt"
-	v1 "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
+	v1 "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
 // PodSandboxStatus returns the status of the PodSandbox.
@@ -92,4 +92,3 @@ func (ds *dockerService) PodSandboxStatus(
 	status.Network.AdditionalIps = additionalPodIPs
 	return &v1.PodSandboxStatusResponse{Status: status}, nil
 }
-
