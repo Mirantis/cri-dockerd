@@ -6,7 +6,7 @@ require (
 	github.com/Microsoft/hcsshim v0.8.10-0.20200715222032-5eafd1556990
 	github.com/armon/circbuf v0.0.0-20150827004946-bbbad097214e
 	github.com/blang/semver v3.5.1+incompatible
-	github.com/containernetworking/cni v0.8.0
+	github.com/containernetworking/cni v1.1.2
 	github.com/coreos/go-systemd/v22 v22.1.0
 	github.com/davecgh/go-spew v1.1.1
 	github.com/docker/distribution v2.7.1+incompatible
