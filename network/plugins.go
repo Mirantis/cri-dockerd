@@ -29,7 +29,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilsets "k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation"
-	utilsysctl "k8s.io/kubernetes/pkg/util/sysctl"
+	utilsysctl "k8s.io/component-helpers/node/util/sysctl"
 	utilexec "k8s.io/utils/exec"
 
 	"github.com/Mirantis/cri-dockerd/network/hostport"

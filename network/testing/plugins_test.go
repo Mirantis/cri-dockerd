@@ -25,7 +25,7 @@ import (
 	"github.com/Mirantis/cri-dockerd/config"
 
 	utilsets "k8s.io/apimachinery/pkg/util/sets"
-	sysctltest "k8s.io/kubernetes/pkg/util/sysctl/testing"
+	sysctltest "k8s.io/component-helpers/node/util/sysctl/testing"
 
 	"github.com/Mirantis/cri-dockerd/network"
 

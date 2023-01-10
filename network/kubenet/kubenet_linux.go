@@ -39,9 +39,9 @@ import (
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	utilnet "k8s.io/apimachinery/pkg/util/net"
 	utilsets "k8s.io/apimachinery/pkg/util/sets"
+	utilsysctl "k8s.io/component-helpers/node/util/sysctl"
 	"k8s.io/kubernetes/pkg/util/bandwidth"
 	utiliptables "k8s.io/kubernetes/pkg/util/iptables"
-	utilsysctl "k8s.io/kubernetes/pkg/util/sysctl"
 	utilexec "k8s.io/utils/exec"
 	utilebtables "k8s.io/utils/net/ebtables"
 
@@ -302,7 +302,7 @@ func (plugin *kubenetNetworkPlugin) Event(name string, details map[string]interf
 	plugin.netConfig, err = libcni.ConfFromBytes([]byte(json))
 	if err != nil {
 		logrus.Debugf("** failed to set up CNI with json format (%+v): %v", json, err)
-		// just incase it was set by mistake
+		// just in case it was set by mistake
 		plugin.netConfig = nil
 		// we bail out by clearing the *entire* list
 		// of addresses assigned to cbr0

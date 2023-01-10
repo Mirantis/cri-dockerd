@@ -99,12 +99,13 @@ func (tv TypedValue) ToFieldSet() (*fieldpath.Set, error) {
 
 // Merge returns the result of merging tv and pso ("partially specified
 // object") together. Of note:
-//  * No fields can be removed by this operation.
-//  * If both tv and pso specify a given leaf field, the result will keep pso's
-//    value.
-//  * Container typed elements will have their items ordered:
-//    * like tv, if pso doesn't change anything in the container
-//    * like pso, if pso does change something in the container.
+//   - No fields can be removed by this operation.
+//   - If both tv and pso specify a given leaf field, the result will keep pso's
+//     value.
+//   - Container typed elements will have their items ordered:
+//     1. like tv, if pso doesn't change anything in the container
+//     2. like pso, if pso does change something in the container.
+//
 // tv and pso must both be of the same type (their Schema and TypeRef must
 // match), or an error will be returned. Validation errors will be returned if
 // the objects don't conform to the schema.
@@ -150,7 +151,13 @@ func (tv TypedValue) Compare(rhs *TypedValue) (c *Comparison, err error) {
 
 // RemoveItems removes each provided list or map item from the value.
 func (tv TypedValue) RemoveItems(items *fieldpath.Set) *TypedValue {
-	tv.value = removeItemsWithSchema(tv.value, items, tv.schema, tv.typeRef)
+	tv.value = removeItemsWithSchema(tv.value, items, tv.schema, tv.typeRef, false)
+	return &tv
+}
+
+// ExtractItems returns a value with only the provided list or map items extracted from the value.
+func (tv TypedValue) ExtractItems(items *fieldpath.Set) *TypedValue {
+	tv.value = removeItemsWithSchema(tv.value, items, tv.schema, tv.typeRef, true)
 	return &tv
 }
 

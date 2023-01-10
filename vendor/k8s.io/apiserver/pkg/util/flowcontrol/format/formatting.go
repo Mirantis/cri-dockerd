@@ -21,7 +21,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	flowcontrol "k8s.io/api/flowcontrol/v1beta1"
+	flowcontrol "k8s.io/api/flowcontrol/v1beta2"
 	"k8s.io/apiserver/pkg/authentication/user"
 	"k8s.io/apiserver/pkg/endpoints/request"
 )
@@ -195,7 +195,7 @@ func BufferFmtPolicyRulesWithSubjectsSlim(buf *bytes.Buffer, rule flowcontrol.Po
 			buf.WriteString(fmt.Sprintf(", Group: &%#+v", *subj.Group))
 		}
 		if subj.ServiceAccount != nil {
-			buf.WriteString(fmt.Sprintf(", ServiceAcount: &%#+v", *subj.ServiceAccount))
+			buf.WriteString(fmt.Sprintf(", ServiceAccount: &%#+v", *subj.ServiceAccount))
 		}
 		buf.WriteString("}")
 	}
