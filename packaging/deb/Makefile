@@ -26,7 +26,7 @@ RUN=docker run --rm -i \
 	-e EPOCH='$(EPOCH)' \
 	-e DEB_VERSION=$(word 1, $(DEB_VERSION)) \
 	-e VERSION=$(word 2, $(DEB_VERSION)) \
-	-e LDFLAGS=$(shell echo ${CRI_DOCKERD_LDLAGS}) \
+	-e LDFLAGS=$(shell echo \"${CRI_DOCKERD_LDFLAGS}\") \
 	-e GITCOMMIT=$(GITCOMMIT) \
 	-e PLATFORM \
 	-v $(CURDIR)/debbuild/$@:/build \
