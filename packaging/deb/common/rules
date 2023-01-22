@@ -1,6 +1,7 @@
 #!/usr/bin/make -f
 
 VERSION ?= $(shell cat app/VERSION)
+LDFLAGS := $(shell echo '${CRI_DOCKERD_LDFLAGS}')
 
 override_dh_gencontrol:
 	# if we're on Ubuntu, we need to Recommends: apparmor
@@ -9,7 +10,7 @@ override_dh_gencontrol:
 
 override_dh_auto_build:
 	# Build the daemon and dependencies
-	cd app && GOPROXY="https://proxy.golang.org" GO111MODULE=on go build
+	cd app && GOPROXY="https://proxy.golang.org" GO111MODULE=on go build ${LDFLAGS}
 	echo "DONE"
 
 override_dh_auto_test:
