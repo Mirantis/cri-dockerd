@@ -19,11 +19,12 @@ package core
 import (
 	"bytes"
 	"context"
-	"fmt"
+	"errors"
 	"github.com/Mirantis/cri-dockerd/libdocker"
 	"github.com/Mirantis/cri-dockerd/streaming"
 	"github.com/Mirantis/cri-dockerd/utils"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	v1 "k8s.io/cri-api/pkg/apis/runtime/v1"
 	"time"
 )
@@ -45,8 +46,8 @@ func (ds *dockerService) ExecSync(
 		timeout)
 
 	// kubelet's backend runtime expects a grpc error with status code DeadlineExceeded on time out.
-	if err == context.DeadlineExceeded {
-		return nil, fmt.Errorf("deadline exceeded (%q): %v", codes.DeadlineExceeded, err.Error())
+	if errors.Is(err, context.DeadlineExceeded) {
+		return nil, status.Errorf(codes.DeadlineExceeded, err.Error())
 	}
 
 	var exitCode int32

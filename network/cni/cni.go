@@ -55,6 +55,8 @@ const (
 	dnsCapability          = "dns"
 )
 
+var cniLogMessage sync.Once
+
 type cniNetworkPlugin struct {
 	network.NoopNetworkPlugin
 
@@ -210,7 +212,9 @@ func getDefaultCNINetwork(confDir string, binDirs []string) (*cniNetwork, error)
 			continue
 		}
 
-		logrus.Infof("Using CNI configuration file %s", confFile)
+		cniLogMessage.Do(func() {
+			logrus.Debugf("Using CNI configuration file %s", confFile)
+		})
 
 		return &cniNetwork{
 			name:          confList.Name,
