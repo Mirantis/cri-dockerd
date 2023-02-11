@@ -7,8 +7,6 @@ var (
 	PreRelease = ""
 	// GitCommit is set during the build
 	GitCommit = "HEAD"
-	// BuildTime is set during the build
-	BuildTime = "<unknown>"
 )
 
 const (
