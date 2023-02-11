@@ -18,6 +18,7 @@ package cmd
 
 import (
 	"fmt"
+	"runtime"
 
 	"github.com/Mirantis/cri-dockerd/backend"
 	"github.com/Mirantis/cri-dockerd/cmd/cri/options"
@@ -92,11 +93,11 @@ func NewDockerCRICommand(stopCh <-chan struct{}) *cobra.Command {
 			if infoflag {
 				fmt.Fprintf(
 					cmd.OutOrStderr(),
-					"Program: %s\nVersion: %s\nBuildTime: %s\nGitCommit: %s\n",
+					"Program: %s\nVersion: %s\nGitCommit: %s\nGo version: %s\n",
 					version.PlatformName,
 					version.FullVersion(),
-					version.BuildTime,
 					version.GitCommit,
+					runtime.Version(),
 				)
 				return
 			}
