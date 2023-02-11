@@ -75,7 +75,7 @@ jobs:
         working-directory: src/sigs.k8s.io/cri-tools
         run: |
           make critest crictl
-          make install
+          find $(pwd)/build/bin -type f -exec mv {} /usr/local/bin \;
 
       - name: Checkout cri-dockerd
         uses: actions/checkout@v2
