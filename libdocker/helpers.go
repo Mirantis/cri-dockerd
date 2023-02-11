@@ -233,14 +233,23 @@ func GenerateMountBindings(mounts []*v1.Mount, terminationMessagePath string) []
 		}
 		switch m.Propagation {
 		case v1.MountPropagation_PROPAGATION_PRIVATE:
-			// noop, private is default
+			// noop, dockerd will decide the propagation.
+			//
+			// dockerd's default propagation is "rprivate": https://github.com/moby/moby/blob/v20.10.23/volume/mounts/linux_parser.go#L145
+			//
+			// However, dockerd automatically changes the default propagation to "rslave"
+			// when the mount source contains the daemon root (/var/lib/docker):
+			// - https://github.com/moby/moby/blob/v20.10.23/daemon/volumes.go#L137-L143
+			// - https://github.com/moby/moby/blob/v20.10.23/daemon/volumes_linux.go#L11-L36
+			//
+			// This behavior was introduced in Docker 18.03: https://github.com/moby/moby/pull/36055
 		case v1.MountPropagation_PROPAGATION_BIDIRECTIONAL:
 			attrs = append(attrs, "rshared")
 		case v1.MountPropagation_PROPAGATION_HOST_TO_CONTAINER:
 			attrs = append(attrs, "rslave")
 		default:
 			logrus.Infof("Unknown propagation mode for hostPath %s", m.HostPath)
-			// Falls back to "private"
+			// let dockerd decide the propagation
 		}
 
 		if len(attrs) > 0 {
