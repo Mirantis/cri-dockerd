@@ -92,6 +92,15 @@ func (ds *dockerService) CreateContainer(
 		},
 	}
 
+	enabled, err := ds.isUserNamespaceEnabled()
+	if err != nil {
+		return nil, fmt.Errorf("unable to check if user namsepace is enabled. Error:%s", err)
+	}
+
+	if enabled {
+		createConfig.HostConfig.UsernsMode = "host"
+	}
+
 	hc := createConfig.HostConfig
 	err = ds.updateCreateConfig(
 		&createConfig,

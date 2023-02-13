@@ -486,3 +486,23 @@ func (ds *dockerService) getDockerVersionFromCache() (*dockertypes.Version, erro
 	}
 	return dv, nil
 }
+
+// isUserNamespaceEnabled gets the security options and check if user namespaces are enabled.
+func (ds *dockerService) isUserNamespaceEnabled() (bool, error) {
+	info, err := ds.client.Info()
+	if err != nil {
+		return false, fmt.Errorf("failed to get docker info: %v", err)
+	}
+
+	if len(info.SecurityOptions) > 0 {
+		logrus.Infof("Security options are : %v", info.SecurityOptions)
+		// Check if userns is enabled
+		for _, val := range info.SecurityOptions {
+			if val == "name=userns" {
+				logrus.Infof("user namespace is enabled")
+				return true, nil
+			}
+		}
+	}
+	return false, nil
+}
