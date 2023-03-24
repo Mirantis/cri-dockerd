@@ -19,6 +19,7 @@ package core
 import (
 	"context"
 	"fmt"
+
 	v1 "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
@@ -41,12 +42,6 @@ func (ds *dockerService) PodSandboxStatus(
 	}
 	ct := createdAt.UnixNano()
 
-	// Translate container to sandbox state.
-	state := v1.PodSandboxState_SANDBOX_NOTREADY
-	if r.State.Running {
-		state = v1.PodSandboxState_SANDBOX_READY
-	}
-
 	var ips []string
 	// This is a workaround for windows, where sandbox is not in use, and pod IP is determined through containers belonging to the Pod.
 	if ips = ds.determinePodIPBySandboxID(podSandboxID); len(ips) == 0 {
@@ -59,6 +54,13 @@ func (ds *dockerService) PodSandboxStatus(
 	if len(ips) != 0 {
 		ip = ips[0]
 		ips = ips[1:]
+	}
+
+	// Translate container to sandbox state.
+	// For a sandbox to be in the Ready state, the container needs to be in the Running state and it also needs to have an IP address.
+	state := v1.PodSandboxState_SANDBOX_NOTREADY
+	if r.State.Running && len(ips) > 0 {
+		state = v1.PodSandboxState_SANDBOX_READY
 	}
 
 	labels, annotations := extractLabels(r.Config.Labels)
