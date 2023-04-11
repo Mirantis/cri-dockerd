@@ -1,3 +1,4 @@
+//go:build linux
 // +build linux
 
 /*
@@ -27,11 +28,11 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/utils/exec"
-
-	"k8s.io/klog/v2"
+	netutils "k8s.io/utils/net"
 )
 
 var (
@@ -60,10 +61,10 @@ func NewTCShaper(iface string) Shaper {
 }
 
 func (t *tcShaper) execAndLog(cmdStr string, args ...string) error {
-	klog.V(6).Infof("Running: %s %s", cmdStr, strings.Join(args, " "))
+	logrus.Infof("Running: %s %s", cmdStr, strings.Join(args, " "))
 	cmd := t.e.Command(cmdStr, args...)
 	out, err := cmd.CombinedOutput()
-	klog.V(6).Infof("Output from tc: %s", string(out))
+	logrus.Infof("Output from tc: %s", string(out))
 	return err
 }
 
@@ -103,7 +104,7 @@ func (t *tcShaper) nextClassID() (int, error) {
 // Convert a CIDR from text to a hex representation
 // Strips any masked parts of the IP, so 1.2.3.4/16 becomes hex(1.2.0.0)/ffffffff
 func hexCIDR(cidr string) (string, error) {
-	ip, ipnet, err := net.ParseCIDR(cidr)
+	ip, ipnet, err := netutils.ParseCIDRSloppy(cidr)
 	if err != nil {
 		return "", err
 	}
@@ -266,7 +267,7 @@ func (t *tcShaper) ReconcileInterface() error {
 		return err
 	}
 	if !exists {
-		klog.V(4).Info("Didn't find bandwidth interface, creating")
+		logrus.Info("Didn't find bandwidth interface, creating")
 		return t.initializeInterface()
 	}
 	fields := strings.Split(output, " ")
