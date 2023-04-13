@@ -18,6 +18,7 @@ package core
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -395,7 +396,24 @@ func (ds *dockerService) Status(
 		networkReady.Message = fmt.Sprintf("docker: network plugin is not ready: %v", err)
 	}
 	status := &runtimeapi.RuntimeStatus{Conditions: conditions}
-	return &runtimeapi.StatusResponse{Status: status}, nil
+	resp := &runtimeapi.StatusResponse{Status: status}
+	if r.Verbose {
+		image := defaultSandboxImage
+		podSandboxImage := ds.podSandboxImage
+		if len(podSandboxImage) != 0 {
+			image = podSandboxImage
+		}
+		config := map[string]interface{}{
+			"sandboxImage": image,
+		}
+		configByt, err := json.Marshal(config)
+		if err != nil {
+			return nil, err
+		}
+		resp.Info = make(map[string]string)
+		resp.Info["config"] = string(configByt)
+	}
+	return resp, nil
 }
 
 func (ds *dockerService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
