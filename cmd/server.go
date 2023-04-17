@@ -173,7 +173,7 @@ func RunCriDockerd(f *options.DockerCRIFlags, stopCh <-chan struct{}) error {
 		if err != nil {
 			addr, err := netip.ParseAddr(r.StreamingBindAddr)
 			if err != nil {
-				logrus.Fatalf("Could not parse the given streaming bind address: %s", r.StreamingBindAddr, err)
+				logrus.Fatalf("Could not parse the given streaming bind address: %s", r.StreamingBindAddr)
 			}
 			resolvedAddr = net.JoinHostPort(addr.String(), "0")
 		} else {
