@@ -18,8 +18,13 @@ package core
 
 import (
 	"context"
-	v1 "k8s.io/cri-api/pkg/apis/runtime/v1"
 	"time"
+
+	"github.com/Mirantis/cri-dockerd/libdocker"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
+	v1 "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
 // StopContainer stops a running container with a grace period (i.e., timeout).
@@ -29,6 +34,9 @@ func (ds *dockerService) StopContainer(
 ) (*v1.StopContainerResponse, error) {
 	err := ds.client.StopContainer(r.ContainerId, time.Duration(r.Timeout)*time.Second)
 	if err != nil {
+		if libdocker.IsContainerNotFoundError(err) {
+			err = status.Error(codes.NotFound, err.Error())
+		}
 		return nil, err
 	}
 	return &v1.StopContainerResponse{}, nil

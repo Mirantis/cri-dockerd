@@ -18,6 +18,8 @@ package core
 
 import (
 	"context"
+
+	"github.com/Mirantis/cri-dockerd/libdocker"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/sirupsen/logrus"
@@ -55,7 +57,7 @@ func (ds *dockerService) ListContainers(
 		}
 	}
 	containers, err := ds.client.ListContainers(opts)
-	if err != nil {
+	if err != nil && (!libdocker.IsContainerNotFoundError(err)) {
 		return nil, err
 	}
 	// Convert docker to runtime api containers.
