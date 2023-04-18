@@ -149,6 +149,11 @@ func TestStatus(t *testing.T) {
 		runtimeapi.NetworkReady: true,
 	}, statusResp.Status)
 
+	// Should report info if verbose.
+	statusResp, err = ds.Status(getTestCTX(), &runtimeapi.StatusRequest{Verbose: true})
+	require.NoError(t, err)
+	assert.NotNil(t, statusResp.Info)
+
 	// Should not report ready status is network plugin returns error.
 	mockPlugin := newTestNetworkPlugin(t)
 	ds.network = network.NewPluginManager(mockPlugin)
