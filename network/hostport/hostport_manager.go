@@ -67,12 +67,14 @@ func NewHostportManager(iptables utiliptables.Interface) HostPortManager {
 		iptables:    iptables,
 		portOpener:  openLocalPort,
 	}
-	h.conntrackFound = conntrack.Exists(h.execer)
-	if !h.conntrackFound {
+
+	_, err := h.execer.LookPath("conntrack")
+	if err != nil {
 		logrus.Info(
 			"The binary conntrack is not installed, this can cause failures in network connection cleanup.",
 		)
 	}
+
 	return h
 }
 
