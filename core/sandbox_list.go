@@ -18,6 +18,8 @@ package core
 
 import (
 	"context"
+
+	"github.com/Mirantis/cri-dockerd/libdocker"
 	"github.com/Mirantis/cri-dockerd/store"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
@@ -78,7 +80,7 @@ func (ds *dockerService) ListPodSandbox(
 	}
 
 	containers, err := ds.client.ListContainers(opts)
-	if err != nil {
+	if err != nil && !libdocker.IsContainerNotFoundError(err) {
 		return nil, err
 	}
 
