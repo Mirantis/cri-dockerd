@@ -80,7 +80,7 @@ func (ds *dockerService) ListPodSandbox(
 	}
 
 	containers, err := ds.client.ListContainers(opts)
-	if err != nil && (!libdocker.IsContainerNotFoundError(err)) {
+	if err != nil && !libdocker.IsContainerNotFoundError(err) {
 		return nil, err
 	}
 
