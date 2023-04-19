@@ -57,7 +57,7 @@ func (ds *dockerService) ListContainers(
 		}
 	}
 	containers, err := ds.client.ListContainers(opts)
-	if err != nil && (!libdocker.IsContainerNotFoundError(err)) {
+	if err != nil && !libdocker.IsContainerNotFoundError(err) {
 		return nil, err
 	}
 	// Convert docker to runtime api containers.
