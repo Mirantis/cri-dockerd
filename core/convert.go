@@ -86,13 +86,15 @@ func imageInspectToRuntimeAPIImageInfo(image *dockertypes.ImageInspect, history 
 	}
 
 	imageSpec := imagespec.Image{
-		Created:      &createdAt,
-		Author:       image.Author,
-		Architecture: image.Architecture,
-		OS:           image.Os,
-		Config:       toRuntimeAPIConfig(image.Config),
-		RootFS:       toRuntimeAPIRootFS(image.RootFS),
-		History:      toRuntimeAPIHistory(history),
+		Created: &createdAt,
+		Author:  image.Author,
+		Platform: imagespec.Platform{
+			Architecture: image.Architecture,
+			OS:           image.Os,
+		},
+		Config:  toRuntimeAPIConfig(image.Config),
+		RootFS:  toRuntimeAPIRootFS(image.RootFS),
+		History: toRuntimeAPIHistory(history),
 	}
 
 	imi := &verboseImageInfo{
