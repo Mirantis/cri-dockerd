@@ -35,6 +35,26 @@ import (
 
 // This file implements methods in ImageManagerService.
 
+func (ds *dockerService) sandboxImage() string {
+	image := defaultSandboxImage
+	podSandboxImage := ds.podSandboxImage
+	if len(podSandboxImage) != 0 {
+		image = podSandboxImage
+	}
+	return image
+}
+
+func isPinned(image string, tags []string) bool {
+	pinned := false
+	for _, tag := range tags {
+		if tag == image {
+			pinned = true
+			break
+		}
+	}
+	return pinned
+}
+
 // ListImages lists existing images.
 func (ds *dockerService) ListImages(
 	_ context.Context,
@@ -53,10 +73,12 @@ func (ds *dockerService) ListImages(
 	if err != nil {
 		return nil, err
 	}
+	image := ds.sandboxImage()
 
 	result := make([]*runtimeapi.Image, 0, len(images))
 	for _, i := range images {
-		apiImage, err := imageToRuntimeAPIImage(&i)
+		pinned := isPinned(image, i.RepoTags)
+		apiImage, err := imageToRuntimeAPIImage(&i, pinned)
 		if err != nil {
 			logrus.Infof("Failed to convert docker API image %v to runtime API image: %v", i, err)
 			continue
@@ -87,7 +109,8 @@ func (ds *dockerService) ImageStatus(
 		}
 	}
 
-	imageStatus, err := imageInspectToRuntimeAPIImage(imageInspect)
+	pinned := isPinned(ds.sandboxImage(), imageInspect.RepoTags)
+	imageStatus, err := imageInspectToRuntimeAPIImage(imageInspect, pinned)
 	if err != nil {
 		return nil, err
 	}
