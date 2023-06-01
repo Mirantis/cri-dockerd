@@ -91,7 +91,7 @@ func (f *DockerCRIFlags) AddFlags(mainfs *pflag.FlagSet) {
 
 const (
 	defaultPodSandboxImageName    = "registry.k8s.io/pause"
-	defaultPodSandboxImageVersion = "3.6"
+	defaultPodSandboxImageVersion = "3.9"
 )
 
 var (
