@@ -58,16 +58,22 @@ go build -ldflags="-X github.com/Mirantis/cri-dockerd/version.Version='$VERSION}
 
 To build for a specific architecture, add `ARCH=` as an argument, where `ARCH` is a known build target for golang
 
+You can find pre-compiled binaries and deb/rpm packages under:
+
+<https://github.com/Mirantis/cri-dockerd/releases>
+
+Where `VERSION` is the latest available cri-dockerd version:
+
+`https://github.com/Mirantis/cri-dockerd/releases/download/v${VERSION}/cri-dockerd-${VERSION}.${ARCH}.tgz`
+
 To install, on a Linux system that uses systemd, and already has Docker Engine installed
 
 ```shell
 # Run these commands as root
 
 cd cri-dockerd
-mkdir bin
-go build -o bin/cri-dockerd
 mkdir -p /usr/local/bin
-install -o root -g root -m 0755 bin/cri-dockerd /usr/local/bin/cri-dockerd
+install -o root -g root -m 0755 cri-dockerd /usr/local/bin/cri-dockerd
 install packaging/systemd/* /etc/systemd/system
 sed -i -e 's,/usr/bin/cri-dockerd,/usr/local/bin/cri-dockerd,' /etc/systemd/system/cri-docker.service
 systemctl daemon-reload
