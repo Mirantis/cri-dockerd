@@ -31,7 +31,6 @@ import (
 	"github.com/sirupsen/logrus"
 
 	dockertypes "github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/container"
 	dockercontainer "github.com/docker/docker/api/types/container"
 	dockerimagetypes "github.com/docker/docker/api/types/image"
 	dockerapi "github.com/docker/docker/client"
@@ -181,8 +180,8 @@ func (d *kubeDockerClient) StopContainer(id string, timeout time.Duration) error
 	ctx, cancel := d.getCustomTimeoutContext(timeout)
 	defer cancel()
 
-	timeoutSeconds := int(timeout / time.Second)
-	options := container.StopOptions{
+	timeoutSeconds := int(timeout.Seconds())
+	options := dockercontainer.StopOptions{
 		Timeout: &timeoutSeconds,
 	}
 
