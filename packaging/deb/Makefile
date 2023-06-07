@@ -3,7 +3,7 @@ include ../common.mk
 APP_DIR:=$(realpath $(CURDIR)/../../)
 GITCOMMIT?=$(shell cd $(APP_DIR) && git rev-parse --short HEAD)
 GO_BASE_IMAGE=golang
-GO_IMAGE=$(GO_BASE_IMAGE):$(GO_VERSION)-stretch
+GO_IMAGE=$(GO_BASE_IMAGE):$(GO_VERSION)-buster
 DEB_VERSION=$(shell ./gen-deb-ver $(APP_DIR) "$(VERSION)")
 CHOWN:=docker run --rm -v $(CURDIR):/v -w /v alpine chown
 EPOCH?=0
@@ -36,10 +36,10 @@ RUN=docker run --rm -i \
 SOURCE_FILES=app.tgz cri-docker.service cri-docker.socket
 SOURCES=$(addprefix sources/, $(SOURCE_FILES))
 
-DEBIAN_VERSIONS := debian-stretch debian-buster debian-bullseye
+DEBIAN_VERSIONS := debian-buster debian-bullseye
 #UBUNTU_VERSIONS := ubuntu-xenial ubuntu-bionic ubuntu-cosmic ubuntu-disco ubuntu-eoan
 UBUNTU_VERSIONS := ubuntu-bionic ubuntu-focal ubuntu-jammy
-RASPBIAN_VERSIONS := raspbian-stretch raspbian-buster raspbian-bullseye
+RASPBIAN_VERSIONS := raspbian-buster raspbian-bullseye
 DISTROS := $(DEBIAN_VERSIONS) $(UBUNTU_VERSIONS) $(RASPBIAN_VERSIONS)
 
 .PHONY: help
