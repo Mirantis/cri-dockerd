@@ -92,6 +92,7 @@ jobs:
         with:
           repository: kubernetes/kubernetes
           path: src/k8s.io/kubernetes
+          ref: 84c8abfb8bf900ce36f7ebfbc52794bad972d8cc
 
       - name: Checkout test-infra for kubetest
         uses: actions/checkout@v2
