@@ -41,13 +41,7 @@ The above step creates a local directory called ```cri-dockerd``` which you will
 
 To build this code (in a POSIX environment):
 
-```shell
-###Install GO###
-wget https://storage.googleapis.com/golang/getgo/installer_linux
-chmod +x ./installer_linux
-./installer_linux
-source ~/.bash_profile
-```
+<https://go.dev/doc/install>
 
 ```shell
 cd cri-dockerd
