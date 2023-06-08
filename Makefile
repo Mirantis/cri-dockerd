@@ -9,6 +9,8 @@ else
     BUILD_DATE?=$(shell date "$(DATE_FMT)")
 endif
 
+SHELL=/bin/bash
+
 export VERSION?=$(shell (git describe --abbrev=0 --tags | sed -e 's/v//') || echo $(cat VERSION)-$(git log -1 --pretty='%h'))
 PRERELEASE=`grep -q dev <<< "${VERSION}" && echo "pre" || echo ""`
 REVISION?=`git log -1 --pretty='%h'`
@@ -20,6 +22,10 @@ export CRI_DOCKERD_LDFLAGS=-ldflags "-s -w -buildid=${REVISION} \
 .PHONY: help
 help: ## show make targets
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {sub("\\\\n",sprintf("\n%22c"," "), $$2);printf " \033[36m%-20s\033[0m  %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+
+.PHONY: cri-dockerd
+cri-dockerd: ## build cri-dockerd
+	GOARCH=$(ARCH) go build -trimpath $(CRI_DOCKERD_LDFLAGS) -o $@
 
 .PHONY: deb
 deb: ## build deb packages
@@ -52,4 +58,5 @@ cross-arm: ## build static packages
 
 .PHONY: clean
 clean: ## clean the build artifacts
+	$(RM) cri-dockerd
 	-$(MAKE) -C $(PACKAGING_DIR) clean

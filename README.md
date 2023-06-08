@@ -33,14 +33,6 @@ and on the Mirantis
 
 To begin following the build process for this code, clone this repository in your local environment:
 
-## To use with Kubernetes
-
-The default network plugin for `cri-dockerd` is set to `cni` on Linux. To change this, `--network-plugin=${plugin}`
-can be passed in as a command line argument if invoked manually, or the systemd unit file
-(`/usr/lib/systemd/system/cri-docker.service` if not enabled yet,
-or `/etc/systemd/system/multi-user.target.wants/cri-docker.service` as a symlink if it is enabled) should be
-edited to add this argument, followed by `systemctl daemon-reload` and restarting the service (if running)
-
 ```shell
 git clone https://github.com/Mirantis/cri-dockerd.git
 ```
@@ -49,33 +41,42 @@ The above step creates a local directory called ```cri-dockerd``` which you will
 
 To build this code (in a POSIX environment):
 
+<https://go.dev/doc/install>
+
 ```shell
 cd cri-dockerd
-mkdir bin
-VERSION=$((git describe --abbrev=0 --tags | sed -e 's/v//') || echo $(cat VERSION)-$(git log -1 --pretty='%h')) PRERELEASE=$(grep -q dev <<< "${VERSION}" && echo "pre" || echo "") REVISION=$(git log -1 --pretty='%h')
-go build -ldflags="-X github.com/Mirantis/cri-dockerd/version.Version='$VERSION}' -X github.com/Mirantis/cri-dockerd/version.PreRelease='$PRERELEASE' -X github.com/Mirantis/cri-dockerd/version.BuildTime='$BUILD_DATE' -X github.com/Mirantis/cri-dockerd/version.GitCommit='$REVISION'" -o cri-dockerd
+make cri-dockerd
 ```
 
 To build for a specific architecture, add `ARCH=` as an argument, where `ARCH` is a known build target for golang
+
+You can find pre-compiled binaries and deb/rpm packages under:
+
+<https://github.com/Mirantis/cri-dockerd/releases>
+
+Where `VERSION` is the latest available cri-dockerd version:
+
+`https://github.com/Mirantis/cri-dockerd/releases/download/v${VERSION}/cri-dockerd-${VERSION}.${ARCH}.tgz`
 
 To install, on a Linux system that uses systemd, and already has Docker Engine installed
 
 ```shell
 # Run these commands as root
-###Install GO###
-wget https://storage.googleapis.com/golang/getgo/installer_linux
-chmod +x ./installer_linux
-./installer_linux
-source ~/.bash_profile
 
 cd cri-dockerd
-mkdir bin
-go build -o bin/cri-dockerd
 mkdir -p /usr/local/bin
-install -o root -g root -m 0755 bin/cri-dockerd /usr/local/bin/cri-dockerd
-cp -a packaging/systemd/* /etc/systemd/system
+install -o root -g root -m 0755 cri-dockerd /usr/local/bin/cri-dockerd
+install packaging/systemd/* /etc/systemd/system
 sed -i -e 's,/usr/bin/cri-dockerd,/usr/local/bin/cri-dockerd,' /etc/systemd/system/cri-docker.service
 systemctl daemon-reload
 systemctl enable cri-docker.service
 systemctl enable --now cri-docker.socket
 ```
+
+## To use with Kubernetes
+
+The default network plugin for `cri-dockerd` is set to `cni` on Linux. To change this, `--network-plugin=${plugin}`
+can be passed in as a command line argument if invoked manually, or the systemd unit file
+(`/usr/lib/systemd/system/cri-docker.service` if not enabled yet,
+or `/etc/systemd/system/multi-user.target.wants/cri-docker.service` as a symlink if it is enabled) should be
+edited to add this argument, followed by `systemctl daemon-reload` and restarting the service (if running)
