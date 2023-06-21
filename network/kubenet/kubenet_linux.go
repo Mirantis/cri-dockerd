@@ -40,12 +40,12 @@ import (
 	utilnet "k8s.io/apimachinery/pkg/util/net"
 	utilsets "k8s.io/apimachinery/pkg/util/sets"
 	utilsysctl "k8s.io/component-helpers/node/util/sysctl"
-	"k8s.io/kubernetes/pkg/util/bandwidth"
 	utiliptables "k8s.io/kubernetes/pkg/util/iptables"
 	utilexec "k8s.io/utils/exec"
 	utilebtables "k8s.io/utils/net/ebtables"
 
 	"github.com/Mirantis/cri-dockerd/network"
+	"github.com/Mirantis/cri-dockerd/network/bandwidth"
 	"github.com/Mirantis/cri-dockerd/network/hostport"
 
 	netutils "k8s.io/utils/net"
