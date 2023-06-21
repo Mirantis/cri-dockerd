@@ -179,7 +179,12 @@ func (d *kubeDockerClient) StartContainer(id string) error {
 func (d *kubeDockerClient) StopContainer(id string, timeout time.Duration) error {
 	ctx, cancel := d.getCustomTimeoutContext(timeout)
 	defer cancel()
-	err := d.client.ContainerStop(ctx, id, &timeout)
+	timeoutSeconds := int(timeout.Seconds())
+	options := dockercontainer.StopOptions{
+		Timeout: &timeoutSeconds,
+	}
+
+	err := d.client.ContainerStop(ctx, id, options)
 	if ctxErr := contextError(ctx); ctxErr != nil {
 		return ctxErr
 	}
