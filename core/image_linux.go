@@ -35,7 +35,7 @@ func (ds *dockerService) ImageFsInfo(
 	_ context.Context,
 	_ *runtimeapi.ImageFsInfoRequest,
 ) (*runtimeapi.ImageFsInfoResponse, error) {
-	info, err := ds.client.Info()
+	info, err := ds.getDockerInfo()
 	if err != nil {
 		logrus.Error(err, "Failed to get docker info")
 		return nil, err

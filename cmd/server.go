@@ -144,6 +144,7 @@ func NewDockerCRICommand(stopCh <-chan struct{}) *cobra.Command {
 
 // RunCriDockerd starts cri-dockerd
 func RunCriDockerd(f *options.DockerCRIFlags, stopCh <-chan struct{}) error {
+	logrus.Infof("Starting %s %s", version.PlatformName, version.FullVersion())
 	r := &f.ContainerRuntimeOptions
 
 	// Initialize docker client configuration.

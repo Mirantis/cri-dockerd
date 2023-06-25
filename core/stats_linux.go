@@ -27,7 +27,7 @@ import (
 )
 
 func (ds *dockerService) getContainerStats(containerID string) (*runtimeapi.ContainerStats, error) {
-	info, err := ds.client.Info()
+	info, err := ds.getDockerInfo()
 	if err != nil {
 		return nil, err
 	}
