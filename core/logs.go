@@ -136,7 +136,7 @@ var criSupportedLogDrivers = []string{"json-file"}
 // IsCRISupportedLogDriver checks whether the logging driver used by docker is
 // supported by native CRI integration.
 func (ds *dockerService) IsCRISupportedLogDriver() (bool, error) {
-	info, err := ds.client.Info()
+	info, err := ds.getDockerInfo()
 	if err != nil {
 		return false, fmt.Errorf("failed to get docker info: %v", err)
 	}

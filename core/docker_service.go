@@ -68,7 +68,9 @@ const (
 
 	// The expiration time of version cache.
 	versionCacheTTL = 60 * time.Second
-	maxMsgSize      = 1024 * 1024 * 16
+	// The expiration time of 'docker info' cache.
+	infoCacheTTL = 60 * time.Second
+	maxMsgSize   = 1024 * 1024 * 16
 
 	defaultCgroupDriver = "cgroupfs"
 )
@@ -214,11 +216,18 @@ func NewDockerService(
 		plug.Name(),
 	)
 
+	ds.infoCache = store.NewObjectCache(
+		func() (interface{}, error) {
+			return ds.client.Info()
+		},
+		infoCacheTTL,
+	)
+
 	// skipping cgroup driver checks for Windows
 	if runtime.GOOS == "linux" {
 		// NOTE: cgroup driver is only detectable in docker 1.11+
 		cgroupDriver := defaultCgroupDriver
-		dockerInfo, err := ds.client.Info()
+		dockerInfo, err := ds.getDockerInfo()
 		logrus.Infof("Docker Info: %+v", dockerInfo)
 		if err != nil {
 			logrus.Error(err, "Failed to execute Info() call to the Docker client")
@@ -242,7 +251,9 @@ func NewDockerService(
 
 	ds.versionCache = store.NewObjectCache(
 		func() (interface{}, error) {
-			return ds.getDockerVersion()
+			v, err := ds.client.Version()
+			fixAPIVersion(v)
+			return v, err
 		},
 		versionCacheTTL,
 	)
@@ -274,6 +285,9 @@ type dockerService struct {
 	// version checking for some operations. Use this cache to avoid querying
 	// the docker daemon every time we need to do such checks.
 	versionCache *store.ObjectCache
+
+	// caches "docker info"
+	infoCache *store.ObjectCache
 
 	// containerCleanupInfos maps container IDs to the `containerCleanupInfo` structs
 	// needed to clean up after containers have been removed.
@@ -326,14 +340,37 @@ func (ds *dockerService) AlphaVersion(
 }
 
 // getDockerVersion gets the version information from docker.
-func (ds *dockerService) getDockerVersion() (*dockertypes.Version, error) {
-	v, err := ds.client.Version()
+func (ds *dockerService) getDockerVersion() (v *dockertypes.Version, err error) {
+	if ds.versionCache != nil {
+		v, err = ds.getDockerVersionFromCache()
+	} else {
+		v, err = ds.client.Version()
+		fixAPIVersion(v)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to get docker version: %v", err)
 	}
-	// Docker API version (e.g., 1.23) is not semver compatible. Add a ".0"
-	// suffix to remedy this.
-	v.APIVersion = fmt.Sprintf("%s.0", v.APIVersion)
+	return v, nil
+}
+
+// fixAPIVersion remedy Docker API version (e.g., 1.23) which is not semver compatible by
+// adding a ".0" suffix
+func fixAPIVersion(v *dockertypes.Version) {
+	if v != nil {
+		v.APIVersion = fmt.Sprintf("%s.0", v.APIVersion)
+	}
+}
+
+// getDockerInfo gets the version information from docker.
+func (ds *dockerService) getDockerInfo() (v *dockertypes.Info, err error) {
+	if ds.versionCache != nil {
+		v, err = ds.getDockerInfoFromCache()
+	} else {
+		v, err = ds.client.Info()
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get docker info: %v", err)
+	}
 	return v, nil
 }
 
@@ -385,7 +422,7 @@ func (ds *dockerService) Status(
 		Status: true,
 	}
 	conditions := []*runtimeapi.RuntimeCondition{runtimeReady, networkReady}
-	if _, err := ds.client.Version(); err != nil {
+	if _, err := ds.getDockerVersion(); err != nil {
 		runtimeReady.Status = false
 		runtimeReady.Reason = "DockerDaemonNotReady"
 		runtimeReady.Message = fmt.Sprintf("docker: failed to get docker version: %v", err)
@@ -475,11 +512,8 @@ func (ds *dockerService) initCleanup() {
 func (ds *dockerService) getDockerAPIVersion() (*semver.Version, error) {
 	var dv *dockertypes.Version
 	var err error
-	if ds.versionCache != nil {
-		dv, err = ds.getDockerVersionFromCache()
-	} else {
-		dv, err = ds.getDockerVersion()
-	}
+
+	dv, err = ds.getDockerVersion()
 	if err != nil {
 		return nil, err
 	}
@@ -501,6 +535,18 @@ func (ds *dockerService) getDockerVersionFromCache() (*dockertypes.Version, erro
 	dv, ok := value.(*dockertypes.Version)
 	if !ok {
 		return nil, fmt.Errorf("converted to *dockertype.Version error")
+	}
+	return dv, nil
+}
+
+func (ds *dockerService) getDockerInfoFromCache() (*dockertypes.Info, error) {
+	value, err := ds.infoCache.Get("info")
+	if err != nil {
+		return nil, err
+	}
+	dv, ok := value.(*dockertypes.Info)
+	if !ok {
+		return nil, fmt.Errorf("converted to *dockertype.Info error")
 	}
 	return dv, nil
 }
