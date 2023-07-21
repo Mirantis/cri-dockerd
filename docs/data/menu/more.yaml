@@ -1,0 +1,13 @@
+---
+more:
+  - name: News
+    ref: "/#"
+    icon: "gdoc_notification"
+  - name: Releases
+    ref: "https://github.com/Mirantis/cri-dockerd/releases"
+    external: true
+    icon: "gdoc_download"
+  - name: "View Source"
+    ref: "https://github.com/Mirantis/cri-dockerd"
+    external: true
+    icon: "gdoc_github"

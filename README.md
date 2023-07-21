@@ -90,6 +90,10 @@ You can then run it directly or install it using the manual process above.
 To build for a specific architecture, add `ARCH=` as an argument, where `ARCH`
 is a known build target for Go.
 
+```shell
+ARCH=amd64 make cri-dockerd
+```
+
 ### Development Setup
 
 When developing, it is nice to have a separate environment to test in so that
@@ -117,3 +121,20 @@ by running:
 make dev
 ```
 
+## Docs
+
+This folder contains the files used to generate the `cri-dockeerd` documentation.
+
+The docs are generated using [Hugo](https://gohugo.io/) and the [Geekdocs](https://themes.gohugo.io/hugo-geekdoc/) theme.
+
+### Editing Docs
+
+The docs can be ran locally with hot-reloading to make editing easier. To do so,
+run the following command in the project's root directory:
+
+```bash
+make docs
+```
+
+This will launch the development server that is included with Hugo. You can then
+access the docs at http://localhost:1313/
