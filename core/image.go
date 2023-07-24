@@ -29,8 +29,10 @@ import (
 
 	"github.com/sirupsen/logrus"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
+	"k8s.io/kubernetes/pkg/credentialprovider"
 
 	"github.com/Mirantis/cri-dockerd/libdocker"
+	"github.com/Mirantis/cri-dockerd/utils"
 )
 
 // This file implements methods in ImageManagerService.
@@ -122,13 +124,44 @@ func (ds *dockerService) PullImage(
 		authConfig.ServerAddress = auth.ServerAddress
 		authConfig.IdentityToken = auth.IdentityToken
 		authConfig.RegistryToken = auth.RegistryToken
-	}
-	err := ds.client.PullImage(image.Image,
-		authConfig,
-		dockertypes.ImagePullOptions{},
-	)
-	if err != nil {
-		return nil, filterHTTPError(err, image.Image)
+
+		err := ds.client.PullImage(image.Image,
+			authConfig,
+			dockertypes.ImagePullOptions{},
+		)
+		if err != nil {
+			return nil, filterHTTPError(err, image.Image)
+		}
+	} else {
+		repoToPull, _, _, err := utils.ParseImageName(image.Image)
+		if err != nil {
+			return nil, err
+		}
+
+		keyring := credentialprovider.NewDockerKeyring()
+		creds, withCredentials := keyring.Lookup(repoToPull)
+
+		if withCredentials {
+			var err error
+			for _, currentCreds := range creds {
+				authConfigWithCreds := dockertypes.AuthConfig(currentCreds)
+				err = ds.client.PullImage(image.Image, authConfigWithCreds, dockertypes.ImagePullOptions{})
+				if err == nil {
+					break
+				}
+			}
+			if err != nil {
+				return nil, filterHTTPError(err, image.Image)
+			}
+		} else {
+			err := ds.client.PullImage(image.Image,
+				authConfig,
+				dockertypes.ImagePullOptions{},
+			)
+			if err != nil {
+				return nil, filterHTTPError(err, image.Image)
+			}
+		}
 	}
 
 	imageRef, err := getImageRef(ds.client, image.Image)
