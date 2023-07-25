@@ -13,6 +13,10 @@ disablePathToLower = true
 # Required if you want to render robots.txt template
 enableRobotsTXT = true
 
+# This done to ignore errors when fetching MD from github API
+# The file may not exist yet on master but we still want to be able to preview locally
+ignoreErrors = ["error-remote-getjson"]
+
 [params]
 # Adds the edit page links
 geekdocRepo = "https://github.com/Mirantis/cri-dockerd"
@@ -32,3 +36,4 @@ geekdocBreadcrumb = false
 
 [taxonomies]
    tag = "tags"
+

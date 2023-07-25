@@ -1,3 +1,5 @@
+![docker and kubernetes interact](docs/static/logo.svg)
+
 # cri-dockerd
 
 This adapter provides a shim for [Docker Engine](https://docs.docker.com/engine/)

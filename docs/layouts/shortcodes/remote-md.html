@@ -1,0 +1,6 @@
+{{ $apiFile := .Get 0 }}
+{{ with $json := getJSON $apiFile }}
+  {{ $json.content | base64Decode | markdownify }}
+{{ else }}
+    {{ warnf "Retrieving JSON failed" }}
+{{ end }}

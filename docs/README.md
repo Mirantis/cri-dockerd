@@ -1,7 +1,3 @@
-# Docs
-
-This folder contains the files used to generate the `cri-dockeerd` documentation.
-
 The docs are generated using [Hugo](https://gohugo.io/) and the [Geekdocs](https://themes.gohugo.io/hugo-geekdoc/) theme.
 
 ## How to generate the documentation
