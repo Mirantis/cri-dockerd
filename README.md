@@ -56,6 +56,37 @@ somewhere in your `PATH` and setup a service to run it. The following command is
 a manual install for a Linux system using systemd:
 
 ```shell
+git clone https://github.com/Mirantis/cri-dockerd.git
+```
+
+The above step creates a local directory called `cri-dockerd` which you will need for the following steps.
+
+To build this code (in a POSIX environment):
+
+<https://go.dev/doc/install>
+
+```shell
+cd cri-dockerd
+make cri-dockerd
+```
+
+To build for a specific architecture, add `ARCH=` as an argument, where `ARCH` is a known build target for golang
+
+You can find pre-compiled binaries and deb/rpm packages under:
+
+<https://github.com/Mirantis/cri-dockerd/releases>
+
+Where `VERSION` is the latest available cri-dockerd version:
+
+`https://github.com/Mirantis/cri-dockerd/releases/download/v${VERSION}/cri-dockerd-${VERSION}.${ARCH}.tgz`
+
+To install, on a Linux system that uses systemd, and already has Docker Engine installed
+
+```shell
+# Run these commands as root
+
+cd cri-dockerd
+mkdir -p /usr/local/bin
 install -o root -g root -m 0755 cri-dockerd /usr/local/bin/cri-dockerd
 install packaging/systemd/* /etc/systemd/system
 sed -i -e 's,/usr/bin/cri-dockerd,/usr/local/bin/cri-dockerd,' /etc/systemd/system/cri-docker.service
@@ -125,7 +156,7 @@ make dev
 
 ## Docs
 
-This folder contains the files used to generate the `cri-dockeerd` documentation.
+This folder contains the files used to generate the `cri-dockerd` documentation.
 
 The docs are generated using [Hugo](https://gohugo.io/) and the [Geekdocs](https://themes.gohugo.io/hugo-geekdoc/) theme.
 
