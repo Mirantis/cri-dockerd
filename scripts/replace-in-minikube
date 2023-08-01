@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# This script will swap out the cri-dockerd binary in an already running minikube
+
+minikube cp cri-dockerd /home/docker/cri-dockerd
+minikube ssh -- 'sudo chmod +x /home/docker/cri-dockerd'
+minikube ssh -- 'sudo systemctl stop cri-docker'
+minikube ssh -- 'sudo mv /home/docker/cri-dockerd /usr/bin/cri-dockerd'
+minikube ssh -- 'sudo systemctl start cri-docker'
