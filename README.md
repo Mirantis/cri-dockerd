@@ -10,8 +10,7 @@ For users running `0.2.5` or above, the default network plugin is `cni`. Kuberne
 other network plumbing from upstream as part of the `dockershim` removal/deprecation. In order for a cluster to become
 operational, Calico, Flannel, Weave, or another CNI should be used.
 
-For CI workflows, basic functionality can be provided via [`containernetworking/plugins`](
-https://github.com/containernetworking/plugins).
+For CI workflows, basic functionality can be provided via [`containernetworking/plugins`](https://github.com/containernetworking/plugins).
 
 ## Motivation
 
@@ -29,54 +28,92 @@ tool in [Don't Panic: Kubernetes and Docker](https://blog.k8s.io/2020/12/02/dont
 and on the Mirantis
 [blog](https://www.mirantis.com/blog/mirantis-to-take-over-support-of-kubernetes-dockershim-2/).
 
-## Build and install
+## Using cri-dockerd
 
-To begin following the build process for this code, clone this repository in your local environment:
+### Install
 
-```shell
-git clone https://github.com/Mirantis/cri-dockerd.git
-```
+The easiest way to install `cri-dockerd` is to use one of the pre-built binaries or
+packages from the [releases page](https://github.com/Mirantis/cri-dockerd/releases).
+There are numerous supported platforms and using a pre-built package will install
+the binary and setup your system to run it as a service.
 
-The above step creates a local directory called ```cri-dockerd``` which you will need for the following steps.
+Please refer to your platform's documentation for how to install a package for
+additional help with these.
 
-To build this code (in a POSIX environment):
+## Advanced Setup
 
-<https://go.dev/doc/install>
+### Installing manually
 
-```shell
-cd cri-dockerd
-make cri-dockerd
-```
+> Note: the release packages will install to /usr/bin which is reserved for
+> binaries managed by a package manager. Manual installation doesn't involve a
+> package manager and thus uses /usr/local/bin and the service file must be edited
+> to reflect this.
 
-To build for a specific architecture, add `ARCH=` as an argument, where `ARCH` is a known build target for golang
-
-You can find pre-compiled binaries and deb/rpm packages under:
-
-<https://github.com/Mirantis/cri-dockerd/releases>
-
-Where `VERSION` is the latest available cri-dockerd version:
-
-`https://github.com/Mirantis/cri-dockerd/releases/download/v${VERSION}/cri-dockerd-${VERSION}.${ARCH}.tgz`
-
-To install, on a Linux system that uses systemd, and already has Docker Engine installed
+If you would like to install the project manually, you will need to place the binary
+somewhere in your `PATH` and setup a service to run it. The following command is
+a manual install for a Linux system using systemd:
 
 ```shell
-# Run these commands as root
-
-cd cri-dockerd
-mkdir -p /usr/local/bin
 install -o root -g root -m 0755 cri-dockerd /usr/local/bin/cri-dockerd
 install packaging/systemd/* /etc/systemd/system
 sed -i -e 's,/usr/bin/cri-dockerd,/usr/local/bin/cri-dockerd,' /etc/systemd/system/cri-docker.service
 systemctl daemon-reload
-systemctl enable cri-docker.service
 systemctl enable --now cri-docker.socket
 ```
 
-## To use with Kubernetes
+### To use with Kubernetes
 
 The default network plugin for `cri-dockerd` is set to `cni` on Linux. To change this, `--network-plugin=${plugin}`
 can be passed in as a command line argument if invoked manually, or the systemd unit file
 (`/usr/lib/systemd/system/cri-docker.service` if not enabled yet,
 or `/etc/systemd/system/multi-user.target.wants/cri-docker.service` as a symlink if it is enabled) should be
 edited to add this argument, followed by `systemctl daemon-reload` and restarting the service (if running)
+
+## Development
+
+### Building
+
+If you would like to build the project yourself, you will need to have Go installed.
+You can find directions for installing the latest version on its website:
+
+[Install the latest version of Go](https://golang.org/doc/install)
+
+Once you have Go installed, you can build the project by running the following command:
+
+```shell
+make cri-dockerd
+```
+
+This will output the binary to the project's root directory as `cri-dockerd`.
+You can then run it directly or install it using the manual process above.
+
+To build for a specific architecture, add `ARCH=` as an argument, where `ARCH`
+is a known build target for Go.
+
+### Development Setup
+
+When developing, it is nice to have a separate environment to test in so that
+you don't have to worry about breaking your system. An easy way to do this is
+by setting up a minikube cluster since it uses `cri-dockerd` by default. You can
+grab the latest version from their repo's releases page:
+
+> You must grab the latest release from their release's page. The version
+> installed by their [Getting Started](https://minikube.sigs.k8s.io/docs/start/)
+> page is not compatible with the latest version of `cri-dockerd`.
+
+[Install the latest version of minikube](https://github.com/kubernetes/minikube/releases)
+
+You'll then be able to create a cluster in minikube's VM by running:
+
+```shell
+minikube start
+```
+
+Once the cluster is up, we have a `make` command that will build `cri-dockerd`
+and swap it out for the version running in the cluster. You can run this command
+by running:
+
+```shell
+make dev
+```
+
