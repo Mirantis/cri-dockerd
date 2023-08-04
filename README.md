@@ -96,11 +96,15 @@ systemctl enable --now cri-docker.socket
 
 ### To use with Kubernetes
 
-The default network plugin for `cri-dockerd` is set to `cni` on Linux. To change this, `--network-plugin=${plugin}`
-can be passed in as a command line argument if invoked manually, or the systemd unit file
-(`/usr/lib/systemd/system/cri-docker.service` if not enabled yet,
-or `/etc/systemd/system/multi-user.target.wants/cri-docker.service` as a symlink if it is enabled) should be
-edited to add this argument, followed by `systemctl daemon-reload` and restarting the service (if running)
+The default network plugin for `cri-dockerd` is set to `cni` on Linux. There are
+a few ways to change this depending on how you are running the binary.
+
+`--network-plugin=${plugin}` can be passed in as a command line argument when
+ - running the binary directly
+ - adding to `/usr/lib/systemd/system/cri-docker.service` if a service isn't enabled
+ - adding to `/etc/systemd/system/multi-user.target.wants/cri-docker.service` if a service is enabled
+
+Run `systemctl daemon-reload` to restart the service if it was already running.
 
 ## Development
 
@@ -131,14 +135,9 @@ ARCH=amd64 make cri-dockerd
 
 When developing, it is nice to have a separate environment to test in so that
 you don't have to worry about breaking your system. An easy way to do this is
-by setting up a minikube cluster since it uses `cri-dockerd` by default. You can
-grab the latest version from their repo's releases page:
-
-> You must grab the latest release from their release's page. The version
-> installed by their [Getting Started](https://minikube.sigs.k8s.io/docs/start/)
-> page is not compatible with the latest version of `cri-dockerd`.
-
-[Install the latest version of minikube](https://github.com/kubernetes/minikube/releases)
+by setting up a minikube cluster since it uses `cri-dockerd` by default. Follow
+the [minikube installation instructions](https://minikube.sigs.k8s.io/docs/start/)
+to get it installed.
 
 You'll then be able to create a cluster in minikube's VM by running:
 
