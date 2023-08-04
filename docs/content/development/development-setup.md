@@ -4,14 +4,9 @@ weight: 2
 
 When developing, it is nice to have a separate environment to test in so that
 you don't have to worry about breaking your system. An easy way to do this is
-by setting up a minikube cluster since it uses `cri-dockerd` by default. You can
-grab the latest version from their repo's releases page:
-
-> You must grab the latest release from their release's page. The version
-> installed by their [Getting Started](https://minikube.sigs.k8s.io/docs/start/)
-> page is not compatible with the latest version of `cri-dockerd`.
-
-[Install the latest version of minikube](https://github.com/kubernetes/minikube/releases)
+by setting up a minikube cluster since it uses `cri-dockerd` by default. Follow
+the [minikube installation instructions](https://minikube.sigs.k8s.io/docs/start/)
+to get it installed.
 
 You'll then be able to create a cluster in minikube's VM by running:
 
