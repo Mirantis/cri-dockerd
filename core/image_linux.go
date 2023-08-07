@@ -41,7 +41,7 @@ func (ds *dockerService) ImageFsInfo(
 		return nil, err
 	}
 
-	bytes, inodes, err := dirSize(filepath.Join(info.DockerRootDir, "image"))
+	bytes, inodes, err := dirSize(filepath.Join(info.DockerRootDir, info.Driver))
 	if err != nil {
 		return nil, err
 	}
