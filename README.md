@@ -1,3 +1,5 @@
+![docker and kubernetes interact](docs/static/logo.svg)
+
 # cri-dockerd
 
 This adapter provides a shim for [Docker Engine](https://docs.docker.com/engine/)
@@ -54,6 +56,37 @@ somewhere in your `PATH` and setup a service to run it. The following command is
 a manual install for a Linux system using systemd:
 
 ```shell
+git clone https://github.com/Mirantis/cri-dockerd.git
+```
+
+The above step creates a local directory called `cri-dockerd` which you will need for the following steps.
+
+To build this code (in a POSIX environment):
+
+<https://go.dev/doc/install>
+
+```shell
+cd cri-dockerd
+make cri-dockerd
+```
+
+To build for a specific architecture, add `ARCH=` as an argument, where `ARCH` is a known build target for golang
+
+You can find pre-compiled binaries and deb/rpm packages under:
+
+<https://github.com/Mirantis/cri-dockerd/releases>
+
+Where `VERSION` is the latest available cri-dockerd version:
+
+`https://github.com/Mirantis/cri-dockerd/releases/download/v${VERSION}/cri-dockerd-${VERSION}.${ARCH}.tgz`
+
+To install, on a Linux system that uses systemd, and already has Docker Engine installed
+
+```shell
+# Run these commands as root
+
+cd cri-dockerd
+mkdir -p /usr/local/bin
 install -o root -g root -m 0755 cri-dockerd /usr/local/bin/cri-dockerd
 install packaging/systemd/* /etc/systemd/system
 sed -i -e 's,/usr/bin/cri-dockerd,/usr/local/bin/cri-dockerd,' /etc/systemd/system/cri-docker.service
@@ -63,11 +96,15 @@ systemctl enable --now cri-docker.socket
 
 ### To use with Kubernetes
 
-The default network plugin for `cri-dockerd` is set to `cni` on Linux. To change this, `--network-plugin=${plugin}`
-can be passed in as a command line argument if invoked manually, or the systemd unit file
-(`/usr/lib/systemd/system/cri-docker.service` if not enabled yet,
-or `/etc/systemd/system/multi-user.target.wants/cri-docker.service` as a symlink if it is enabled) should be
-edited to add this argument, followed by `systemctl daemon-reload` and restarting the service (if running)
+The default network plugin for `cri-dockerd` is set to `cni` on Linux. There are
+a few ways to change this depending on how you are running the binary.
+
+`--network-plugin=${plugin}` can be passed in as a command line argument when
+ - running the binary directly
+ - adding to `/usr/lib/systemd/system/cri-docker.service` if a service isn't enabled
+ - adding to `/etc/systemd/system/multi-user.target.wants/cri-docker.service` if a service is enabled
+
+Run `systemctl daemon-reload` to restart the service if it was already running.
 
 ## Development
 
@@ -90,18 +127,17 @@ You can then run it directly or install it using the manual process above.
 To build for a specific architecture, add `ARCH=` as an argument, where `ARCH`
 is a known build target for Go.
 
+```shell
+ARCH=amd64 make cri-dockerd
+```
+
 ### Development Setup
 
 When developing, it is nice to have a separate environment to test in so that
 you don't have to worry about breaking your system. An easy way to do this is
-by setting up a minikube cluster since it uses `cri-dockerd` by default. You can
-grab the latest version from their repo's releases page:
-
-> You must grab the latest release from their release's page. The version
-> installed by their [Getting Started](https://minikube.sigs.k8s.io/docs/start/)
-> page is not compatible with the latest version of `cri-dockerd`.
-
-[Install the latest version of minikube](https://github.com/kubernetes/minikube/releases)
+by setting up a minikube cluster since it uses `cri-dockerd` by default. Follow
+the [minikube installation instructions](https://minikube.sigs.k8s.io/docs/start/)
+to get it installed.
 
 You'll then be able to create a cluster in minikube's VM by running:
 
@@ -117,3 +153,20 @@ by running:
 make dev
 ```
 
+## Docs
+
+This folder contains the files used to generate the `cri-dockerd` documentation.
+
+The docs are generated using [Hugo](https://gohugo.io/) and the [Geekdocs](https://themes.gohugo.io/hugo-geekdoc/) theme.
+
+### Editing Docs
+
+The docs can be ran locally with hot-reloading to make editing easier. To do so,
+run the following command in the project's root directory:
+
+```bash
+make docs
+```
+
+This will launch the development server that is included with Hugo. You can then
+access the docs at http://localhost:1313/

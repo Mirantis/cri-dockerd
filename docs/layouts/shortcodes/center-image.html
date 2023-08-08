@@ -1,0 +1,14 @@
+{{ $src := .Get "src" }}
+
+<div class="center">
+  <img
+    src="{{ $src }}"
+    decoding="async"
+  />
+</div>
+
+style {
+  .center {
+    text-align: center;
+  }
+}

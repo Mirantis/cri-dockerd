@@ -1,0 +1,39 @@
+baseURL = "/"
+title = "cri-dockerd"
+theme = "geekdoc"
+
+
+pluralizeListTitles = false
+
+# Geekdoc required configuration
+pygmentsUseClasses = true
+pygmentsCodeFences = true
+disablePathToLower = true
+
+# Required if you want to render robots.txt template
+enableRobotsTXT = true
+
+# This done to ignore errors when fetching MD from github API
+# The file may not exist yet on master but we still want to be able to preview locally
+ignoreErrors = ["error-remote-getjson"]
+
+[params]
+# Adds the edit page links
+geekdocRepo = "https://github.com/Mirantis/cri-dockerd"
+geekdocEditPath = "edit/master/docs"
+
+
+geekdocBreadcrumb = false
+
+# Needed for mermaid shortcodes
+[markup]
+  [markup.goldmark.renderer]
+    # Needed for mermaid shortcode
+    unsafe = true
+  [markup.tableOfContents]
+    startLevel = 1
+    endLevel = 9
+
+[taxonomies]
+   tag = "tags"
+

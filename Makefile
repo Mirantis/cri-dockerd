@@ -97,3 +97,7 @@ release: static-linux deb rpm cross-arm cross-mac cross-win ## build the release
 .PHONY: dev
 dev: cri-dockerd ## Run cri-docker in a running minikube
 	./scripts/replace-in-minikube
+.PHONY: docs
+docs:
+	hugo server --source docs/
+
