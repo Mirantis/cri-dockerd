@@ -18,6 +18,7 @@ package core
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -29,6 +30,7 @@ import (
 
 	"github.com/armon/circbuf"
 	dockertypes "github.com/docker/docker/api/types"
+	"github.com/nxadm/tail"
 
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
@@ -221,4 +223,75 @@ func (ds *dockerService) removeContainerLogSymlink(containerID string) error {
 		}
 	}
 	return nil
+}
+
+// createCRIFormattedContainerLog reads the container log from docker and outputs
+// it in the CRI format for kube
+func (ds *dockerService) createCRIFormattedContainerLog(containerID string) error {
+	kubePath, dockerPath, err := ds.getContainerLogPath(containerID)
+	if err != nil {
+		return fmt.Errorf("failed to get container %q log path: %v", containerID, err)
+	}
+
+	if kubePath == "" {
+		logrus.Debugf("Container log path for Container ID %s isn't specified, will not create kubepath", containerID)
+		return nil
+	}
+
+	logrus.Infof("Creating CRI formatted container log at %s", kubePath)
+
+	go func() {
+		_, err = os.Create(kubePath)
+		if err != nil {
+			logrus.Infof("Failed to create kube log file %s: %v", kubePath, err)
+			panic(err)
+		}
+
+		// Open the kube file for output
+		kubeFile, err := os.OpenFile(kubePath, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+		if err != nil {
+			logrus.Infof("Failed to open kube log file %s: %v", kubePath, err)
+			panic(err)
+		}
+		defer kubeFile.Close()
+
+		// Make sure the docker file exists
+		_, err = os.Create(dockerPath)
+		if err != nil {
+			logrus.Infof("Failed to create docker log file %s: %v", dockerPath, err)
+			panic(err)
+		}
+
+		// Tail the docker file for input
+		t, err := tail.TailFile(dockerPath, tail.Config{
+			Follow: true,
+			ReOpen: true})
+		if err != nil {
+			logrus.Infof("Failed to tail docker log file %s: %v", dockerPath, err)
+			panic(err)
+		}
+
+		// Watch for changes to be copied over
+		for line := range t.Lines {
+			logLine := Log{}
+			json.Unmarshal([]byte(line.Text), &logLine)
+
+			if _, err = kubeFile.WriteString(logLine.CRIFormat()); err != nil {
+				panic(err)
+			}
+		}
+	}()
+
+	return nil
+}
+
+type Log struct {
+	Log    string    `json:"log"`
+	Stream string    `json:"stream"`
+	Time   time.Time `json:"time"`
+}
+
+// CRIFormat returns the log in the CRI format
+func (l Log) CRIFormat() string {
+	return fmt.Sprintf("%s %s %s", l.Time.String(), l.Stream, l.Log)
 }

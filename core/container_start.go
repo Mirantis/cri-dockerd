@@ -19,6 +19,7 @@ package core
 import (
 	"context"
 	"fmt"
+
 	v1 "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
@@ -30,7 +31,7 @@ func (ds *dockerService) StartContainer(
 	err := ds.client.StartContainer(r.ContainerId)
 
 	// Create container log symlink for all containers (including failed ones).
-	if linkError := ds.createContainerLogSymlink(r.ContainerId); linkError != nil {
+	if linkError := ds.createCRIFormattedContainerLog(r.ContainerId); linkError != nil {
 		// Do not stop the container if we failed to create symlink because:
 		//   1. This is not a critical failure.
 		//   2. We don't have enough information to properly stop container here.
