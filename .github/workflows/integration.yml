@@ -2,16 +2,15 @@ name: Integration Tests
 
 on:
   push:
-    branches: [ master ]
+    branches: [master]
   pull_request:
-    branches: [ master ]
+    branches: [master]
 
 jobs:
   integration:
     runs-on: ubuntu-20.04
     timeout-minutes: 60
     steps:
-
       - name: Set up Go 1.19.10
         uses: actions/setup-go@v1
         with:
@@ -70,7 +69,6 @@ jobs:
         with:
           repository: kubernetes-sigs/cri-tools
           path: src/sigs.k8s.io/cri-tools
-          ref: e3c99451faee42de2fcf4568bdd81be8bb29e40f
 
       - name: Build cri-tools
         working-directory: src/sigs.k8s.io/cri-tools

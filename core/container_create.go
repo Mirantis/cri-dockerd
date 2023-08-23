@@ -116,7 +116,7 @@ func (ds *dockerService) CreateContainer(
 	hc.Resources.Devices = devices
 
 	securityOpts, err := ds.getSecurityOpts(
-		config.GetLinux().GetSecurityContext().GetSeccompProfilePath(),
+		config.GetLinux().GetSecurityContext().GetSeccomp(),
 		securityOptSeparator,
 	)
 	if err != nil {
