@@ -94,10 +94,19 @@ release: static-linux deb rpm cross-arm cross-mac cross-win ## build the release
 	# linux
 	cp $(PACKAGING_DIR)/static/build/linux/cri-dockerd-$(VERSION).tgz $(RELEASE_DIR)/cri-dockerd-$(VERSION).amd64.tgz
 
+.PHONY: run
+run: cri-dockerd ## Run cri-docker in a running minikube
+	sudo ./cri-dockerd --log-level debug --network-plugin=""
+
 .PHONY: dev
 dev: cri-dockerd ## Run cri-docker in a running minikube
 	./scripts/replace-in-minikube
+
 .PHONY: docs
 docs:
 	hugo server --source docs/
+
+.PHONY: integration
+integration:
+	sudo critest -runtime-endpoint=unix:///var/run/cri-dockerd.sock -ginkgo.skip="runtime should support apparmor|runtime should support reopening container log|runtime should support execSync with timeout|runtime should support selinux|.*should support propagation.*"
 
