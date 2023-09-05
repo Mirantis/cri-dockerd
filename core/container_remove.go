@@ -19,10 +19,11 @@ package core
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/Mirantis/cri-dockerd/libdocker"
 	"github.com/docker/docker/api/types"
 	v1 "k8s.io/cri-api/pkg/apis/runtime/v1"
-	"time"
 )
 
 // RemoveContainer removes the container.

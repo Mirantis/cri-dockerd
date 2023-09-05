@@ -226,6 +226,7 @@ func convertFakeContainer(f *FakeContainer) *dockertypes.ContainerJSON {
 	if f.HostConfig == nil {
 		f.HostConfig = &dockercontainer.HostConfig{}
 	}
+	fakeRWSize := int64(40)
 	return &dockertypes.ContainerJSON{
 		ContainerJSONBase: &dockertypes.ContainerJSONBase{
 			ID:    f.ID,
@@ -240,6 +241,7 @@ func convertFakeContainer(f *FakeContainer) *dockertypes.ContainerJSON {
 			},
 			Created:    dockerTimestampToString(f.CreatedAt),
 			HostConfig: f.HostConfig,
+			SizeRw:     &fakeRWSize,
 		},
 		Config:          f.Config,
 		NetworkSettings: &dockertypes.NetworkSettings{},

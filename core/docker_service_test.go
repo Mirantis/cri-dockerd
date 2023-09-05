@@ -102,17 +102,12 @@ func newTestDockerService() (*dockerService, *libdocker.FakeDockerClient, *clock
 		network:           pm,
 		checkpointManager: ckm,
 		networkReady:      make(map[string]bool),
+		dockerRootDir:     "/docker/root/dir",
 	}, c, fakeClock
 }
 
 func newTestDockerServiceWithVersionCache() (*dockerService, *libdocker.FakeDockerClient, *clock.FakeClock) {
 	ds, c, fakeClock := newTestDockerService()
-	ds.versionCache = store.NewObjectCache(
-		func() (interface{}, error) {
-			return ds.getDockerVersion()
-		},
-		time.Hour*10,
-	)
 	return ds, c, fakeClock
 }
 
