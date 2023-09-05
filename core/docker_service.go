@@ -361,9 +361,9 @@ func fixAPIVersion(v *dockertypes.Version) {
 	}
 }
 
-// getDockerInfo gets the version information from docker.
+// getDockerInfo gets the information of "docker info".
 func (ds *dockerService) getDockerInfo() (v *dockertypes.Info, err error) {
-	if ds.versionCache != nil {
+	if ds.infoCache != nil {
 		v, err = ds.getDockerInfoFromCache()
 	} else {
 		v, err = ds.client.Info()
