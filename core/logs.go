@@ -18,6 +18,7 @@ package core
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -26,6 +27,7 @@ import (
 	"time"
 
 	"github.com/Mirantis/cri-dockerd/config"
+	"github.com/nxadm/tail"
 
 	"github.com/armon/circbuf"
 	dockertypes "github.com/docker/docker/api/types"
@@ -85,6 +87,7 @@ func (ds *dockerService) GetContainerLogs(
 		stderr = SharedLimitWriter(stderr, &max)
 		stdout = SharedLimitWriter(stdout, &max)
 	}
+
 	sopts := libdocker.StreamOptions{
 		OutputStream: stdout,
 		ErrorStream:  stderr,
@@ -155,6 +158,7 @@ func (ds *dockerService) getContainerLogPath(containerID string) (string, string
 	if err != nil {
 		return "", "", fmt.Errorf("failed to inspect container %q: %v", containerID, err)
 	}
+
 	return info.Config.Labels[containerLogPathLabelKey], info.LogPath, nil
 }
 
@@ -221,4 +225,105 @@ func (ds *dockerService) removeContainerLogSymlink(containerID string) error {
 		}
 	}
 	return nil
+}
+
+// createContainerKubeLogFile creates the kube log file for docker container log.
+func (ds *dockerService) createContainerKubeLogFile(containerID string) error {
+	kubePath, dockerPath, err := ds.getContainerLogPath(containerID)
+	if err != nil {
+		return fmt.Errorf("failed to get container %q log path: %v", containerID, err)
+	}
+
+	if kubePath == "" {
+		logrus.Debugf("Container log path for Container ID %s isn't specified, will not create kubepath", containerID)
+		return nil
+	}
+
+	if dockerPath != "" {
+		// Only create the kube log file when container log path is specified and log file exists.
+		// Delete possibly existing file first
+		if err = ds.os.Remove(kubePath); err == nil {
+			logrus.Debugf("Deleted previously existing kube log file: %s", kubePath)
+		}
+
+		_, err = os.Create(kubePath)
+		if err != nil {
+			return fmt.Errorf(
+				"failed to create the kube log file %q to the container log file %q for container %q: %v",
+				kubePath,
+				dockerPath,
+				containerID,
+				err,
+			)
+
+		}
+
+		go func() {
+			// Open the kube file for output
+			kubeFile, err := os.OpenFile(kubePath, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+			if err != nil {
+				logrus.Errorf(
+					"failed to open kube log file %s: %v",
+					kubePath,
+					err,
+				)
+				panic(err)
+			}
+			defer kubeFile.Close()
+
+			// Tail the docker file for input
+			t, err := tail.TailFile(dockerPath, tail.Config{
+				Follow: true,
+				ReOpen: true})
+			if err != nil {
+				logrus.Errorf(
+					"failed to tail docker log file %s: %v",
+					dockerPath,
+					err,
+				)
+				panic(err)
+			}
+			// Watch for changes to be copied over
+			for line := range t.Lines {
+				logLine := Log{}
+				json.Unmarshal([]byte(line.Text), &logLine)
+
+				_, err := kubeFile.WriteString(logLine.CRIFormat())
+				if err != nil {
+					logrus.Errorf(
+						"failed to write to kube log file %s: %v",
+						kubePath,
+						err,
+					)
+					return
+				}
+			}
+		}()
+	} else {
+		supported, err := ds.IsCRISupportedLogDriver()
+		if err != nil {
+			logrus.Errorf("Failed to check supported logging driver for CRI: %v", err)
+			return nil
+		}
+
+		if supported {
+			logrus.Info("Cannot create kube log file because container log file doesn't exist!")
+		} else {
+			logrus.Debug("Unsupported logging driver by CRI")
+		}
+	}
+
+	return nil
+}
+
+type Log struct {
+	Log    string    `json:"log"`
+	Stream string    `json:"stream"`
+	Flags  string    `json:"flags"`
+	Time   time.Time `json:"time"`
+}
+
+// CRIFormat returns the log in the CRI format
+func (l Log) CRIFormat() string {
+	return fmt.Sprintf("%s %s %s %s", l.Time.Format(time.RFC3339), l.Stream, l.Flags, l.Log)
 }
