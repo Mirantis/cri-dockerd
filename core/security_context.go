@@ -31,7 +31,6 @@ import (
 	dockercontainer "github.com/docker/docker/api/types/container"
 
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
-	v1 "k8s.io/cri-api/pkg/apis/runtime/v1"
 
 	knetwork "github.com/Mirantis/cri-dockerd/network"
 )
@@ -250,20 +249,20 @@ func modifyHostOptionsForContainer(
 	}
 }
 
-func getSeccompDockerOpts(seccomp *v1.SecurityProfile) ([]DockerOpt, error) {
+func getSeccompDockerOpts(seccomp *runtimeapi.SecurityProfile) ([]DockerOpt, error) {
 
-	if seccomp == nil || seccomp.GetProfileType() == v1.SecurityProfile_Unconfined {
+	if seccomp == nil || seccomp.GetProfileType() == runtimeapi.SecurityProfile_Unconfined {
 		// return early the default
 		return defaultSeccompOpt, nil
 	}
 
-	if seccomp.GetProfileType() == v1.SecurityProfile_RuntimeDefault ||
+	if seccomp.GetProfileType() == runtimeapi.SecurityProfile_RuntimeDefault ||
 		seccomp.GetProfileType().String() == config.DeprecatedSeccompProfileDockerDefault {
 		// return nil so docker will load the default seccomp profile
 		return nil, nil
 	}
 
-	if seccomp.GetProfileType() != v1.SecurityProfile_Localhost {
+	if seccomp.GetProfileType() != runtimeapi.SecurityProfile_Localhost {
 		return nil, fmt.Errorf("unknown seccomp profile option: %s", seccomp)
 	}
 
@@ -292,7 +291,7 @@ func getSeccompDockerOpts(seccomp *v1.SecurityProfile) ([]DockerOpt, error) {
 
 // getSeccompSecurityOpts gets container seccomp options from container seccomp profile.
 // It is an experimental feature and may be promoted to official runtime api in the future.
-func getSeccompSecurityOpts(seccompProfile *v1.SecurityProfile, separator rune) ([]string, error) {
+func getSeccompSecurityOpts(seccompProfile *runtimeapi.SecurityProfile, separator rune) ([]string, error) {
 	seccompOpts, err := getSeccompDockerOpts(seccompProfile)
 	if err != nil {
 		return nil, err
