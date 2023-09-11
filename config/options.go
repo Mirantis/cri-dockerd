@@ -17,8 +17,6 @@ limitations under the License.
 package config
 
 import (
-	"fmt"
-
 	"github.com/spf13/pflag"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -106,38 +104,32 @@ func (s *ContainerRuntimeOptions) AddFlags(fs *pflag.FlagSet) {
 		&s.PodSandboxImage,
 		"pod-infra-container-image",
 		s.PodSandboxImage,
-		fmt.Sprintf("The image whose network/ipc namespaces containers in each pod will use"),
+		"The image whose network/ipc namespaces containers in each pod will use",
 	)
 	fs.StringVar(
 		&s.DockerEndpoint,
 		"docker-endpoint",
 		s.DockerEndpoint,
-		fmt.Sprintf("Use this for the docker endpoint to communicate with."),
+		"Use this for the docker endpoint to communicate with.",
 	)
 	fs.DurationVar(
 		&s.ImagePullProgressDeadline.Duration,
 		"image-pull-progress-deadline",
 		s.ImagePullProgressDeadline.Duration,
-		fmt.Sprintf(
-			"If no pulling progress is made before this deadline, the image pulling will be cancelled.",
-		),
+		"If no pulling progress is made before this deadline, the image pulling will be cancelled.",
 	)
 	fs.DurationVar(
 		&s.RuntimeRequestTimeout.Duration,
 		"runtime-request-timeout",
 		s.RuntimeRequestTimeout.Duration,
-		fmt.Sprintf(
-			"If no runtime progress is made before this deadline, the operation will be cancelled.",
-		),
+		"If no runtime progress is made before this deadline, the operation will be cancelled.",
 	)
 
 	fs.StringVar(
 		&s.StreamingBindAddr,
 		"streaming-bind-addr",
 		s.StreamingBindAddr,
-		fmt.Sprintf(
-			"The address to bind the CRI streaming server to. If not specified, it will bind to all addresses.",
-		),
+		"The address to bind the CRI streaming server to. If not specified, it will bind to all addresses.",
 	)
 	// Network plugin settings for Docker.
 	fs.StringVar(
@@ -150,53 +142,41 @@ func (s *ContainerRuntimeOptions) AddFlags(fs *pflag.FlagSet) {
 		&s.IPv6DualStackEnabled,
 		"ipv6-dual-stack",
 		s.IPv6DualStackEnabled,
-		fmt.Sprintf("Enable IPv6 dual stack support"),
+		"Enable IPv6 dual stack support",
 	)
 	fs.StringVar(
 		&s.NetworkPluginName,
 		"network-plugin",
 		s.NetworkPluginName,
-		fmt.Sprintf(
-			"The name of the network plugin to be invoked for various events in kubelet/pod lifecycle.",
-		),
+		"The name of the network plugin to be invoked for various events in kubelet/pod lifecycle.",
 	)
 	fs.StringVar(
 		&s.CNIConfDir,
 		"cni-conf-dir",
 		s.CNIConfDir,
-		fmt.Sprintf(
-			"The full path of the directory in which to search for CNI config files",
-		),
+		"The full path of the directory in which to search for CNI config files",
 	)
 	fs.StringVar(
 		&s.CNIBinDir,
 		"cni-bin-dir",
 		s.CNIBinDir,
-		fmt.Sprintf(
 			"A comma-separated list of full paths of directories in which to search for CNI plugin binaries.",
-		),
 	)
 	fs.StringVar(
 		&s.CNICacheDir,
 		"cni-cache-dir",
 		s.CNICacheDir,
-		fmt.Sprintf(
-			"The full path of the directory in which CNI should store cache files.",
-		),
+		"The full path of the directory in which CNI should store cache files.",
 	)
 	fs.Int32Var(
 		&s.NetworkPluginMTU,
 		"network-plugin-mtu",
 		s.NetworkPluginMTU,
-		fmt.Sprintf(
-			"<Warning: Alpha feature> The MTU to be passed to the network plugin, to override the default. Set to 0 to use the default 1460 MTU.",
-		),
+		"<Warning: Alpha feature> The MTU to be passed to the network plugin, to override the default. Set to 0 to use the default 1460 MTU.",
 	)
 	fs.Var(
 		&HairpinModeVar,
 		"hairpin-mode",
-		fmt.Sprintf(
-			"<Warning: Alpha feature> The mode of hairpin to use.",
-		),
+		"<Warning: Alpha feature> The mode of hairpin to use.",
 	)
 }

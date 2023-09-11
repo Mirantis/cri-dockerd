@@ -20,11 +20,13 @@ package core
 
 import (
 	"fmt"
+
+	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
-func (ds *dockerService) getSecurityOpts(seccompProfile string, separator rune) ([]string, error) {
+func (ds *dockerService) getSecurityOpts(seccomp *runtimeapi.SecurityProfile, separator rune) ([]string, error) {
 	// Apply seccomp options.
-	seccompSecurityOpts, err := getSeccompSecurityOpts(seccompProfile, separator)
+	seccompSecurityOpts, err := getSeccompSecurityOpts(seccomp, separator)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate seccomp security options for container: %v", err)
 	}
