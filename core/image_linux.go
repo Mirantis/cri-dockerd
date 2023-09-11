@@ -49,7 +49,7 @@ func (ds *dockerService) ImageFsInfo(
 	return &runtimeapi.ImageFsInfoResponse{
 		ImageFilesystems: []*runtimeapi.FilesystemUsage{
 			{
-				Timestamp: time.Now().Unix(),
+				Timestamp: time.Now().UnixNano(),
 				FsId: &runtimeapi.FilesystemIdentifier{
 					Mountpoint: info.DockerRootDir,
 				},
