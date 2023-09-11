@@ -21,11 +21,12 @@ import (
 	"crypto/md5"
 	"encoding/json"
 	"fmt"
-	"github.com/Mirantis/cri-dockerd/config"
 	"io/ioutil"
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/Mirantis/cri-dockerd/config"
 
 	dockercontainer "github.com/docker/docker/api/types/container"
 
@@ -248,24 +249,25 @@ func modifyHostOptionsForContainer(
 	}
 }
 
-func getSeccompDockerOpts(seccompProfile string) ([]DockerOpt, error) {
-	if seccompProfile == "" || seccompProfile == config.SeccompProfileNameUnconfined {
+func getSeccompDockerOpts(seccomp *runtimeapi.SecurityProfile) ([]DockerOpt, error) {
+
+	if seccomp == nil || seccomp.GetProfileType() == runtimeapi.SecurityProfile_Unconfined {
 		// return early the default
 		return defaultSeccompOpt, nil
 	}
 
-	if seccompProfile == config.SeccompProfileRuntimeDefault ||
-		seccompProfile == config.DeprecatedSeccompProfileDockerDefault {
+	if seccomp.GetProfileType() == runtimeapi.SecurityProfile_RuntimeDefault ||
+		seccomp.GetProfileType().String() == config.DeprecatedSeccompProfileDockerDefault {
 		// return nil so docker will load the default seccomp profile
 		return nil, nil
 	}
 
-	if !strings.HasPrefix(seccompProfile, config.SeccompLocalhostProfileNamePrefix) {
-		return nil, fmt.Errorf("unknown seccomp profile option: %s", seccompProfile)
+	if seccomp.GetProfileType() != runtimeapi.SecurityProfile_Localhost {
+		return nil, fmt.Errorf("unknown seccomp profile option: %s", seccomp)
 	}
 
 	// get the full path of seccomp profile when prefixed with 'localhost/'.
-	fname := strings.TrimPrefix(seccompProfile, config.SeccompLocalhostProfileNamePrefix)
+	fname := seccomp.GetLocalhostRef()
 	if !filepath.IsAbs(fname) {
 		return nil, fmt.Errorf(
 			"seccomp profile path must be absolute, but got relative path %q",
@@ -289,7 +291,7 @@ func getSeccompDockerOpts(seccompProfile string) ([]DockerOpt, error) {
 
 // getSeccompSecurityOpts gets container seccomp options from container seccomp profile.
 // It is an experimental feature and may be promoted to official runtime api in the future.
-func getSeccompSecurityOpts(seccompProfile string, separator rune) ([]string, error) {
+func getSeccompSecurityOpts(seccompProfile *runtimeapi.SecurityProfile, separator rune) ([]string, error) {
 	seccompOpts, err := getSeccompDockerOpts(seccompProfile)
 	if err != nil {
 		return nil, err
