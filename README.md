@@ -30,6 +30,10 @@ tool in [Don't Panic: Kubernetes and Docker](https://blog.k8s.io/2020/12/02/dont
 and on the Mirantis
 [blog](https://www.mirantis.com/blog/mirantis-to-take-over-support-of-kubernetes-dockershim-2/).
 
+## Community
+
+We can be found on the [Kubernetes Slack](https://communityinviter.com/apps/kubernetes/community) in the [`#cri-dockerd`](https://kubernetes.slack.com/messages/cri-dockerd) channel.
+
 ## Using cri-dockerd
 
 ### Install
