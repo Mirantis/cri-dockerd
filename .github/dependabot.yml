@@ -1,0 +1,11 @@
+version: 2
+updates:
+  - package-ecosystem: gomod
+    directory: "/"
+    schedule:
+      interval: 'daily'
+      time: '00:00'
+      timezone: 'America/Los_Angeles' # 12am Pacific Time
+    labels:
+      - 'dependabot'
+    open-pull-requests-limit: 5
