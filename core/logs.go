@@ -39,6 +39,7 @@ import (
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 
 	"github.com/Mirantis/cri-dockerd/libdocker"
+	"github.com/docker/docker/daemon/logger/jsonfilelog/jsonlog"
 )
 
 // ReopenContainerLog reopens the container log file.
@@ -285,7 +286,7 @@ func (ds *dockerService) createContainerKubeLogFile(containerID string) error {
 			}
 			// Watch for changes to be copied over
 			for line := range t.Lines {
-				logLine := Log{}
+				logLine := log{}
 				json.Unmarshal([]byte(line.Text), &logLine)
 
 				_, err := kubeFile.WriteString(logLine.CRIFormat())
@@ -316,14 +317,11 @@ func (ds *dockerService) createContainerKubeLogFile(containerID string) error {
 	return nil
 }
 
-type Log struct {
-	Log    string    `json:"log"`
-	Stream string    `json:"stream"`
-	Flags  string    `json:"flags"`
-	Time   time.Time `json:"time"`
+type log struct {
+	jsonlog.JSONLog
 }
 
 // CRIFormat returns the log in the CRI format
-func (l Log) CRIFormat() string {
-	return fmt.Sprintf("%s %s %s %s", l.Time.Format(time.RFC3339), l.Stream, l.Flags, l.Log)
+func (l log) CRIFormat() string {
+	return fmt.Sprintf("%s %s %s %s", l.Created.Format(time.RFC3339), l.Stream, l.Attrs, l.Log)
 }
