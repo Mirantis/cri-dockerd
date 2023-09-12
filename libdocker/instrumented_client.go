@@ -93,7 +93,7 @@ func (in instrumentedInterface) InspectContainerWithSize(
 
 func (in instrumentedInterface) CreateContainer(
 	opts dockertypes.ContainerCreateConfig,
-) (*dockercontainer.ContainerCreateCreatedBody, error) {
+) (*dockercontainer.CreateResponse, error) {
 	const operation = "create_container"
 	defer recordOperation(operation, time.Now())
 
