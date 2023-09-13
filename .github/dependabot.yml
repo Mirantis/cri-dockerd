@@ -3,9 +3,19 @@ updates:
   - package-ecosystem: gomod
     directory: "/"
     schedule:
-      interval: 'daily'
-      time: '00:00'
-      timezone: 'America/Los_Angeles' # 12am Pacific Time
+      interval: 'weekly'
     labels:
       - 'dependabot'
     open-pull-requests-limit: 5
+    groups:
+      # We only want to automate our dependencies that are not as big of moving pieces
+      minor-dependencies:
+        patterns:
+          - "*"
+        # Skip docker and k8 dependencies. We want to manually keep an eye on these
+        exclude-patterns:
+          - "*/docker/*"
+          - "*/opencontainers/*"
+          - "*/cri-api/*"
+          - "*/kubernetes/*"
+          - "*/moby/*"
