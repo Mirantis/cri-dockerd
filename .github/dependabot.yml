@@ -15,7 +15,7 @@ updates:
         # Skip docker and k8 dependencies. We want to manually keep an eye on these
         exclude-patterns:
           - "*/docker/*"
+          - "*/moby/*"
           - "*/opencontainers/*"
           - "*/cri-api/*"
           - "*/kubernetes/*"
-          - "*/moby/*"
