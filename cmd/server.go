@@ -81,7 +81,7 @@ func NewDockerCRICommand(stopCh <-chan struct{}) *cobra.Command {
 			verflag, _ := cleanFlagSet.GetBool("version")
 			if verflag {
 				fmt.Fprintf(
-					cmd.OutOrStderr(),
+					cmd.OutOrStdout(),
 					"%s %s\n",
 					version.PlatformName,
 					version.FullVersion(),
@@ -92,7 +92,7 @@ func NewDockerCRICommand(stopCh <-chan struct{}) *cobra.Command {
 			infoflag, _ := cleanFlagSet.GetBool("buildinfo")
 			if infoflag {
 				fmt.Fprintf(
-					cmd.OutOrStderr(),
+					cmd.OutOrStdout(),
 					"Program: %s\nVersion: %s\nGitCommit: %s\nGo version: %s\n",
 					version.PlatformName,
 					version.FullVersion(),
