@@ -26,6 +26,9 @@ updates:
     labels:
       - 'dependabot'
     open-pull-requests-limit: 5
+    reviewers:
+      - 'nwneisen'
+      - 'neersighted'
     groups:
       # Our major dependencies are only done as a reminder. These should be manually checked
       major-dependencies:
