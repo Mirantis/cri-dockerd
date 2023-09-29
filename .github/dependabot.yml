@@ -1,0 +1,21 @@
+version: 2
+updates:
+  - package-ecosystem: gomod
+    directory: "/"
+    schedule:
+      interval: 'weekly'
+    labels:
+      - 'dependabot'
+    open-pull-requests-limit: 5
+    groups:
+      # We are less concerned about the minor dependencies
+      minor-dependencies:
+        patterns:
+          - "*"
+        # Skip docker and k8 dependencies. We want to manually keep an eye on these
+        exclude-patterns:
+          - "*/docker/*"
+          - "*/moby/*"
+          - "*/opencontainers/*"
+          - "*/cri-api/*"
+          - "*/kubernetes/*"
