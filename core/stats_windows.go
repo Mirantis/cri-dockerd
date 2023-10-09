@@ -66,15 +66,6 @@ func (ds *dockerService) getContainerStats(container *runtimeapi.Container) (*ru
 		return nil, err
 	}
 
-	// used bytes from image are not implemented on Windows
-	// don't query for it since it is expensive to call docker over named pipe
-	// https://github.com/moby/moby/blob/1ba54a5fd0ba293db3bea46cd67604b593f2048b/daemon/images/image_windows.go#L11-L14
-	//
-	// containerJSON, err := ds.client.InspectContainerWithSize(containerID)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
 	timestamp := time.Now().UnixNano()
 	containerStats := &runtimeapi.ContainerStats{
 		Attributes: &runtimeapi.ContainerAttributes{

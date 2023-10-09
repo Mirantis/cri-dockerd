@@ -220,7 +220,7 @@ func NewDockerService(
 	if err != nil {
 		return nil, fmt.Errorf("Failed to execute Info() call to the Docker client")
 	}
-	logrus.Infof("Docker Info: %+v", dockerInfo)
+	logrus.Debugf("Docker Info: %+v", dockerInfo)
 	ds.dockerRootDir = dockerInfo.DockerRootDir
 
 	// skipping cgroup driver checks for Windows
