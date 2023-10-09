@@ -39,8 +39,8 @@ import (
 )
 
 // kubeDockerClient is a wrapped layer of docker client for kubelet internal use. This layer is added to:
-//	1) Redirect stream for exec and attach operations.
-//	2) Wrap the context in this layer to make the DockerClientInterface cleaner.
+//  1. Redirect stream for exec and attach operations.
+//  2. Wrap the context in this layer to make the DockerClientInterface cleaner.
 type kubeDockerClient struct {
 	// timeout is the timeout of short running docker operations.
 	timeout time.Duration
@@ -723,6 +723,10 @@ type operationTimeout struct {
 
 func (e operationTimeout) Error() string {
 	return fmt.Sprintf("operation timeout: %v", e.err)
+}
+
+func (e operationTimeout) Unwrap() error {
+	return e.err
 }
 
 // containerNotFoundErrorRegx is the regexp of container not found error message.

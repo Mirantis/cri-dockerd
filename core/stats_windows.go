@@ -20,7 +20,6 @@ limitations under the License.
 package core
 
 import (
-	"context"
 	"strings"
 	"time"
 
@@ -29,12 +28,8 @@ import (
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
-func (ds *dockerService) getContainerStats(containerID string) (*runtimeapi.ContainerStats, error) {
-	info, err := ds.client.Info()
-	if err != nil {
-		return nil, err
-	}
-
+func (ds *dockerService) getContainerStats(container *runtimeapi.Container) (*runtimeapi.ContainerStats, error) {
+	containerID := container.Id
 	hcsshimContainer, err := hcsshim.OpenContainer(containerID)
 	if err != nil {
 		// As we moved from using Docker stats to hcsshim directly, we may query HCS with already exited container IDs.
@@ -71,27 +66,13 @@ func (ds *dockerService) getContainerStats(containerID string) (*runtimeapi.Cont
 		return nil, err
 	}
 
-	containerJSON, err := ds.client.InspectContainerWithSize(containerID)
-	if err != nil {
-		return nil, err
-	}
-
-	statusResp, err := ds.ContainerStatus(
-		context.Background(),
-		&runtimeapi.ContainerStatusRequest{ContainerId: containerID},
-	)
-	if err != nil {
-		return nil, err
-	}
-	status := statusResp.GetStatus()
-
 	timestamp := time.Now().UnixNano()
 	containerStats := &runtimeapi.ContainerStats{
 		Attributes: &runtimeapi.ContainerAttributes{
 			Id:          containerID,
-			Metadata:    status.Metadata,
-			Labels:      status.Labels,
-			Annotations: status.Annotations,
+			Metadata:    container.Metadata,
+			Labels:      container.Labels,
+			Annotations: container.Annotations,
 		},
 		Cpu: &runtimeapi.CpuUsage{
 			Timestamp: timestamp,
@@ -108,8 +89,8 @@ func (ds *dockerService) getContainerStats(containerID string) (*runtimeapi.Cont
 		},
 		WritableLayer: &runtimeapi.FilesystemUsage{
 			Timestamp: timestamp,
-			FsId:      &runtimeapi.FilesystemIdentifier{Mountpoint: info.DockerRootDir},
-			UsedBytes: &runtimeapi.UInt64Value{Value: uint64(*containerJSON.SizeRw)},
+			FsId:      &runtimeapi.FilesystemIdentifier{Mountpoint: ds.dockerRootDir},
+			UsedBytes: &runtimeapi.UInt64Value{Value: 0},
 		},
 	}
 	return containerStats, nil

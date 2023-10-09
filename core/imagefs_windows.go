@@ -20,7 +20,6 @@ limitations under the License.
 package core
 
 import (
-	"context"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -30,20 +29,11 @@ import (
 )
 
 // ImageFsInfo returns information of the filesystem that is used to store images.
-func (ds *dockerService) ImageFsInfo(
-	_ context.Context,
-	_ *runtimeapi.ImageFsInfoRequest,
-) (*runtimeapi.ImageFsInfoResponse, error) {
-	info, err := ds.client.Info()
-	if err != nil {
-		logrus.Error(err, "Failed to get docker info")
-		return nil, err
-	}
-
+func (ds *dockerService) imageFsInfo() (*runtimeapi.ImageFsInfoResponse, error) {
 	statsClient := &winstats.StatsClient{}
-	fsinfo, err := statsClient.GetDirFsInfo(info.DockerRootDir)
+	fsinfo, err := statsClient.GetDirFsInfo(ds.dockerRootDir)
 	if err != nil {
-		logrus.Errorf("Failed to get fsInfo for dockerRootDir %s: %v", info.DockerRootDir, err)
+		logrus.Errorf("Failed to get fsInfo for dockerRootDir %s: %v", ds.dockerRootDir, err)
 		return nil, err
 	}
 
@@ -52,7 +42,7 @@ func (ds *dockerService) ImageFsInfo(
 			Timestamp: time.Now().UnixNano(),
 			UsedBytes: &runtimeapi.UInt64Value{Value: fsinfo.Usage},
 			FsId: &runtimeapi.FilesystemIdentifier{
-				Mountpoint: info.DockerRootDir,
+				Mountpoint: ds.dockerRootDir,
 			},
 		},
 	}
