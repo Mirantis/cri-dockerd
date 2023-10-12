@@ -1,4 +1,4 @@
-include ../common.mk
+include ../../common.mk
 
 APP_DIR:=$(realpath $(CURDIR)/../../)
 STATIC_VERSION:=$(shell ../static/gen-static-ver $(APP_DIR) $(VERSION))

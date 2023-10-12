@@ -1,4 +1,4 @@
-include ../common.mk
+include ../../common.mk
 
 APP_DIR:=$(realpath $(CURDIR)/../../)
 GITCOMMIT?=$(shell cd $(APP_DIR) && git rev-parse --short HEAD)

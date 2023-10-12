@@ -5,7 +5,7 @@ weight: 3
 These are the steps in order to create a new release for `cri-dockerd`. These steps will need to be done by a project maintainer.
 
 1. Setup the repo for a new release
-    1. Change the version found in `VERSION`, `cmd/version/version.go`, and `packaging/common.mk` to the new version
+    1. Change the version found in `VERSION`, `cmd/version/version.go`, and `build/common.mk` to the new version
     2. Create a PR with these changes and merge them to master
     3. Build the release artifacts using `make release`
     4. Verify the artifacts in the `build/release` directory and make sure they look correct

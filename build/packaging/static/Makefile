@@ -1,4 +1,4 @@
-include ../common.mk
+include ../../common.mk
 
 APP_DIR:=$(realpath $(CURDIR)/../../)
 CGO_ENABLED ?= 0
