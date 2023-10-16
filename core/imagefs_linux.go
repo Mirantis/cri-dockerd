@@ -40,7 +40,7 @@ func (ds *dockerService) imageFsInfo() (*runtimeapi.ImageFsInfoResponse, error) 
 	}
 	usedBytes := (stat.Blocks - stat.Bfree) * uint64(stat.Bsize)
 	iNodesUsed := stat.Files - stat.Ffree
-	logrus.Infof("Filesystem usage containing '%s': usedBytes=%v, iNodesUsed=%v", ds.dockerRootDir, usedBytes, iNodesUsed)
+	logrus.Debugf("Filesystem usage containing '%s': usedBytes=%v, iNodesUsed=%v", ds.dockerRootDir, usedBytes, iNodesUsed)
 
 	// compute total used bytes by docker images
 	images, err := ds.client.ListImages(types.ImageListOptions{All: true, SharedSize: true})
@@ -61,7 +61,7 @@ func (ds *dockerService) imageFsInfo() (*runtimeapi.ImageFsInfoResponse, error) 
 	for k := range sharedSizeMap {
 		totalImageSize += uint64(k)
 	}
-	logrus.Infof("Total used bytes by docker images: %v", totalImageSize)
+	logrus.Debugf("Total used bytes by docker images: %v", totalImageSize)
 
 	return &runtimeapi.ImageFsInfoResponse{
 		ImageFilesystems: []*runtimeapi.FilesystemUsage{

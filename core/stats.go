@@ -175,7 +175,6 @@ func (ds *dockerService) ListContainerStats(
 	r *runtimeapi.ListContainerStatsRequest,
 ) (*runtimeapi.ListContainerStatsResponse, error) {
 	start := time.Now()
-	logrus.Info("Begin ListContainerStats")
 	containerStatsFilter := r.GetFilter()
 	filter := &runtimeapi.ContainerFilter{}
 
@@ -194,7 +193,7 @@ func (ds *dockerService) ListContainerStats(
 	containers := res.Containers
 	ds.containerStatsCache.clist <- containers
 	numContainers := len(containers)
-	logrus.Infof("Number of pod containers: %v", numContainers)
+	logrus.Debugf("Number of pod containers: %v", numContainers)
 	if numContainers == 0 {
 		return &runtimeapi.ListContainerStatsResponse{}, nil
 	}
@@ -242,7 +241,7 @@ func (ds *dockerService) ListContainerStats(
 		return nil, err
 	}
 
-	logrus.Infof("End ListContainerStats. Number of stats:%v, Time taken: %v", len(results), time.Since(start))
+	logrus.Debugf("Number of stats:%v, Time taken: %v", len(results), time.Since(start))
 
 	return &runtimeapi.ListContainerStatsResponse{Stats: results}, nil
 }
