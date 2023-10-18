@@ -15,7 +15,7 @@ SHELL=/bin/bash
 export VERSION?=$(shell (git describe --abbrev=0 --tags | sed -e 's/v//') || echo $(cat VERSION)-$(git log -1 --pretty='%h'))
 PRERELEASE=`grep -q dev <<< "${VERSION}" && echo "pre" || echo ""`
 REVISION?=`git log -1 --pretty='%h'`
-export CRI_DOCKERD_LDFLAGS=-ldflags "-s -w -buildid=${REVISION} \
+export CRI_DOCKERD_LDFLAGS:=-ldflags "${CRI_DOCKERD_LDFLAGS} -s -w -buildid=${REVISION} \
 	-X github.com/Mirantis/cri-dockerd/cmd/version.Version=${VERSION} \
 	-X github.com/Mirantis/cri-dockerd/cmd/version.PreRelease=${PRERELEASE} \
 	-X github.com/Mirantis/cri-dockerd/cmd/version.GitCommit=${REVISION}"
