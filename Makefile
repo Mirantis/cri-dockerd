@@ -64,7 +64,7 @@ clean: ## clean the build artifacts
 	-$(MAKE) -C $(PACKAGING_DIR) clean
 
 .PHONY: release
-release: static-linux deb rpm cross-arm cross-mac cross-win ## build the release binaries
+release: static deb rpm cross-arm cross-mac cross-win ## build the release binaries
 	mkdir -p $(RELEASE_DIR)
 
 	# Copy the release files
