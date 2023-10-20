@@ -26,10 +26,10 @@ import (
 )
 
 func (ds *dockerService) getSecurityOpts(
-	seccompProfile string,
+	seccompProfile *v1.SecurityProfile,
 	separator rune,
 ) ([]string, error) {
-	if seccompProfile != "" {
+	if seccompProfile != nil {
 		logrus.Info("seccomp annotations are not supported on windows")
 	}
 	return nil, nil

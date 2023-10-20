@@ -20,45 +20,26 @@ limitations under the License.
 package core
 
 import (
-	"context"
 	"time"
 
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
-func (ds *dockerService) getContainerStats(containerID string) (*runtimeapi.ContainerStats, error) {
-	info, err := ds.getDockerInfo()
-	if err != nil {
-		return nil, err
-	}
-
+func (ds *dockerService) getContainerStats(container *runtimeapi.Container) (*runtimeapi.ContainerStats, error) {
+	containerID := container.Id
 	statsJSON, err := ds.client.GetContainerStats(containerID)
 	if err != nil {
 		return nil, err
 	}
-
-	containerJSON, err := ds.client.InspectContainerWithSize(containerID)
-	if err != nil {
-		return nil, err
-	}
-
-	statusResp, err := ds.ContainerStatus(
-		context.Background(),
-		&runtimeapi.ContainerStatusRequest{ContainerId: containerID},
-	)
-	if err != nil {
-		return nil, err
-	}
-	status := statusResp.GetStatus()
 
 	dockerStats := statsJSON.Stats
 	timestamp := time.Now().UnixNano()
 	containerStats := &runtimeapi.ContainerStats{
 		Attributes: &runtimeapi.ContainerAttributes{
 			Id:          containerID,
-			Metadata:    status.Metadata,
-			Labels:      status.Labels,
-			Annotations: status.Annotations,
+			Metadata:    container.Metadata,
+			Labels:      container.Labels,
+			Annotations: container.Annotations,
 		},
 		Cpu: &runtimeapi.CpuUsage{
 			Timestamp: timestamp,
@@ -72,11 +53,15 @@ func (ds *dockerService) getContainerStats(containerID string) (*runtimeapi.Cont
 				Value: dockerStats.MemoryStats.Usage,
 			},
 		},
-		WritableLayer: &runtimeapi.FilesystemUsage{
+	}
+
+	cstat := ds.containerStatsCache.getStats(containerID)
+	if cstat != nil && cstat.isInitialized() {
+		containerStats.WritableLayer = &runtimeapi.FilesystemUsage{
 			Timestamp: timestamp,
-			FsId:      &runtimeapi.FilesystemIdentifier{Mountpoint: info.DockerRootDir},
-			UsedBytes: &runtimeapi.UInt64Value{Value: uint64(*containerJSON.SizeRw)},
-		},
+			FsId:      &runtimeapi.FilesystemIdentifier{Mountpoint: ds.dockerRootDir},
+			UsedBytes: &runtimeapi.UInt64Value{Value: cstat.getContainerRWSize()},
+		}
 	}
 	return containerStats, nil
 }

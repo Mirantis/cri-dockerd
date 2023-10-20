@@ -1,5 +1,5 @@
-//go:build windows
-// +build windows
+//go:build linux || windows
+// +build linux windows
 
 /*
 Copyright 2021 Mirantis
@@ -23,39 +23,28 @@ import (
 	"context"
 	"time"
 
-	"github.com/sirupsen/logrus"
-
+	"github.com/Mirantis/cri-dockerd/utils"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
-	"k8s.io/kubernetes/pkg/kubelet/winstats"
 )
+
+// ImageFsStatsCache caches imagefs stats.
+var ImageFsStatsCache utils.Cache
+
+const imageFsStatsMinTTL = 30 * time.Second
 
 // ImageFsInfo returns information of the filesystem that is used to store images.
 func (ds *dockerService) ImageFsInfo(
 	_ context.Context,
 	_ *runtimeapi.ImageFsInfoRequest,
 ) (*runtimeapi.ImageFsInfoResponse, error) {
-	info, err := ds.client.Info()
+
+	res, err := ImageFsStatsCache.Memoize("imagefs", imageFsStatsMinTTL, func() (interface{}, error) {
+		return ds.imageFsInfo()
+	})
 	if err != nil {
-		logrus.Error(err, "Failed to get docker info")
 		return nil, err
 	}
+	stats := res.(*runtimeapi.ImageFsInfoResponse)
+	return stats, nil
 
-	statsClient := &winstats.StatsClient{}
-	fsinfo, err := statsClient.GetDirFsInfo(info.DockerRootDir)
-	if err != nil {
-		logrus.Errorf("Failed to get fsInfo for dockerRootDir %s: %v", info.DockerRootDir, err)
-		return nil, err
-	}
-
-	filesystems := []*runtimeapi.FilesystemUsage{
-		{
-			Timestamp: time.Now().UnixNano(),
-			UsedBytes: &runtimeapi.UInt64Value{Value: fsinfo.Usage},
-			FsId: &runtimeapi.FilesystemIdentifier{
-				Mountpoint: info.DockerRootDir,
-			},
-		},
-	}
-
-	return &runtimeapi.ImageFsInfoResponse{ImageFilesystems: filesystems}, nil
 }

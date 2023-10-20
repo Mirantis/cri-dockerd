@@ -18,18 +18,151 @@ package core
 
 import (
 	"context"
-	"github.com/sirupsen/logrus"
+	"errors"
+	"fmt"
+	"runtime"
 	"sync"
+	"time"
+
+	"github.com/sirupsen/logrus"
+
+	"golang.org/x/sync/errgroup"
 
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
+type cstats struct {
+	sync.Mutex
+	ds          *dockerService
+	containerID string
+	stopCh      chan struct{}
+	rwLayerSize uint64
+	initialized bool
+}
+
+type containerStatsCache struct {
+	sync.RWMutex
+	stats map[string]*cstats
+	clist chan []*runtimeapi.Container
+}
+
+func newCstats(cid string, ds *dockerService) *cstats {
+	return &cstats{
+		containerID: cid,
+		ds:          ds,
+		stopCh:      make(chan struct{}),
+	}
+}
+
+func newContainerStatsCache() *containerStatsCache {
+	return &containerStatsCache{
+		stats: make(map[string]*cstats),
+		clist: make(chan []*runtimeapi.Container, 1),
+	}
+}
+
+const maxBackoffDuration = 20 * time.Minute
+const minCollectInterval = time.Minute
+
+func (cs *cstats) startCollect() {
+	backoffDuration := minCollectInterval
+	for {
+		var sleepTime time.Duration
+		// time consuming operation
+		start := time.Now()
+		containerJSON, err := cs.ds.client.InspectContainerWithSize(cs.containerID)
+		logrus.Debugf("Get RW layer size for container ID '%s', time taken %v", cs.containerID, time.Since(start))
+		if err != nil {
+			logrus.Errorf("error getting RW layer size for container ID '%s': %v", cs.containerID, err)
+			if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+				backoffDuration = backoffDuration * 2
+				if backoffDuration >= maxBackoffDuration {
+					backoffDuration = maxBackoffDuration
+				}
+			}
+			logrus.Errorf("Set backoffDuration to : %v for container ID '%s'", backoffDuration, cs.containerID)
+			sleepTime = backoffDuration
+		} else {
+			cs.Lock()
+			cs.rwLayerSize = uint64(*containerJSON.SizeRw)
+			cs.initialized = true
+			cs.Unlock()
+			backoffDuration = minCollectInterval
+			logrus.Debugf("RW layer size for container ID '%s': %v", cs.containerID, cs.rwLayerSize)
+			sleepTime = minCollectInterval
+		}
+		select {
+		case <-cs.stopCh:
+			return
+		case <-time.After(sleepTime):
+		}
+	}
+}
+
+func (cs *cstats) stopCollect() {
+	cs.stopCh <- struct{}{}
+}
+
+func (cs *cstats) isInitialized() bool {
+	cs.Lock()
+	defer cs.Unlock()
+	return cs.initialized
+}
+
+func (cs *cstats) getContainerRWSize() uint64 {
+	cs.Lock()
+	defer cs.Unlock()
+	return cs.rwLayerSize
+}
+
+func (c *containerStatsCache) getStats(containerID string) *cstats {
+	c.RLock()
+	defer c.RUnlock()
+	return c.stats[containerID]
+}
+
+func (ds *dockerService) startStatsCollection() {
+	c := ds.containerStatsCache
+	for clist := range c.clist {
+		c.Lock()
+		containerIDMap := make(map[string]struct{}, len(clist))
+		for _, container := range clist {
+			cid := container.Id
+			containerIDMap[cid] = struct{}{}
+			// add new container
+			if _, exist := c.stats[cid]; !exist {
+				cs := newCstats(cid, ds)
+				c.stats[cid] = cs
+				go cs.startCollect()
+			}
+		}
+		// cleanup the containers that are not in latest container list
+		for k, cs := range c.stats {
+			if _, exist := containerIDMap[k]; !exist {
+				delete(c.stats, k)
+				go cs.stopCollect()
+			}
+		}
+		c.Unlock()
+	}
+}
+
 // ContainerStats returns stats for a container stats request based on container id.
 func (ds *dockerService) ContainerStats(
-	_ context.Context,
+	ctx context.Context,
 	r *runtimeapi.ContainerStatsRequest,
 ) (*runtimeapi.ContainerStatsResponse, error) {
-	stats, err := ds.getContainerStats(r.ContainerId)
+	filter := &runtimeapi.ContainerFilter{
+		Id: r.ContainerId,
+	}
+	listResp, err := ds.ListContainers(ctx, &runtimeapi.ListContainersRequest{Filter: filter})
+	if err != nil {
+		return nil, err
+	}
+	if len(listResp.Containers) != 1 {
+		return nil, fmt.Errorf("container with id %s not found", r.ContainerId)
+	}
+	stats, err := ds.getContainerStats(listResp.Containers[0])
 	if err != nil {
 		return nil, err
 	}
@@ -41,6 +174,7 @@ func (ds *dockerService) ListContainerStats(
 	ctx context.Context,
 	r *runtimeapi.ListContainerStatsRequest,
 ) (*runtimeapi.ListContainerStatsResponse, error) {
+	start := time.Now()
 	containerStatsFilter := r.GetFilter()
 	filter := &runtimeapi.ContainerFilter{}
 
@@ -50,31 +184,64 @@ func (ds *dockerService) ListContainerStats(
 		filter.LabelSelector = containerStatsFilter.LabelSelector
 	}
 
-	listResp, err := ds.ListContainers(ctx, &runtimeapi.ListContainersRequest{Filter: filter})
+	res, err := ds.ListContainers(ctx, &runtimeapi.ListContainersRequest{Filter: filter})
 	if err != nil {
 		logrus.Errorf("Error listing containers with filter: %+v", filter)
 		logrus.Errorf("Error listing containers error: %s", err)
 		return nil, err
 	}
-
-	var mtx sync.Mutex
-	var wg sync.WaitGroup
-	var stats = make([]*runtimeapi.ContainerStats, 0, len(listResp.Containers))
-	for _, container := range listResp.Containers {
-		container := container
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			if containerStats, err := ds.getContainerStats(container.Id); err == nil && containerStats != nil {
-				mtx.Lock()
-				stats = append(stats, containerStats)
-				mtx.Unlock()
-			} else if err != nil {
-				logrus.Error(err, " Failed to get stats from container "+container.Id)
-			}
-		}()
+	containers := res.Containers
+	ds.containerStatsCache.clist <- containers
+	numContainers := len(containers)
+	logrus.Debugf("Number of pod containers: %v", numContainers)
+	if numContainers == 0 {
+		return &runtimeapi.ListContainerStatsResponse{}, nil
 	}
-	wg.Wait()
 
-	return &runtimeapi.ListContainerStatsResponse{Stats: stats}, nil
+	var mu sync.Mutex
+	results := make([]*runtimeapi.ContainerStats, 0, len(containers))
+
+	g, ctx := errgroup.WithContext(ctx)
+	// The `getContainerStats` may take some time. When there are many containers,
+	// the whole `ListContainerStats` may have long delays if the number of workers is
+	// small. So we want to set a bigger value for the number of workers to avoid
+	// too long delays before the issue mentioned in https://github.com/moby/moby/pull/46448
+	// is fixed.
+	// Consider a common node with 8 CPU running dozens of pods, NumCPU() * 6 may be a moderate
+	// number.
+	numWorkers := runtime.NumCPU() * 6
+	if numWorkers > numContainers {
+		numWorkers = numContainers
+	}
+	g.SetLimit(numWorkers)
+
+	// Collect container stats and send to result channel.
+	// The concurrency is numWorkers
+	for _, c := range containers {
+		c := c
+		g.Go(func() error {
+			if ctx.Err() != nil {
+				return ctx.Err()
+			}
+			stats, err := ds.getContainerStats(c)
+			if err != nil {
+				logrus.Errorf("error collecting stats for container '%s': %v", c.Metadata.Name, err)
+				return nil
+			}
+			mu.Lock()
+			results = append(results, stats)
+			mu.Unlock()
+			return nil
+		})
+	}
+
+	// wait for workers to finish
+	if err := g.Wait(); err != nil {
+		logrus.Errorf("Error ListContainerStats. %v", err)
+		return nil, err
+	}
+
+	logrus.Debugf("Number of stats:%v, Time taken: %v", len(results), time.Since(start))
+
+	return &runtimeapi.ListContainerStatsResponse{Stats: results}, nil
 }
