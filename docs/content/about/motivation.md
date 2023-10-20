@@ -1,5 +1,4 @@
 ---
-weight: 2
 ---
 
 Mirantis and Docker have agreed to partner to maintain the shim code standalone outside Kubernetes, as a conformant CRI
