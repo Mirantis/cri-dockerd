@@ -15,7 +15,7 @@ SHELL=/bin/bash
 export VERSION?=$(shell (git describe --abbrev=0 --tags | sed -e 's/v//') || echo $(cat VERSION)-$(git log -1 --pretty='%h'))
 PRERELEASE=`grep -q dev <<< "${VERSION}" && echo "pre" || echo ""`
 REVISION?=`git log -1 --pretty='%h'`
-export CRI_DOCKERD_LDFLAGS=-ldflags "-s -w -buildid=${REVISION} \
+export CRI_DOCKERD_LDFLAGS:=-ldflags "${CRI_DOCKERD_LDFLAGS} -s -w -buildid=${REVISION} \
 	-X github.com/Mirantis/cri-dockerd/cmd/version.Version=${VERSION} \
 	-X github.com/Mirantis/cri-dockerd/cmd/version.PreRelease=${PRERELEASE} \
 	-X github.com/Mirantis/cri-dockerd/cmd/version.GitCommit=${REVISION}"
@@ -64,7 +64,7 @@ clean: ## clean the build artifacts
 	-$(MAKE) -C $(PACKAGING_DIR) clean
 
 .PHONY: release
-release: static-linux deb rpm cross-arm cross-mac cross-win ## build the release binaries
+release: static deb rpm cross-arm cross-mac cross-win ## build the release binaries
 	mkdir -p $(RELEASE_DIR)
 
 	# Copy the release files
@@ -94,10 +94,19 @@ release: static-linux deb rpm cross-arm cross-mac cross-win ## build the release
 	# linux
 	cp $(PACKAGING_DIR)/static/build/linux/cri-dockerd-$(VERSION).tgz $(RELEASE_DIR)/cri-dockerd-$(VERSION).amd64.tgz
 
+.PHONY: run
+run: cri-dockerd ## Run cri-docker in a running minikube
+	sudo ./cri-dockerd --log-level debug --network-plugin=""
+
 .PHONY: dev
 dev: cri-dockerd ## Run cri-docker in a running minikube
 	./scripts/replace-in-minikube
+
 .PHONY: docs
 docs:
 	hugo server --source docs/
+
+.PHONY: integration
+integration:
+	sudo critest -runtime-endpoint=unix:///var/run/cri-dockerd.sock -ginkgo.skip="runtime should support apparmor|runtime should support reopening container log|runtime should support execSync with timeout|runtime should support selinux|.*should support propagation.*"
 

@@ -2,7 +2,7 @@ package version
 
 var (
 	// Version of the product
-	Version = "0.3.5"
+	Version = "0.3.6"
 	// PreRelease is set during the build
 	PreRelease = ""
 	// GitCommit is set during the build
