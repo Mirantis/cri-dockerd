@@ -80,6 +80,7 @@ install -D -m 0644 %{_topdir}/SOURCES/cri-docker.socket $RPM_BUILD_ROOT/%{_unitd
 /%{_bindir}/cri-dockerd
 /%{_unitdir}/cri-docker.service
 /%{_unitdir}/cri-docker.socket
+%license LICENSE
 
 %post
 %systemd_post cri-docker.service
