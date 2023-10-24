@@ -8,6 +8,7 @@ Epoch: 3
 Source0: app.tgz
 Source1: cri-docker.service
 Source2: cri-docker.socket
+Source3: LICENSE
 Summary: A CRI interface for Docker
 Group: Tools/Docker
 License: ASL 2.0
@@ -75,6 +76,9 @@ install -D -p -m 0755 $(readlink -f app/cri-dockerd) $RPM_BUILD_ROOT/%{_bindir}/
 # install systemd scripts
 install -D -m 0644 %{_topdir}/SOURCES/cri-docker.service $RPM_BUILD_ROOT/%{_unitdir}/cri-docker.service
 install -D -m 0644 %{_topdir}/SOURCES/cri-docker.socket $RPM_BUILD_ROOT/%{_unitdir}/cri-docker.socket
+
+# install license
+install -D -m 0644 %{_topdir}/SOURCES/LICENSE $RPM_BUILD_ROOT/LICENSE
 
 %files
 /%{_bindir}/cri-dockerd
