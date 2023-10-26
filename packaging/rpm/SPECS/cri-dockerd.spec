@@ -8,6 +8,7 @@ Epoch: 3
 Source0: app.tgz
 Source1: cri-docker.service
 Source2: cri-docker.socket
+Source3: LICENSE
 Summary: A CRI interface for Docker
 Group: Tools/Docker
 License: ASL 2.0
@@ -59,6 +60,7 @@ cri-dockerd is a lightweight implementation of the CRI specification which talks
 %setup -q -c -n src -a 0
 
 %build
+cp %{_topdir}/SOURCES/LICENSE /root/rpmbuild/BUILD/src/LICENSE
 export CRI_DOCKER_GITCOMMIT=%{_gitcommit}
 mkdir -p /go/src/github.com/Mirantis
 ln -s /root/rpmbuild/BUILD/src/app /go/src/github.com/Mirantis/cri-dockerd
@@ -80,6 +82,7 @@ install -D -m 0644 %{_topdir}/SOURCES/cri-docker.socket $RPM_BUILD_ROOT/%{_unitd
 /%{_bindir}/cri-dockerd
 /%{_unitdir}/cri-docker.service
 /%{_unitdir}/cri-docker.socket
+%license LICENSE
 
 %post
 %systemd_post cri-docker.service

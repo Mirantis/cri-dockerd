@@ -39,7 +39,7 @@ RPMBUILD_FLAGS?=-ba\
 	$(SPECS)
 RUN?=$(RPMBUILD) rpmbuild-$@/$(ARCH) $(RPMBUILD_FLAGS)
 
-SOURCE_FILES=app.tgz cri-docker.service cri-docker.socket
+SOURCE_FILES=app.tgz cri-docker.service cri-docker.socket LICENSE
 SOURCES=$(addprefix rpmbuild/SOURCES/, $(SOURCE_FILES))
 
 FEDORA_RELEASES := fedora-36 fedora-35
@@ -87,5 +87,9 @@ rpmbuild/SOURCES/cri-docker.service: ../systemd/cri-docker.service
 	cp $< $@
 
 rpmbuild/SOURCES/cri-docker.socket: ../systemd/cri-docker.socket
+	mkdir -p $(@D)
+	cp $< $@
+
+rpmbuild/SOURCES/LICENSE: ../../LICENSE
 	mkdir -p $(@D)
 	cp $< $@
