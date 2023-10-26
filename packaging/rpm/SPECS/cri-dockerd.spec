@@ -60,6 +60,7 @@ cri-dockerd is a lightweight implementation of the CRI specification which talks
 %setup -q -c -n src -a 0
 
 %build
+cp %{_topdir}/SOURCES/LICENSE /root/rpmbuild/BUILD/src/LICENSE
 export CRI_DOCKER_GITCOMMIT=%{_gitcommit}
 mkdir -p /go/src/github.com/Mirantis
 ln -s /root/rpmbuild/BUILD/src/app /go/src/github.com/Mirantis/cri-dockerd
@@ -76,9 +77,6 @@ install -D -p -m 0755 $(readlink -f app/cri-dockerd) $RPM_BUILD_ROOT/%{_bindir}/
 # install systemd scripts
 install -D -m 0644 %{_topdir}/SOURCES/cri-docker.service $RPM_BUILD_ROOT/%{_unitdir}/cri-docker.service
 install -D -m 0644 %{_topdir}/SOURCES/cri-docker.socket $RPM_BUILD_ROOT/%{_unitdir}/cri-docker.socket
-
-# install license
-install -D -m 0644 %{_topdir}/SOURCES/LICENSE $RPM_BUILD_ROOT/LICENSE
 
 %files
 /%{_bindir}/cri-dockerd
