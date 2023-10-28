@@ -1,0 +1,142 @@
+name: Build
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+  workflow_call:
+
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.20'
+
+    - name: Build
+      run: make static-linux
+
+    - name: Upload
+      if: ${{ github.event_name == 'release' }}
+      uses: actions/upload-artifact@v3
+      with:
+        name: cri-dockerd
+        retention-days: 5
+        path: |
+          packaging/static/**/**/**/*.tgz
+
+  deb:
+    if: ${{ github.event_name == 'release' }}
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.20'
+
+    - name: Build
+      run: make deb
+
+    - name: Upload
+      uses: actions/upload-artifact@v3
+      with:
+        name: cri-dockerd
+        retention-days: 5
+        path: |
+          packaging/deb/**/**/**/*.deb
+
+  rpm:
+    if: ${{ github.event_name == 'release' }}
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.20'
+
+    - name: Build
+      run: make rpm
+
+    - name: Upload
+      uses: actions/upload-artifact@v3
+      with:
+        name: cri-dockerd
+        retention-days: 5
+        path: |
+          packaging/rpm/**/**/**/*.rpm
+
+  arm:
+    if: ${{ github.event_name == 'release' }}
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.20'
+
+    - name: Build
+      run: make cross-arm
+
+    - name: Upload
+      uses: actions/upload-artifact@v3
+      with:
+        name: cri-dockerd
+        retention-days: 5
+        path: |
+          packaging/static/**/**/**/*.tgz
+
+  windows:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.20'
+
+    - name: Build
+      run: make cross-win
+
+    - name: Upload
+      if: ${{ github.event_name == 'release' }}
+      uses: actions/upload-artifact@v3
+      with:
+        name: cri-dockerd
+        retention-days: 5
+        path: |
+          packaging/static/**/**/**/*.zip
+
+  mac:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.20'
+
+    - name: Build
+      run: make cross-mac
+
+    - name: Upload
+      if: ${{ github.event_name == 'release' }}
+      uses: actions/upload-artifact@v3
+      with:
+        name: cri-dockerd
+        retention-days: 5
+        path: |
+          packaging/static/**/**/**/*.tgz

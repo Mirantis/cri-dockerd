@@ -63,37 +63,6 @@ clean: ## clean the build artifacts
 	$(RM) -r build
 	-$(MAKE) -C $(PACKAGING_DIR) clean
 
-.PHONY: release
-release: static deb rpm cross-arm cross-mac cross-win ## build the release binaries
-	mkdir -p $(RELEASE_DIR)
-
-	# Copy the release files
-	# Debian
-	cp $(PACKAGING_DIR)/deb/debbuild/debian-bullseye/cri-dockerd_$(VERSION)~3-0~debian-bullseye_amd64.deb $(RELEASE_DIR)
-	cp $(PACKAGING_DIR)/deb/debbuild/debian-buster/cri-dockerd_$(VERSION)~3-0~debian-buster_amd64.deb $(RELEASE_DIR)
-	# Ubuntu
-	cp $(PACKAGING_DIR)/deb/debbuild/ubuntu-bionic/cri-dockerd_$(VERSION)~3-0~ubuntu-bionic_amd64.deb $(RELEASE_DIR)
-	cp $(PACKAGING_DIR)/deb/debbuild/ubuntu-focal/cri-dockerd_$(VERSION)~3-0~ubuntu-focal_amd64.deb $(RELEASE_DIR)
-	cp $(PACKAGING_DIR)/deb/debbuild/ubuntu-jammy/cri-dockerd_$(VERSION)~3-0~ubuntu-jammy_amd64.deb $(RELEASE_DIR)
-	# CentOS
-	cp $(PACKAGING_DIR)/rpm/rpmbuild/RPMS/x86_64/cri-dockerd-$(VERSION).*.el7.x86_64.rpm $(RELEASE_DIR)
-	cp $(PACKAGING_DIR)/rpm/rpmbuild/RPMS/x86_64/cri-dockerd-$(VERSION).*.el8.x86_64.rpm $(RELEASE_DIR)
-	cp $(PACKAGING_DIR)/rpm/rpmbuild/SRPMS/cri-dockerd-$(VERSION).*.el7.src.rpm $(RELEASE_DIR)
-	cp $(PACKAGING_DIR)/rpm/rpmbuild/SRPMS/cri-dockerd-$(VERSION).*.el8.src.rpm $(RELEASE_DIR)
-	# Fedora
-	cp $(PACKAGING_DIR)/rpm/rpmbuild/RPMS/x86_64/cri-dockerd-$(VERSION).*.fc35.x86_64.rpm $(RELEASE_DIR)
-	cp $(PACKAGING_DIR)/rpm/rpmbuild/RPMS/x86_64/cri-dockerd-$(VERSION).*.fc36.x86_64.rpm $(RELEASE_DIR)
-	cp $(PACKAGING_DIR)/rpm/rpmbuild/SRPMS/cri-dockerd-$(VERSION).*.fc35.src.rpm $(RELEASE_DIR)
-	cp $(PACKAGING_DIR)/rpm/rpmbuild/SRPMS/cri-dockerd-$(VERSION).*.fc36.src.rpm $(RELEASE_DIR)
-	# arm
-	cp $(PACKAGING_DIR)/static/build/arm/cri-dockerd-$(VERSION).tgz $(RELEASE_DIR)/cri-dockerd-$(VERSION).arm64.tgz
-	# win
-	cp $(PACKAGING_DIR)/static/build/win/cri-dockerd-$(VERSION).zip $(RELEASE_DIR)/cri-dockerd-$(VERSION).win.amd64.zip
-	# mac
-	cp $(PACKAGING_DIR)/static/build/mac/cri-dockerd-$(VERSION).tgz $(RELEASE_DIR)/cri-dockerd-$(VERSION).darwin.amd64.tgz
-	# linux
-	cp $(PACKAGING_DIR)/static/build/linux/cri-dockerd-$(VERSION).tgz $(RELEASE_DIR)/cri-dockerd-$(VERSION).amd64.tgz
-
 .PHONY: run
 run: cri-dockerd ## Run cri-docker in a running minikube
 	sudo ./cri-dockerd --log-level debug --network-plugin=""

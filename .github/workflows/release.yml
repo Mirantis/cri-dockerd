@@ -1,0 +1,21 @@
+name: Release
+
+on:
+  release:
+    types: [prereleased]
+
+jobs:
+  build:
+    uses: ./.github/workflows/build.yml
+  e2e:
+    uses: ./.github/workflows/e2e.yml
+  integration:
+    uses: ./.github/workflows/integration.yml
+  publish:
+    if: ${{ always() && contains(join(needs.*.result, ','), 'success') }}
+    needs: [build, e2e, integration]
+    uses: ./.github/workflows/publish.yml
+  docs:
+    if: ${{ always() && contains(join(needs.*.result, ','), 'success') }}
+    needs: [build, e2e, integration]
+    uses: ./.github/workflows/docs.yml
