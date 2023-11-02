@@ -9,14 +9,14 @@ require (
 	github.com/containernetworking/cni v1.1.2
 	github.com/coreos/go-systemd/v22 v22.5.0
 	github.com/davecgh/go-spew v1.1.1
-	github.com/docker/distribution v2.8.2-beta.1+incompatible
+	github.com/docker/distribution v2.8.3+incompatible
 	github.com/docker/docker v23.0.3+incompatible
 	github.com/docker/go-connections v0.4.0
 	github.com/emicklei/go-restful v2.16.0+incompatible
 	github.com/golang/mock v1.6.0
 	github.com/opencontainers/go-digest v1.0.0
-	github.com/opencontainers/image-spec v1.1.0-rc3
-	github.com/opencontainers/runc v1.1.5
+	github.com/opencontainers/image-spec v1.1.0-rc5
+	github.com/opencontainers/runc v1.1.10
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.7.0
@@ -47,6 +47,7 @@ require (
 	github.com/containerd/cgroups v1.0.1 // indirect
 	github.com/coreos/go-semver v0.3.0 // indirect
 	github.com/cyphar/filepath-securejoin v0.2.3 // indirect
+	github.com/distribution/reference v0.5.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/evanphx/json-patch v4.12.0+incompatible // indirect
 	github.com/felixge/httpsnoop v1.0.1 // indirect
