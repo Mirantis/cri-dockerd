@@ -223,7 +223,7 @@ func RunCriDockerd(f *options.DockerCRIFlags, stopCh <-chan struct{}) error {
 	criLogDriver.Handlers(&h, criLogDriver.NewDriver())
 	go func() {
 		logrus.Info("Starting the logging driver for Docker CRI interface.")
-		if err := h.ServeUnix("CRILogger", 0); err != nil {
+		if err := h.ServeUnix("cri-logger", 0); err != nil {
 			panic(err)
 		}
 	}()
