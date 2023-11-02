@@ -25,7 +25,9 @@ import (
 	"github.com/Mirantis/cri-dockerd/cmd/version"
 	"github.com/Mirantis/cri-dockerd/config"
 	"github.com/Mirantis/cri-dockerd/core"
+	"github.com/Mirantis/cri-dockerd/internal/criLogDriver"
 	"github.com/Mirantis/cri-dockerd/streaming"
+	"github.com/docker/go-plugins-helpers/sdk"
 	"github.com/sirupsen/logrus"
 
 	"net"
@@ -216,6 +218,15 @@ func RunCriDockerd(f *options.DockerCRIFlags, stopCh <-chan struct{}) error {
 	}); err != nil {
 		return err
 	}
+
+	h := sdk.NewHandler(`{"Implements": ["LoggingDriver"]}`)
+	criLogDriver.Handlers(&h, criLogDriver.NewDriver())
+	go func() {
+		logrus.Info("Starting the logging driver for Docker CRI interface.")
+		if err := h.ServeUnix("CRILogger", 0); err != nil {
+			panic(err)
+		}
+	}()
 
 	logrus.Info("Starting the GRPC backend for the Docker CRI interface.")
 	server := backend.NewCriDockerServer(f.RemoteRuntimeEndpoint, ds)

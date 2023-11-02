@@ -1,0 +1,8 @@
+{
+  "description": "CRI format logger for Docker",
+  "documentation": "",
+	"interface": {
+		"types": ["docker.logdriver/1.0"],
+		"socket": "CRILogger.sock"
+	}
+}
