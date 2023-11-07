@@ -51,7 +51,7 @@ static-linux:
 	mkdir -p build/linux/cri-dockerd
 	cd $(APP_DIR) && env CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GOARCH=$(ARCH) go build -trimpath ${CRI_DOCKERD_LDFLAGS} -o cri-dockerd
 	mv $(APP_DIR)/cri-dockerd build/linux/cri-dockerd/cri-dockerd
-	tar -C build/linux -c -z -f build/linux/cri-dockerd-$(VERSION).tgz cri-dockerd
+	tar -C build/linux -c -z -f build/linux/cri-dockerd-$(VERSION).amd64.tgz cri-dockerd
 
 .PHONY: hash_files
 hash_files:
@@ -63,7 +63,7 @@ cross-mac:
 	mkdir -p build/mac/cri-dockerd
 	cd $(APP_DIR) && env CGO_ENABLED=$(CGO_ENABLED) GOOS=darwin GOARCH=$(ARCH) go build -trimpath ${CRI_DOCKERD_LDFLAGS} -o cri-dockerd-darwin-amd64
 	mv $(APP_DIR)/cri-dockerd-darwin-amd64 build/mac/cri-dockerd/cri-dockerd
-	tar -C build/mac -c -z -f build/mac/cri-dockerd-$(VERSION).tgz cri-dockerd
+	tar -C build/mac -c -z -f build/mac/cri-dockerd-$(VERSION).darwin.amd64.tgz cri-dockerd
 
 .PHONY: cross-win
 cross-win:
@@ -71,7 +71,7 @@ cross-win:
 	cd $(APP_DIR) && env CGO_ENABLED=$(CGO_ENABLED) GOOS=windows GOARCH=$(ARCH) go build -trimpath ${CRI_DOCKERD_LDFLAGS} -o cri-dockerd-windows-amd64
 	mv $(APP_DIR)/cri-dockerd-windows-amd64 build/win/cri-dockerd/cri-dockerd.exe
 	if ! grep -sq 'docker\|lxc' /proc/1/cgroup; then \
-	    docker run --rm -v $(CURDIR)/build/win:/v -w /v alpine sh -c 'apk update && apk add zip && zip -r cri-dockerd-$(VERSION).zip cri-dockerd'; \
+	    docker run --rm -v $(CURDIR)/build/win:/v -w /v alpine sh -c 'apk update && apk add zip && zip -r cri-dockerd-$(VERSION).win.amd64.zip cri-dockerd'; \
 	    $(CHOWN) -R $(shell id -u):$(shell id -g) build; \
 	fi
 
@@ -80,4 +80,4 @@ cross-arm: ## create tgz with linux arm64 client only
 	mkdir -p build/arm/cri-dockerd
 	cd $(APP_DIR) && env CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GOARCH=arm64 go build -trimpath ${CRI_DOCKERD_LDFLAGS} -o cri-dockerd-arm64
 	mv $(APP_DIR)/cri-dockerd-arm64 build/arm/cri-dockerd/cri-dockerd
-	tar -C build/arm -c -z -f build/arm/cri-dockerd-$(VERSION).tgz cri-dockerd
+	tar -C build/arm -c -z -f build/arm/cri-dockerd-$(VERSION).arm64.tgz cri-dockerd
