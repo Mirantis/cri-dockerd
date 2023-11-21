@@ -1,4 +1,4 @@
-![docker and kubernetes interact](docs/static/logo.svg)
+![docker and kubernetes interact](docs/static/images/logo.svg)
 
 # cri-dockerd
 
