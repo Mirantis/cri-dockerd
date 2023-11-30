@@ -72,12 +72,6 @@ func Exec(execer exec.Interface, parameters ...string) error {
 	return nil
 }
 
-// Exists returns true if conntrack binary is installed.
-func Exists(execer exec.Interface) bool {
-	_, err := execer.LookPath("conntrack")
-	return err == nil
-}
-
 // ClearEntriesForPort uses the conntrack tool to delete the conntrack entries
 // for connections specified by the port.
 // When a packet arrives, it will not go through NAT table again, because it is not "the first" packet.
@@ -86,7 +80,7 @@ func Exists(execer exec.Interface) bool {
 // https://github.com/kubernetes/kubernetes/issues/31983
 func ClearEntriesForPort(execer exec.Interface, port int, isIPv6 bool, protocol v1.Protocol) error {
 	if port <= 0 {
-		return fmt.Errorf("Wrong port number. The port number must be greater than zero")
+		return fmt.Errorf("wrong port number. The port number must be greater than zero")
 	}
 	parameters := parametersWithFamily(isIPv6, "-D", "-p", protoStr(protocol), "--dport", strconv.Itoa(port))
 	err := Exec(execer, parameters...)
@@ -106,7 +100,7 @@ func ClearEntriesForNAT(execer exec.Interface, origin, dest string, protocol v1.
 		// TODO: Better handling for deletion failure. When failure occur, stale udp connection may not get flushed.
 		// These stale udp connection will keep black hole traffic. Making this a best effort operation for now, since it
 		// is expensive to baby sit all udp connections to kubernetes services.
-		return fmt.Errorf("error deleting conntrack entries for %s peer {%s, %s}, error: %v", protoStr(protocol), origin, dest, err)
+		return fmt.Errorf("error deleting conntrack entries for UDP peer {%s, %s}, error: %v", origin, dest, err)
 	}
 	return nil
 }
@@ -117,17 +111,12 @@ func ClearEntriesForNAT(execer exec.Interface, origin, dest string, protocol v1.
 // https://github.com/kubernetes/kubernetes/issues/59368
 func ClearEntriesForPortNAT(execer exec.Interface, dest string, port int, protocol v1.Protocol) error {
 	if port <= 0 {
-		return fmt.Errorf("Wrong port number. The port number must be greater then zero")
+		return fmt.Errorf("wrong port number. The port number must be greater than zero")
 	}
 	parameters := parametersWithFamily(utilnet.IsIPv6String(dest), "-D", "-p", protoStr(protocol), "--dport", strconv.Itoa(port), "--dst-nat", dest)
 	err := Exec(execer, parameters...)
 	if err != nil && !strings.Contains(err.Error(), NoConnectionToDelete) {
-		return fmt.Errorf("error deleting conntrack entries for %s port: %d, error: %v", protoStr(protocol), port, err)
+		return fmt.Errorf("error deleting conntrack entries for UDP port: %d, error: %v", port, err)
 	}
 	return nil
-}
-
-// IsClearConntrackNeeded returns true if protocol requires conntrack cleanup for the stale connections
-func IsClearConntrackNeeded(proto v1.Protocol) bool {
-	return proto == v1.ProtocolUDP || proto == v1.ProtocolSCTP
 }

@@ -22,7 +22,7 @@ import (
 	"time"
 
 	"k8s.io/apimachinery/pkg/util/runtime"
-	"k8s.io/apiserver/pkg/server/httplog"
+	"k8s.io/apiserver/pkg/endpoints/responsewriter"
 	"k8s.io/apiserver/pkg/util/wsstream"
 )
 
@@ -68,9 +68,9 @@ func writeChannel(real bool) wsstream.ChannelType {
 	return wsstream.IgnoreChannel
 }
 
-// createWebSocketStreams returns a context containing the websocket connection and
+// createWebSocketStreams returns a connectionContext containing the websocket connection and
 // streams needed to perform an exec or an attach.
-func createWebSocketStreams(req *http.Request, w http.ResponseWriter, opts *Options, idleTimeout time.Duration) (*context, bool) {
+func createWebSocketStreams(req *http.Request, w http.ResponseWriter, opts *Options, idleTimeout time.Duration) (*connectionContext, bool) {
 	channels := createChannels(opts)
 	conn := wsstream.NewConn(map[string]wsstream.ChannelProtocolConfig{
 		"": {
@@ -95,7 +95,7 @@ func createWebSocketStreams(req *http.Request, w http.ResponseWriter, opts *Opti
 		},
 	})
 	conn.SetIdleTimeout(idleTimeout)
-	negotiatedProtocol, streams, err := conn.Open(httplog.Unlogged(req, w), req)
+	negotiatedProtocol, streams, err := conn.Open(responsewriter.GetOriginal(w), req)
 	if err != nil {
 		runtime.HandleError(fmt.Errorf("unable to upgrade websocket connection: %v", err))
 		return nil, false
@@ -112,7 +112,7 @@ func createWebSocketStreams(req *http.Request, w http.ResponseWriter, opts *Opti
 		streams[errorChannel].Write([]byte{})
 	}
 
-	ctx := &context{
+	ctx := &connectionContext{
 		conn:         conn,
 		stdinStream:  streams[stdinChannel],
 		stdoutStream: streams[stdoutChannel],

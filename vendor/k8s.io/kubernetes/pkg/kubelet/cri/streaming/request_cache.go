@@ -25,7 +25,7 @@ import (
 	"sync"
 	"time"
 
-	"k8s.io/apimachinery/pkg/util/clock"
+	"k8s.io/utils/clock"
 )
 
 var (
@@ -56,7 +56,7 @@ type requestCache struct {
 type request interface{}
 
 type cacheEntry struct {
-	token      string
+	token      string `datapolicy:"token"`
 	req        request
 	expireTime time.Time
 }

@@ -121,10 +121,17 @@ func getEbtablesVersionString(exec utilexec.Interface) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	versionMatcher := regexp.MustCompile(`v([0-9]+\.[0-9]+\.[0-9]+)`)
-	match := versionMatcher.FindStringSubmatch(string(bytes))
+	return parseVersion(string(bytes))
+}
+
+func parseVersion(version string) (string, error) {
+	// the regular expression contains `v?` at the beginning because
+	// different OS distros have different version format output i.e
+	// either starts with `v` or it doesn't
+	versionMatcher := regexp.MustCompile(`v?([0-9]+\.[0-9]+\.[0-9]+)`)
+	match := versionMatcher.FindStringSubmatch(version)
 	if match == nil {
-		return "", fmt.Errorf("no ebtables version found in string: %s", bytes)
+		return "", fmt.Errorf("no ebtables version found in string: %s", version)
 	}
 	return match[1], nil
 }
