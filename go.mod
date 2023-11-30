@@ -9,11 +9,12 @@ require (
 	github.com/containernetworking/cni v1.1.2
 	github.com/coreos/go-systemd/v22 v22.5.0
 	github.com/davecgh/go-spew v1.1.1
-	github.com/docker/distribution v2.8.3+incompatible
-	github.com/docker/docker v23.0.3+incompatible
+	github.com/docker/distribution v2.8.2-beta.1+incompatible
+	github.com/docker/docker v24.0.6+incompatible
 	github.com/docker/go-connections v0.4.0
 	github.com/emicklei/go-restful v2.16.0+incompatible
 	github.com/golang/mock v1.6.0
+	github.com/nxadm/tail v1.4.8
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.1.0-rc5
 	github.com/opencontainers/runc v1.1.10
@@ -38,6 +39,7 @@ require (
 )
 
 require (
+	github.com/AdaLogics/go-fuzz-headers v0.0.0-20230811130428-ced1acdcaa24 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
 	github.com/JeffAshton/win_pdh v0.0.0-20161109143554-76bb4ee9f0ab // indirect
 	github.com/Microsoft/go-winio v0.4.17 // indirect
@@ -47,7 +49,6 @@ require (
 	github.com/containerd/cgroups v1.0.1 // indirect
 	github.com/coreos/go-semver v0.3.0 // indirect
 	github.com/cyphar/filepath-securejoin v0.2.3 // indirect
-	github.com/distribution/reference v0.5.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/evanphx/json-patch v4.12.0+incompatible // indirect
 	github.com/felixge/httpsnoop v1.0.1 // indirect
@@ -126,6 +127,7 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230822172742-b8732ec3820d // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
+	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/cloud-provider v0.22.8 // indirect
