@@ -53,10 +53,10 @@ func (mr *MockDockerClientInterfaceMockRecorder) AttachToContainer(arg0, arg1, a
 }
 
 // CreateContainer mocks base method.
-func (m *MockDockerClientInterface) CreateContainer(arg0 types.ContainerCreateConfig) (*container.ContainerCreateCreatedBody, error) {
+func (m *MockDockerClientInterface) CreateContainer(arg0 types.ContainerCreateConfig) (*container.CreateResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateContainer", arg0)
-	ret0, _ := ret[0].(*container.ContainerCreateCreatedBody)
+	ret0, _ := ret[0].(*container.CreateResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
