@@ -376,7 +376,7 @@ func recoverFromCreationConflictIfNeeded(
 	client libdocker.DockerClientInterface,
 	createConfig dockertypes.ContainerCreateConfig,
 	err error,
-) (*dockercontainer.ContainerCreateCreatedBody, error) {
+) (*dockercontainer.CreateResponse, error) {
 	matches := conflictRE.FindStringSubmatch(err.Error())
 	if len(matches) != 2 {
 		return nil, err

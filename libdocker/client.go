@@ -48,7 +48,7 @@ type DockerClientInterface interface {
 	InspectContainerWithSize(id string) (*dockertypes.ContainerJSON, error)
 	CreateContainer(
 		dockertypes.ContainerCreateConfig,
-	) (*dockercontainer.ContainerCreateCreatedBody, error)
+	) (*dockercontainer.CreateResponse, error)
 	StartContainer(id string) error
 	StopContainer(id string, timeout time.Duration) error
 	UpdateContainerResources(id string, updateConfig dockercontainer.UpdateConfig) error
