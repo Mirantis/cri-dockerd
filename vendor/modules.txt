@@ -80,11 +80,9 @@ github.com/cyphar/filepath-securejoin
 # github.com/davecgh/go-spew v1.1.1
 ## explicit
 github.com/davecgh/go-spew/spew
-# github.com/distribution/reference v0.5.0
-## explicit; go 1.20
-github.com/distribution/reference
-# github.com/docker/distribution v2.8.3+incompatible
+# github.com/docker/distribution v2.8.2-beta.1+incompatible
 ## explicit
+github.com/docker/distribution/digestset
 github.com/docker/distribution/reference
 # github.com/docker/docker v24.0.6+incompatible
 ## explicit
@@ -267,7 +265,6 @@ github.com/nxadm/tail/winfile
 # github.com/opencontainers/go-digest v1.0.0
 ## explicit; go 1.13
 github.com/opencontainers/go-digest
-github.com/opencontainers/go-digest/digestset
 # github.com/opencontainers/image-spec v1.1.0-rc5
 ## explicit; go 1.18
 github.com/opencontainers/image-spec/specs-go
