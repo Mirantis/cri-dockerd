@@ -155,7 +155,7 @@ func (hm *hostportManager) Add(
 		writeLine(natRules, "-A", string(chain),
 			"-m", "comment", "--comment", fmt.Sprintf(`"%s hostport %d"`, podFullName, pm.HostPort),
 			"-s", podIP,
-			"-j", "KUBE-MARK-MASQ") // iptablesproxy "k8s.io/kubernetes/pkg/proxy/iptables" is too cool to stay imported
+			"-j", kubeMarkMasqChain)
 
 		// DNAT to the podIP:containerPort
 		hostPortBinding := net.JoinHostPort(podIP, strconv.Itoa(int(pm.ContainerPort)))
