@@ -31,6 +31,7 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/metrics"
 	apirequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/endpoints/responsewriter"
+	"k8s.io/apiserver/pkg/server/httplog"
 )
 
 // WithTimeoutForNonLongRunningRequests times out non-long-running requests after the time given by timeout.
@@ -141,8 +142,10 @@ func (t *timeoutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				utilruntime.HandleError(err)
 			}()
 		}()
-
-		postTimeoutFn()
+		httplog.SetStacktracePredicate(r.Context(), func(status int) bool {
+			return false
+		})
+		defer postTimeoutFn()
 		tw.timeout(err)
 	}
 }

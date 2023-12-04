@@ -17,10 +17,12 @@ limitations under the License.
 package iptables
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -89,6 +91,9 @@ type Interface interface {
 	// mapped to the same IP:PORT and consequently some suffer packet
 	// drops.
 	HasRandomFully() bool
+
+	// Present checks if the kernel supports the iptable interface
+	Present() bool
 }
 
 // Protocol defines the ip protocol either ipv4 or ipv6
@@ -213,7 +218,7 @@ type runner struct {
 func newInternal(exec utilexec.Interface, protocol Protocol, lockfilePath14x, lockfilePath16x string) Interface {
 	version, err := getIPTablesVersion(exec, protocol)
 	if err != nil {
-		klog.Warningf("Error checking iptables version, assuming version at least %s: %v", MinCheckVersion, err)
+		klog.InfoS("Error checking iptables version, assuming version at least", "version", MinCheckVersion, "err", err)
 		version = MinCheckVersion
 	}
 
@@ -282,7 +287,6 @@ func (runner *runner) DeleteChain(table Table, chain Chain) error {
 	runner.mu.Lock()
 	defer runner.mu.Unlock()
 
-	// TODO: we could call iptables -S first, ignore the output and check for non-zero return (more like DeleteRule)
 	out, err := runner.run(opDeleteChain, fullArgs)
 	if err != nil {
 		return fmt.Errorf("error deleting chain %q: %v: %s", chain, err, out)
@@ -351,7 +355,7 @@ func (runner *runner) SaveInto(table Table, buffer *bytes.Buffer) error {
 	// run and return
 	iptablesSaveCmd := iptablesSaveCommand(runner.protocol)
 	args := []string{"-t", string(table)}
-	klog.V(4).Infof("running %s %v", iptablesSaveCmd, args)
+	klog.V(4).InfoS("Running", "command", iptablesSaveCmd, "arguments", args)
 	cmd := runner.exec.Command(iptablesSaveCmd, args...)
 	cmd.SetStdout(buffer)
 	stderrBuffer := bytes.NewBuffer(nil)
@@ -408,7 +412,7 @@ func (runner *runner) restoreInternal(args []string, data []byte, flush FlushFla
 		trace.Step("Locks grabbed")
 		defer func(locker iptablesLocker) {
 			if err := locker.Close(); err != nil {
-				klog.Errorf("Failed to close iptables locks: %v", err)
+				klog.ErrorS(err, "Failed to close iptables locks")
 			}
 		}(locker)
 	}
@@ -416,12 +420,16 @@ func (runner *runner) restoreInternal(args []string, data []byte, flush FlushFla
 	// run the command and return the output or an error including the output and error
 	fullArgs := append(runner.restoreWaitFlag, args...)
 	iptablesRestoreCmd := iptablesRestoreCommand(runner.protocol)
-	klog.V(4).Infof("running %s %v", iptablesRestoreCmd, fullArgs)
+	klog.V(4).InfoS("Running", "command", iptablesRestoreCmd, "arguments", fullArgs)
 	cmd := runner.exec.Command(iptablesRestoreCmd, fullArgs...)
 	cmd.SetStdin(bytes.NewBuffer(data))
 	b, err := cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("%v (%s)", err, b)
+		pErr, ok := parseRestoreError(string(b))
+		if ok {
+			return pErr
+		}
+		return fmt.Errorf("%w: %s", err, b)
 	}
 	return nil
 }
@@ -456,7 +464,7 @@ func (runner *runner) runContext(ctx context.Context, op operation, args []strin
 	iptablesCmd := iptablesCommand(runner.protocol)
 	fullArgs := append(runner.waitFlag, string(op))
 	fullArgs = append(fullArgs, args...)
-	klog.V(5).Infof("running iptables: %s %v", iptablesCmd, fullArgs)
+	klog.V(5).InfoS("Running", "command", iptablesCmd, "arguments", fullArgs)
 	if ctx == nil {
 		return runner.exec.Command(iptablesCmd, fullArgs...).CombinedOutput()
 	}
@@ -484,7 +492,7 @@ func trimhex(s string) string {
 // of hack and half-measures.  We should nix this ASAP.
 func (runner *runner) checkRuleWithoutCheck(table Table, chain Chain, args ...string) (bool, error) {
 	iptablesSaveCmd := iptablesSaveCommand(runner.protocol)
-	klog.V(1).Infof("running %s -t %s", iptablesSaveCmd, string(table))
+	klog.V(1).InfoS("Running", "command", iptablesSaveCmd, "table", string(table))
 	out, err := runner.exec.Command(iptablesSaveCmd, "-t", string(table)).CombinedOutput()
 	if err != nil {
 		return false, fmt.Errorf("error checking rule: %v", err)
@@ -523,7 +531,7 @@ func (runner *runner) checkRuleWithoutCheck(table Table, chain Chain, args ...st
 		if sets.NewString(fields...).IsSuperset(argset) {
 			return true, nil
 		}
-		klog.V(5).Infof("DBG: fields is not a superset of args: fields=%v  args=%v", fields, args)
+		klog.V(5).InfoS("DBG: fields is not a superset of args", "fields", fields, "arguments", args)
 	}
 
 	return false, nil
@@ -564,7 +572,7 @@ func (runner *runner) Monitor(canary Chain, tables []Table, reloadFunc func(), i
 		_ = utilwait.PollImmediateUntil(interval, func() (bool, error) {
 			for _, table := range tables {
 				if _, err := runner.EnsureChain(table, canary); err != nil {
-					klog.Warningf("Could not set up iptables canary %s/%s: %v", string(table), string(canary), err)
+					klog.ErrorS(err, "Could not set up iptables canary", "table", table, "chain", canary)
 					return false, nil
 				}
 			}
@@ -576,11 +584,10 @@ func (runner *runner) Monitor(canary Chain, tables []Table, reloadFunc func(), i
 			if exists, err := runner.ChainExists(tables[0], canary); exists {
 				return false, nil
 			} else if isResourceError(err) {
-				klog.Warningf("Could not check for iptables canary %s/%s: %v", string(tables[0]), string(canary), err)
+				klog.ErrorS(err, "Could not check for iptables canary", "table", tables[0], "chain", canary)
 				return false, nil
 			}
-			klog.V(2).Infof("iptables canary %s/%s deleted", string(tables[0]), string(canary))
-
+			klog.V(2).InfoS("IPTables canary deleted", "table", tables[0], "chain", canary)
 			// Wait for the other canaries to be deleted too before returning
 			// so we don't start reloading too soon.
 			err := utilwait.PollImmediate(iptablesFlushPollTime, iptablesFlushTimeout, func() (bool, error) {
@@ -592,7 +599,7 @@ func (runner *runner) Monitor(canary Chain, tables []Table, reloadFunc func(), i
 				return true, nil
 			})
 			if err != nil {
-				klog.Warning("Inconsistent iptables state detected.")
+				klog.InfoS("Inconsistent iptables state detected")
 			}
 			return true, nil
 		}, stopCh)
@@ -605,7 +612,7 @@ func (runner *runner) Monitor(canary Chain, tables []Table, reloadFunc func(), i
 			return
 		}
 
-		klog.V(2).Infof("Reloading after iptables flush")
+		klog.V(2).InfoS("Reloading after iptables flush")
 		reloadFunc()
 	}
 }
@@ -686,11 +693,11 @@ func getIPTablesRestoreWaitFlag(version *utilversion.Version, exec utilexec.Inte
 	// --version, assume it also supports --wait
 	vstring, err := getIPTablesRestoreVersionString(exec, protocol)
 	if err != nil || vstring == "" {
-		klog.V(3).Infof("couldn't get iptables-restore version; assuming it doesn't support --wait")
+		klog.V(3).InfoS("Couldn't get iptables-restore version; assuming it doesn't support --wait")
 		return nil
 	}
 	if _, err := utilversion.ParseGeneric(vstring); err != nil {
-		klog.V(3).Infof("couldn't parse iptables-restore version; assuming it doesn't support --wait")
+		klog.V(3).InfoS("Couldn't parse iptables-restore version; assuming it doesn't support --wait")
 		return nil
 	}
 	return []string{WaitString}
@@ -721,6 +728,16 @@ func getIPTablesRestoreVersionString(exec utilexec.Interface, protocol Protocol)
 
 func (runner *runner) HasRandomFully() bool {
 	return runner.hasRandomFully
+}
+
+// Present tests if iptable is supported on current kernel by checking the existence
+// of default table and chain
+func (runner *runner) Present() bool {
+	if _, err := runner.ChainExists(TableNAT, ChainPostrouting); err != nil {
+		return false
+	}
+
+	return true
 }
 
 var iptablesNotFoundStrings = []string{
@@ -770,4 +787,90 @@ func isResourceError(err error) bool {
 		return ee.ExitStatus() == iptablesStatusResourceProblem
 	}
 	return false
+}
+
+// ParseError records the payload when iptables reports an error parsing its input.
+type ParseError interface {
+	// Line returns the line number on which the parse error was reported.
+	// NOTE: First line is 1.
+	Line() int
+	// Error returns the error message of the parse error, including line number.
+	Error() string
+}
+
+type parseError struct {
+	cmd  string
+	line int
+}
+
+func (e parseError) Line() int {
+	return e.line
+}
+
+func (e parseError) Error() string {
+	return fmt.Sprintf("%s: input error on line %d: ", e.cmd, e.line)
+}
+
+// LineData represents a single numbered line of data.
+type LineData struct {
+	// Line holds the line number (the first line is 1).
+	Line int
+	// The data of the line.
+	Data string
+}
+
+var regexpParseError = regexp.MustCompile("line ([1-9][0-9]*) failed$")
+
+// parseRestoreError extracts the line from the error, if it matches returns parseError
+// for example:
+// input: iptables-restore: line 51 failed
+// output: parseError:  cmd = iptables-restore, line = 51
+// NOTE: parseRestoreError depends on the error format of iptables, if it ever changes
+// we need to update this function
+func parseRestoreError(str string) (ParseError, bool) {
+	errors := strings.Split(str, ":")
+	if len(errors) != 2 {
+		return nil, false
+	}
+	cmd := errors[0]
+	matches := regexpParseError.FindStringSubmatch(errors[1])
+	if len(matches) != 2 {
+		return nil, false
+	}
+	line, errMsg := strconv.Atoi(matches[1])
+	if errMsg != nil {
+		return nil, false
+	}
+	return parseError{cmd: cmd, line: line}, true
+}
+
+// ExtractLines extracts the -count and +count data from the lineNum row of lines and return
+// NOTE: lines start from line 1
+func ExtractLines(lines []byte, line, count int) []LineData {
+	// first line is line 1, so line can't be smaller than 1
+	if line < 1 {
+		return nil
+	}
+	start := line - count
+	if start <= 0 {
+		start = 1
+	}
+	end := line + count + 1
+
+	offset := 1
+	scanner := bufio.NewScanner(bytes.NewBuffer(lines))
+	extractLines := make([]LineData, 0, count*2)
+	for scanner.Scan() {
+		if offset >= start && offset < end {
+			extractLines = append(extractLines, LineData{
+				Line: offset,
+				Data: scanner.Text(),
+			})
+		}
+		if offset == end {
+			break
+		}
+		offset++
+	}
+	return extractLines
 }

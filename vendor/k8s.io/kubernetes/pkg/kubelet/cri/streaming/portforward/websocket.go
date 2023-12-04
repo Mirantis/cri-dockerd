@@ -17,6 +17,7 @@ limitations under the License.
 package portforward
 
 import (
+	"context"
 	"encoding/binary"
 	"fmt"
 	"io"
@@ -31,7 +32,7 @@ import (
 	api "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/runtime"
-	"k8s.io/apiserver/pkg/server/httplog"
+	"k8s.io/apiserver/pkg/endpoints/responsewriter"
 	"k8s.io/apiserver/pkg/util/wsstream"
 )
 
@@ -113,7 +114,7 @@ func handleWebSocketStreams(req *http.Request, w http.ResponseWriter, portForwar
 		},
 	})
 	conn.SetIdleTimeout(idleTimeout)
-	_, streams, err := conn.Open(httplog.Unlogged(req, w), req)
+	_, streams, err := conn.Open(responsewriter.GetOriginal(w), req)
 	if err != nil {
 		err = fmt.Errorf("unable to upgrade websocket connection: %v", err)
 		return err
@@ -182,11 +183,12 @@ func (h *websocketStreamHandler) run() {
 }
 
 func (h *websocketStreamHandler) portForward(p *websocketStreamPair) {
+	ctx := context.Background()
 	defer p.dataStream.Close()
 	defer p.errorStream.Close()
 
 	klog.V(5).InfoS("Connection invoking forwarder.PortForward for port", "connection", h.conn, "port", p.port)
-	err := h.forwarder.PortForward(h.pod, h.uid, p.port, p.dataStream)
+	err := h.forwarder.PortForward(ctx, h.pod, h.uid, p.port, p.dataStream)
 	klog.V(5).InfoS("Connection done invoking forwarder.PortForward for port", "connection", h.conn, "port", p.port)
 
 	if err != nil {

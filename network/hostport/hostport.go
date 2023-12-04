@@ -34,6 +34,8 @@ const (
 	kubeHostportsChain utiliptables.Chain = "KUBE-HOSTPORTS"
 	// prefix for hostport chains
 	kubeHostportChainPrefix string = "KUBE-HP-"
+	// kubeMarkMasqChain is the mark-for-masquerade chain
+	kubeMarkMasqChain string = "KUBE-MARK-MASQ"
 )
 
 // PortMapping represents a network port in a container
