@@ -1,7 +1,7 @@
 ARCH=$(shell uname -m)
-GO_VERSION:=1.19.10
+GO_VERSION?=$(shell grep GO_VERSION ../.github/.env | grep -v HUGO_VERSION | cut -d '=' -f 2)
 PLATFORM=cri-dockerd
 SHELL:=/bin/bash
-VERSION?=0.3.8-dev
+export VERSION?=$(shell (git describe --tags))
 
 export PLATFORM

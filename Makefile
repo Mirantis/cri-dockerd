@@ -12,7 +12,7 @@ endif
 
 SHELL=/bin/bash
 
-export VERSION?=$(shell (git describe --abbrev=0 --tags | sed -e 's/v//') || echo $(cat VERSION)-$(git log -1 --pretty='%h'))
+export VERSION?=$(shell (git describe --tags | sed -e 's/v//'))
 PRERELEASE=`grep -q dev <<< "${VERSION}" && echo "pre" || echo ""`
 REVISION?=`git log -1 --pretty='%h'`
 export CRI_DOCKERD_LDFLAGS:=-ldflags "${CRI_DOCKERD_LDFLAGS} -s -w -buildid=${REVISION} \
