@@ -12,11 +12,21 @@ jobs:
     runs-on: ubuntu-20.04
     timeout-minutes: 60
     steps:
-
-      - name: Set up Go 1.21.3
-        uses: actions/setup-go@v1
+      - name: Checkout cri-dockerd
+        uses: actions/checkout@v2
         with:
-          go-version: 1.21.3
+          repository: ${{ github.repository }}
+          path: src/github.com/Mirantis/cri-dockerd
+
+      - name: Load environment
+        uses: c-py/action-dotenv-to-setenv@v4
+        with:
+          env-file: src/github.com/Mirantis/cri-dockerd/.github/.env
+
+      - name: Set up Go ${{ env.GO_VERSION }}
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GO_VERSION }}
         id: go
 
       - name: Setup environment
@@ -78,12 +88,6 @@ jobs:
         run: |
           make critest crictl
           find $(pwd)/build/bin -type f -exec mv {} /usr/local/bin \;
-
-      - name: Checkout cri-dockerd
-        uses: actions/checkout@v2
-        with:
-          repository: ${{ github.repository }}
-          path: src/github.com/Mirantis/cri-dockerd
 
       - name: Build cri-dockerd
         working-directory: src/github.com/Mirantis/cri-dockerd

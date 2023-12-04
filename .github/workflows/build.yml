@@ -14,10 +14,15 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Set up Go
+    - name: Load environment
+      uses: c-py/action-dotenv-to-setenv@v4
+      with:
+        env-file: .github/.env
+
+    - name: Set up Go ${{ env.GO_VERSION }}
       uses: actions/setup-go@v4
       with:
-        go-version: '1.21.3'
+        go-version: ${{ env.GO_VERSION }}
 
     - name: Build
       run: make static-linux
@@ -37,10 +42,15 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Set up Go
+    - name: Load environment
+      uses: c-py/action-dotenv-to-setenv@v4
+      with:
+        env-file: .github/.env
+
+    - name: Set up Go ${{ env.GO_VERSION }}
       uses: actions/setup-go@v4
       with:
-        go-version: '1.21.3'
+        go-version: ${{ env.GO_VERSION }}
 
     - name: Build
       run: make deb
@@ -59,10 +69,15 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Set up Go
+    - name: Load environment
+      uses: c-py/action-dotenv-to-setenv@v4
+      with:
+        env-file: .github/.env
+
+    - name: Set up Go ${{ env.GO_VERSION }}
       uses: actions/setup-go@v4
       with:
-        go-version: '1.21.3'
+        go-version: ${{ env.GO_VERSION }}
 
     - name: Build
       run: make rpm
@@ -81,10 +96,15 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Set up Go
+    - name: Load environment
+      uses: c-py/action-dotenv-to-setenv@v4
+      with:
+        env-file: .github/.env
+
+    - name: Set up Go ${{ env.GO_VERSION }}
       uses: actions/setup-go@v4
       with:
-        go-version: '1.21.3'
+        go-version: ${{ env.GO_VERSION }}
 
     - name: Build
       run: make cross-arm
@@ -102,10 +122,15 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Set up Go
+    - name: Load environment
+      uses: c-py/action-dotenv-to-setenv@v4
+      with:
+        env-file: .github/.env
+
+    - name: Set up Go ${{ env.GO_VERSION }}
       uses: actions/setup-go@v4
       with:
-        go-version: '1.21.3'
+        go-version: ${{ env.GO_VERSION }}
 
     - name: Build
       run: make cross-win
@@ -124,10 +149,15 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Set up Go
+    - name: Load environment
+      uses: c-py/action-dotenv-to-setenv@v4
+      with:
+        env-file: .github/.env
+
+    - name: Set up Go ${{ env.GO_VERSION }}
       uses: actions/setup-go@v4
       with:
-        go-version: '1.21.3'
+        go-version: ${{ env.GO_VERSION }}
 
     - name: Build
       run: make cross-mac

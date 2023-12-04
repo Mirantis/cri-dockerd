@@ -3,7 +3,7 @@ include ../common.mk
 APP_DIR:=$(realpath $(CURDIR)/../../)
 STATIC_VERSION:=$(shell ../static/gen-static-ver $(APP_DIR) $(VERSION))
 GO_BASE_IMAGE=golang
-GO_IMAGE?=$(GO_BASE_IMAGE):$(GO_VERSION)-buster
+GO_IMAGE?=$(GO_BASE_IMAGE):$(GO_VERSION)-bullseye
 GEN_RPM_VER=$(shell ./gen-rpm-ver $(APP_DIR) $(VERSION))
 CRI_DOCKER_GITCOMMIT?=$(word 3,$(GEN_RPM_VER))
 CHOWN=docker run --rm -i -v $(CURDIR):/v -w /v alpine chown
