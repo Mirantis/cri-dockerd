@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/base32"
+	"encoding/json"
 	"fmt"
 	"net"
 	"strconv"
@@ -428,12 +429,18 @@ func getExistingHostportIPTablesRules(
 	existingHostportChains := make(map[utiliptables.Chain]string)
 	existingHostportRules := []string{}
 
-	for chain := range existingNATChains {
+	for chain, value := range existingNATChains {
 		if strings.HasPrefix(string(chain), string(kubeHostportsChain)) ||
 			strings.HasPrefix(string(chain), kubeHostportChainPrefix) {
 			if _, ok := existingNATChains[chain]; ok {
-				// This just means true
-				existingHostportChains[chain] = ""
+				// It looks like the value isn't used, just the key. We convert the map
+				// to string anyway to make sure we save it if we need it later.
+				out, err := json.Marshal(value)
+				if err != nil {
+					return nil, nil, fmt.Errorf("failed to marshal chain %s: %v", chain, err)
+				}
+
+				existingHostportChains[chain] = string(out)
 			}
 		}
 	}
