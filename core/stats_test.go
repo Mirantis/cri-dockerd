@@ -48,9 +48,6 @@ func TestContainerStats(t *testing.T) {
 			[]libdocker.CalledDetail{
 				libdocker.NewCalledDetail("list", nil),
 				libdocker.NewCalledDetail("get_container_stats", nil),
-				libdocker.NewCalledDetail("inspect_container_withsize", nil),
-				libdocker.NewCalledDetail("inspect_container", nil),
-				libdocker.NewCalledDetail("inspect_image", nil),
 			},
 		},
 		"container doesn't exists": {

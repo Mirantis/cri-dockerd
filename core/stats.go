@@ -118,6 +118,9 @@ func (cs *cstats) getContainerRWSize() uint64 {
 func (c *containerStatsCache) getStats(containerID string) *cstats {
 	c.RLock()
 	defer c.RUnlock()
+	if _, exist := c.stats[containerID]; !exist {
+		return nil
+	}
 	return c.stats[containerID]
 }
 
