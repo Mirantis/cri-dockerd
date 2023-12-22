@@ -45,7 +45,7 @@ import (
 
 	v1 "k8s.io/api/core/v1"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
-	runtimeapi_alpha "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
+	runtimeapi_alpha "k8s.io/cri-api/v1alpha2/pkg/apis/runtime/v1alpha2"
 )
 
 const (
@@ -310,7 +310,6 @@ func (ds *dockerService) Version(
 	}, nil
 }
 
-// Version returns the runtime name, runtime version and runtime API version
 func (ds *dockerService) AlphaVersion(
 	_ context.Context,
 	r *runtimeapi.VersionRequest,
@@ -325,6 +324,30 @@ func (ds *dockerService) AlphaVersion(
 		RuntimeVersion:    v.Version,
 		RuntimeApiVersion: config.CRIVersionAlpha,
 	}, nil
+}
+
+func (ds *dockerService) CheckpointContainer(context.Context, *runtimeapi.CheckpointContainerRequest) (*runtimeapi.CheckpointContainerResponse, error) {
+	return nil, fmt.Errorf("CheckpointContainer is not implemented")
+}
+
+func (ds *dockerService) GetContainerEvents(*runtimeapi.GetEventsRequest, runtimeapi.RuntimeService_GetContainerEventsServer) error {
+	return fmt.Errorf("GetContainerEvents is not implemented")
+}
+
+func (ds *dockerService) ListMetricDescriptors(context.Context, *runtimeapi.ListMetricDescriptorsRequest) (*runtimeapi.ListMetricDescriptorsResponse, error) {
+	return nil, fmt.Errorf("ListMetricDescriptors is not implemented")
+}
+
+func (ds *dockerService) ListPodSandboxMetrics(context.Context, *runtimeapi.ListPodSandboxMetricsRequest) (*runtimeapi.ListPodSandboxMetricsResponse, error) {
+	return nil, fmt.Errorf("ListPodSandboxMetrics is not implemented")
+}
+
+func (ds *dockerService) ListPodSandboxStats(context.Context, *runtimeapi.ListPodSandboxStatsRequest) (*runtimeapi.ListPodSandboxStatsResponse, error) {
+	return nil, fmt.Errorf("ListPodSandboxStats is not implemented")
+}
+
+func (ds *dockerService) PodSandboxStats(context.Context, *runtimeapi.PodSandboxStatsRequest) (*runtimeapi.PodSandboxStatsResponse, error) {
+	return nil, fmt.Errorf("PodSandboxStats is not implemented")
 }
 
 // getDockerVersion gets the version information from docker.

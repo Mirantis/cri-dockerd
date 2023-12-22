@@ -28,6 +28,7 @@ help: ## show make targets
 cri-dockerd: ## build cri-dockerd
 	GOARCH=$(ARCH) go build -trimpath $(CRI_DOCKERD_LDFLAGS) -o $@
 
+### Release
 .PHONY: deb
 deb: ## build deb packages
 	$(MAKE) APP_DIR=$(APP_DIR) -C $(PACKAGING_DIR) deb
@@ -57,6 +58,7 @@ cross-win: ## build static packages
 cross-arm: ## build static packages
 	$(MAKE) APP_DIR=$(APP_DIR) -C $(PACKAGING_DIR) cross-arm
 
+### Development
 .PHONY: clean
 clean: ## clean the build artifacts
 	$(RM) cri-dockerd
@@ -71,11 +73,16 @@ run: cri-dockerd ## Run cri-docker in a running minikube
 dev: cri-dockerd ## Run cri-docker in a running minikube
 	./scripts/replace-in-minikube
 
-.PHONY: docs
-docs:
-	hugo server --source docs/
-
+#### Testing
 .PHONY: integration
-integration:
+integration: ## Run integration tests
 	sudo critest -runtime-endpoint=unix:///var/run/cri-dockerd.sock -ginkgo.skip="runtime should support apparmor|runtime should support reopening container log|runtime should support execSync with timeout|runtime should support selinux|.*should support propagation.*"
 
+.PHONY: test
+test: ## Run unit tests
+	go test ./...
+
+### Documentation
+.PHONY: docs
+docs: ## Run docs server
+	hugo server --source docs/

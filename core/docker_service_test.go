@@ -31,7 +31,7 @@ import (
 	"github.com/stretchr/testify/require"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 	containertest "k8s.io/kubernetes/pkg/kubelet/container/testing"
-	"k8s.io/utils/clock"
+	clock "k8s.io/utils/clock/testing"
 
 	"github.com/Mirantis/cri-dockerd/libdocker"
 	"github.com/Mirantis/cri-dockerd/network"
@@ -97,12 +97,13 @@ func newTestDockerService() (*dockerService, *libdocker.FakeDockerClient, *clock
 	pm := network.NewPluginManager(&network.NoopNetworkPlugin{})
 	ckm := newMockCheckpointManager()
 	return &dockerService{
-		client:            c,
-		os:                &containertest.FakeOS{},
-		network:           pm,
-		checkpointManager: ckm,
-		networkReady:      make(map[string]bool),
-		dockerRootDir:     "/docker/root/dir",
+		client:              c,
+		os:                  &containertest.FakeOS{},
+		network:             pm,
+		checkpointManager:   ckm,
+		networkReady:        make(map[string]bool),
+		dockerRootDir:       "/docker/root/dir",
+		containerStatsCache: newContainerStatsCache(),
 	}, c, fakeClock
 }
 
@@ -140,7 +141,7 @@ func TestStatus(t *testing.T) {
 	statusResp, err = ds.Status(getTestCTX(), &runtimeapi.StatusRequest{})
 	assert.NoError(t, err)
 	assertStatus(map[string]bool{
-		runtimeapi.RuntimeReady: false,
+		runtimeapi.RuntimeReady: true,
 		runtimeapi.NetworkReady: true,
 	}, statusResp.Status)
 

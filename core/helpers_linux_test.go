@@ -1,3 +1,4 @@
+//go:build linux
 // +build linux
 
 /*
@@ -25,7 +26,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/Mirantis/cri-dockerd/config"
+	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -34,24 +35,31 @@ import (
 func TestGetSeccompSecurityOpts(t *testing.T) {
 	tests := []struct {
 		msg            string
-		seccompProfile string
+		seccompProfile *runtimeapi.SecurityProfile
 		expectedOpts   []string
 	}{{
 		msg:            "No security annotations",
-		seccompProfile: "",
+		seccompProfile: nil,
 		expectedOpts:   []string{"seccomp=unconfined"},
 	}, {
-		msg:            "Seccomp unconfined",
-		seccompProfile: "unconfined",
-		expectedOpts:   []string{"seccomp=unconfined"},
+		msg: "Seccomp unconfined",
+		seccompProfile: &runtimeapi.SecurityProfile{
+			ProfileType: runtimeapi.SecurityProfile_Unconfined,
+		},
+		expectedOpts: []string{"seccomp=unconfined"},
 	}, {
-		msg:            "Seccomp default",
-		seccompProfile: config.SeccompProfileRuntimeDefault,
-		expectedOpts:   nil,
+		msg: "Seccomp default",
+		seccompProfile: &runtimeapi.SecurityProfile{
+			ProfileType: runtimeapi.SecurityProfile_RuntimeDefault,
+		},
+		expectedOpts: nil,
 	}, {
-		msg:            "Seccomp deprecated default",
-		seccompProfile: config.DeprecatedSeccompProfileDockerDefault,
-		expectedOpts:   nil,
+		msg: "Seccomp deprecated default",
+		seccompProfile: &runtimeapi.SecurityProfile{
+			ProfileType:  runtimeapi.SecurityProfile_RuntimeDefault,
+			LocalhostRef: "docker/default",
+		},
+		expectedOpts: nil,
 	}}
 
 	for i, test := range tests {
@@ -74,24 +82,33 @@ func TestLoadSeccompLocalhostProfiles(t *testing.T) {
 
 	tests := []struct {
 		msg            string
-		seccompProfile string
+		seccompProfile *runtimeapi.SecurityProfile
 		expectedOpts   []string
 		expectErr      bool
 	}{{
-		msg:            "Seccomp localhost/test profile should return correct seccomp profiles",
-		seccompProfile: "localhost/" + filepath.Join(tmpdir, "test"),
-		expectedOpts:   []string{`seccomp={"foo":"bar"}`},
-		expectErr:      false,
+		msg: "Seccomp localhost/test profile should return correct seccomp profiles",
+		seccompProfile: &runtimeapi.SecurityProfile{
+			ProfileType:  runtimeapi.SecurityProfile_Localhost,
+			LocalhostRef: filepath.Join(tmpdir, "test"),
+		},
+		expectedOpts: []string{`seccomp={"foo":"bar"}`},
+		expectErr:    false,
 	}, {
-		msg:            "Non-existent profile should return error",
-		seccompProfile: "localhost/" + filepath.Join(tmpdir, "fixtures/non-existent"),
-		expectedOpts:   nil,
-		expectErr:      true,
+		msg: "Non-existent profile should return error",
+		seccompProfile: &runtimeapi.SecurityProfile{
+			ProfileType:  runtimeapi.SecurityProfile_Localhost,
+			LocalhostRef: "localhost/" + filepath.Join(tmpdir, "fixtures/non-existent"),
+		},
+		expectedOpts: nil,
+		expectErr:    true,
 	}, {
-		msg:            "Relative profile path should return error",
-		seccompProfile: "localhost/fixtures/test",
-		expectedOpts:   nil,
-		expectErr:      true,
+		msg: "Relative profile path should return error",
+		seccompProfile: &runtimeapi.SecurityProfile{
+			ProfileType:  runtimeapi.SecurityProfile_Localhost,
+			LocalhostRef: "localhost/fixtures/test",
+		},
+		expectedOpts: nil,
+		expectErr:    true,
 	}}
 
 	for i, test := range tests {
