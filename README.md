@@ -1,10 +1,14 @@
-![docker and kubernetes interact](docs/static/images/logo.svg)
+<p align="center">
+  <img src="docs/static/images/logo.svg" alt="docker and kubernetes interact"/>
+</p>
 
 # cri-dockerd
 
 This adapter provides a shim for [Docker Engine](https://docs.docker.com/engine/)
 that lets you control Docker via the
 Kubernetes [Container Runtime Interface](https://github.com/kubernetes/cri-api#readme).
+
+Take a look at the [official docs](https://mirantis.github.io/cri-dockerd/) for more information.
 
 ## IMPORTANT
 

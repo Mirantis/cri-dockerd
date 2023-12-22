@@ -1,0 +1,22 @@
+name: Merge
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  vet:
+    uses: ./.github/workflows/vet.yml
+  unit-test:
+    uses: ./.github/workflows/unit.yml
+  build:
+    uses: ./.github/workflows/build.yml
+  e2e:
+    if: ${{ always() && contains(join(needs.*.result, ','), 'success') }}
+    needs: [build, vet, unit-test]
+    uses: ./.github/workflows/e2e.yml
+  integration:
+    if: ${{ always() && contains(join(needs.*.result, ','), 'success') }}
+    needs: [build, vet, unit-test]
+    uses: ./.github/workflows/integration.yml
