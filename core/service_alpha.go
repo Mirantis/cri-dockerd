@@ -18,12 +18,10 @@ package core
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/Mirantis/cri-dockerd/config"
 	"github.com/Mirantis/cri-dockerd/utils"
 	v1 "k8s.io/cri-api/pkg/apis/runtime/v1"
-	"k8s.io/cri-api/v1alpha2/pkg/apis/runtime/v1alpha2"
 	runtimeapi_alpha "k8s.io/cri-api/v1alpha2/pkg/apis/runtime/v1alpha2"
 )
 
@@ -603,12 +601,4 @@ func (as *dockerServiceAlpha) Version(
 		return res, err
 	}
 	return nil, err
-}
-
-func (as *dockerServiceAlpha) ListPodSandboxStats(context.Context, *v1alpha2.ListPodSandboxStatsRequest) (*v1alpha2.ListPodSandboxStatsResponse, error) {
-	return nil, fmt.Errorf("ListPodSandboxStats is not implemented")
-}
-
-func (ds *dockerServiceAlpha) PodSandboxStats(context.Context, *v1alpha2.PodSandboxStatsRequest) (*v1alpha2.PodSandboxStatsResponse, error) {
-	return nil, fmt.Errorf("PodSandboxStats is not implemented")
 }
