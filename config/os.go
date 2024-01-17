@@ -17,7 +17,7 @@ limitations under the License.
 package config
 
 import (
-	"io/ioutil"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"time"
@@ -100,7 +100,19 @@ func (RealOS) Pipe() (r *os.File, w *os.File, err error) {
 
 // ReadDir will call ioutil.ReadDir to return the files under the directory.
 func (RealOS) ReadDir(dirname string) ([]os.FileInfo, error) {
-	return ioutil.ReadDir(dirname)
+	entries, err := os.ReadDir(dirname)
+	if err != nil {
+		return nil, err
+	}
+	infos := make([]fs.FileInfo, 0, len(entries))
+	for _, entry := range entries {
+		info, err := entry.Info()
+		if err != nil {
+			return nil, err
+		}
+		infos = append(infos, info)
+	}
+	return infos, nil
 }
 
 // Glob will call filepath.Glob to return the names of all files matching
