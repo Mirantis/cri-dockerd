@@ -42,12 +42,11 @@ func imageToRuntimeAPIImage(image *dockertypes.ImageSummary) (*runtimeapi.Image,
 		return nil, fmt.Errorf("unable to convert a nil pointer to a runtime API image")
 	}
 
-	size := uint64(image.VirtualSize)
 	return &runtimeapi.Image{
 		Id:          image.ID,
 		RepoTags:    image.RepoTags,
 		RepoDigests: image.RepoDigests,
-		Size_:       size,
+		Size_:       uint64(image.Size),
 	}, nil
 }
 
@@ -56,12 +55,11 @@ func imageInspectToRuntimeAPIImage(image *dockertypes.ImageInspect) (*runtimeapi
 		return nil, fmt.Errorf("unable to convert a nil pointer to a runtime API image")
 	}
 
-	size := uint64(image.VirtualSize)
 	runtimeImage := &runtimeapi.Image{
 		Id:          image.ID,
 		RepoTags:    image.RepoTags,
 		RepoDigests: image.RepoDigests,
-		Size_:       size,
+		Size_:       uint64(image.Size),
 	}
 
 	uid, username := getUserFromImageUser(image.Config.User)
