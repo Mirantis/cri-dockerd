@@ -253,6 +253,9 @@ func NewDockerService(
 }
 
 type dockerService struct {
+	// This handles unimplemented methods unless cri-dockerd overrides them
+	runtimeapi.UnimplementedRuntimeServiceServer
+
 	client           libdocker.DockerClientInterface
 	os               config.OSInterface
 	podSandboxImage  string
@@ -287,6 +290,9 @@ type dockerService struct {
 
 type dockerServiceAlpha struct {
 	ds DockerService
+
+	// This handles unimplemented methods unless cri-dockerd overrides them
+	runtimeapi_alpha.UnimplementedRuntimeServiceServer
 }
 
 func NewDockerServiceAlpha(ds DockerService) v1AlphaCRIService {
@@ -324,30 +330,6 @@ func (ds *dockerService) AlphaVersion(
 		RuntimeVersion:    v.Version,
 		RuntimeApiVersion: config.CRIVersionAlpha,
 	}, nil
-}
-
-func (ds *dockerService) CheckpointContainer(context.Context, *runtimeapi.CheckpointContainerRequest) (*runtimeapi.CheckpointContainerResponse, error) {
-	return nil, fmt.Errorf("CheckpointContainer is not implemented")
-}
-
-func (ds *dockerService) GetContainerEvents(*runtimeapi.GetEventsRequest, runtimeapi.RuntimeService_GetContainerEventsServer) error {
-	return fmt.Errorf("GetContainerEvents is not implemented")
-}
-
-func (ds *dockerService) ListMetricDescriptors(context.Context, *runtimeapi.ListMetricDescriptorsRequest) (*runtimeapi.ListMetricDescriptorsResponse, error) {
-	return nil, fmt.Errorf("ListMetricDescriptors is not implemented")
-}
-
-func (ds *dockerService) ListPodSandboxMetrics(context.Context, *runtimeapi.ListPodSandboxMetricsRequest) (*runtimeapi.ListPodSandboxMetricsResponse, error) {
-	return nil, fmt.Errorf("ListPodSandboxMetrics is not implemented")
-}
-
-func (ds *dockerService) ListPodSandboxStats(context.Context, *runtimeapi.ListPodSandboxStatsRequest) (*runtimeapi.ListPodSandboxStatsResponse, error) {
-	return nil, fmt.Errorf("ListPodSandboxStats is not implemented")
-}
-
-func (ds *dockerService) PodSandboxStats(context.Context, *runtimeapi.PodSandboxStatsRequest) (*runtimeapi.PodSandboxStatsResponse, error) {
-	return nil, fmt.Errorf("PodSandboxStats is not implemented")
 }
 
 // getDockerVersion gets the version information from docker.
