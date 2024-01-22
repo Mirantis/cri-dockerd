@@ -17,7 +17,6 @@ limitations under the License.
 package config
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"time"
@@ -36,7 +35,7 @@ type OSInterface interface {
 	Hostname() (name string, err error)
 	Chtimes(path string, atime time.Time, mtime time.Time) error
 	Pipe() (r *os.File, w *os.File, err error)
-	ReadDir(dirname string) ([]os.FileInfo, error)
+	ReadDir(dirname string) ([]os.DirEntry, error)
 	Glob(pattern string) ([]string, error)
 	Open(name string) (*os.File, error)
 	OpenFile(name string, flag int, perm os.FileMode) (*os.File, error)
@@ -99,8 +98,8 @@ func (RealOS) Pipe() (r *os.File, w *os.File, err error) {
 }
 
 // ReadDir will call ioutil.ReadDir to return the files under the directory.
-func (RealOS) ReadDir(dirname string) ([]os.FileInfo, error) {
-	return ioutil.ReadDir(dirname)
+func (RealOS) ReadDir(dirname string) ([]os.DirEntry, error) {
+	return os.ReadDir(dirname)
 }
 
 // Glob will call filepath.Glob to return the names of all files matching
