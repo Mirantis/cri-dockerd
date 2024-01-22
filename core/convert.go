@@ -37,7 +37,7 @@ import (
 // This file contains helper functions to convert docker API types to runtime
 // API types, or vice versa.
 
-func imageToRuntimeAPIImage(image *dockertypes.ImageSummary) (*runtimeapi.Image, error) {
+func imageToRuntimeAPIImage(image *dockertypes.ImageSummary, pinned bool) (*runtimeapi.Image, error) {
 	if image == nil {
 		return nil, fmt.Errorf("unable to convert a nil pointer to a runtime API image")
 	}
@@ -47,10 +47,11 @@ func imageToRuntimeAPIImage(image *dockertypes.ImageSummary) (*runtimeapi.Image,
 		RepoTags:    image.RepoTags,
 		RepoDigests: image.RepoDigests,
 		Size_:       uint64(image.Size),
+		Pinned:      pinned,
 	}, nil
 }
 
-func imageInspectToRuntimeAPIImage(image *dockertypes.ImageInspect) (*runtimeapi.Image, error) {
+func imageInspectToRuntimeAPIImage(image *dockertypes.ImageInspect, pinned bool) (*runtimeapi.Image, error) {
 	if image == nil || image.Config == nil {
 		return nil, fmt.Errorf("unable to convert a nil pointer to a runtime API image")
 	}
@@ -60,6 +61,7 @@ func imageInspectToRuntimeAPIImage(image *dockertypes.ImageInspect) (*runtimeapi
 		RepoTags:    image.RepoTags,
 		RepoDigests: image.RepoDigests,
 		Size_:       uint64(image.Size),
+		Pinned:      pinned,
 	}
 
 	uid, username := getUserFromImageUser(image.Config.User)
