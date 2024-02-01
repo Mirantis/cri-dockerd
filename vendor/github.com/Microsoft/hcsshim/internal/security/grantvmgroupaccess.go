@@ -23,14 +23,20 @@ type (
 )
 
 type explicitAccess struct {
+	//nolint:structcheck
 	accessPermissions accessMask
-	accessMode        accessMode
-	inheritance       inheritMode
-	trustee           trustee
+	//nolint:structcheck
+	accessMode accessMode
+	//nolint:structcheck
+	inheritance inheritMode
+	//nolint:structcheck
+	trustee trustee
 }
 
 type trustee struct {
-	multipleTrustee          *trustee
+	//nolint:unused,structcheck
+	multipleTrustee *trustee
+	//nolint:unused,structcheck
 	multipleTrusteeOperation int32
 	trusteeForm              trusteeForm
 	trusteeType              trusteeType

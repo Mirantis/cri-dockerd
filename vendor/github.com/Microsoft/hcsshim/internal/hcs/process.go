@@ -167,39 +167,7 @@ func (process *Process) Kill(ctx context.Context) (bool, error) {
 		return true, nil
 	}
 
-	// HCS serializes the signals sent to a target pid per compute system handle.
-	// To avoid SIGKILL being serialized behind other signals, we open a new compute
-	// system handle to deliver the kill signal.
-	// If the calls to opening a new compute system handle fail, we forcefully
-	// terminate the container itself so that no container is left behind
-	hcsSystem, err := OpenComputeSystem(ctx, process.system.id)
-	if err != nil {
-		// log error and force termination of container
-		log.G(ctx).WithField("err", err).Error("OpenComputeSystem() call failed")
-		err = process.system.Terminate(ctx)
-		// if the Terminate() call itself ever failed, log and return error
-		if err != nil {
-			log.G(ctx).WithField("err", err).Error("Terminate() call failed")
-			return false, err
-		}
-		process.system.Close()
-		return true, nil
-	}
-	defer hcsSystem.Close()
-
-	newProcessHandle, err := hcsSystem.OpenProcess(ctx, process.Pid())
-	if err != nil {
-		// Return true only if the target process has either already
-		// exited, or does not exist.
-		if IsAlreadyStopped(err) {
-			return true, nil
-		} else {
-			return false, err
-		}
-	}
-	defer newProcessHandle.Close()
-
-	resultJSON, err := vmcompute.HcsTerminateProcess(ctx, newProcessHandle.handle)
+	resultJSON, err := vmcompute.HcsTerminateProcess(ctx, process.handle)
 	if err != nil {
 		// We still need to check these two cases, as processes may still be killed by an
 		// external actor (human operator, OOM, random script etc).
@@ -223,9 +191,9 @@ func (process *Process) Kill(ctx context.Context) (bool, error) {
 		}
 	}
 	events := processHcsResult(ctx, resultJSON)
-	delivered, err := newProcessHandle.processSignalResult(ctx, err)
+	delivered, err := process.processSignalResult(ctx, err)
 	if err != nil {
-		err = makeProcessError(newProcessHandle, operation, err, events)
+		err = makeProcessError(process, operation, err, events)
 	}
 
 	process.killSignalDelivered = delivered
@@ -421,6 +389,12 @@ func (process *Process) CloseStdin(ctx context.Context) (err error) {
 		return makeProcessError(process, operation, ErrAlreadyClosed, nil)
 	}
 
+	process.stdioLock.Lock()
+	defer process.stdioLock.Unlock()
+	if process.stdin == nil {
+		return nil
+	}
+
 	//HcsModifyProcess request to close stdin will fail if the process has already exited
 	if !process.stopped() {
 		modifyRequest := processModifyRequest{
@@ -442,12 +416,8 @@ func (process *Process) CloseStdin(ctx context.Context) (err error) {
 		}
 	}
 
-	process.stdioLock.Lock()
-	defer process.stdioLock.Unlock()
-	if process.stdin != nil {
-		process.stdin.Close()
-		process.stdin = nil
-	}
+	process.stdin.Close()
+	process.stdin = nil
 
 	return nil
 }

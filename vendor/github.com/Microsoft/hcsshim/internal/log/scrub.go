@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"strings"
 	"sync/atomic"
 
 	hcsschema "github.com/Microsoft/hcsshim/internal/hcs/schema2"
@@ -55,11 +56,11 @@ func ScrubProcessParameters(s string) (string, error) {
 	}
 	pp.Environment = map[string]string{_scrubbedReplacement: _scrubbedReplacement}
 
-	b, err := encodeBuffer(bytes.NewBuffer(b[:0]), pp)
-	if err != nil {
+	buf := bytes.NewBuffer(b[:0])
+	if err := encode(buf, pp); err != nil {
 		return "", err
 	}
-	return string(b), nil
+	return strings.TrimSpace(buf.String()), nil
 }
 
 // ScrubBridgeCreate scrubs requests sent over the bridge of type
@@ -149,12 +150,21 @@ func scrubBytes(b []byte, scrub scrubberFunc) ([]byte, error) {
 		return nil, err
 	}
 
-	b, err := encode(m)
-	if err != nil {
+	buf := &bytes.Buffer{}
+	if err := encode(buf, m); err != nil {
 		return nil, err
 	}
 
-	return b, nil
+	return bytes.TrimSpace(buf.Bytes()), nil
+}
+
+func encode(buf *bytes.Buffer, v interface{}) error {
+	enc := json.NewEncoder(buf)
+	enc.SetEscapeHTML(false)
+	if err := enc.Encode(v); err != nil {
+		return err
+	}
+	return nil
 }
 
 func isRequestBase(m genMap) bool {
