@@ -144,3 +144,50 @@ jobs:
         with:
           name: logs
           path: logs
+
+  selinux:
+    name: "SELinux"
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout cri-dockerd
+        uses: actions/checkout@v2
+        with:
+          repository: ${{ github.repository }}
+          path: src/github.com/Mirantis/cri-dockerd
+
+      - name: Load environment
+        uses: c-py/action-dotenv-to-setenv@v4
+        with:
+          env-file: src/github.com/Mirantis/cri-dockerd/.github/.env
+
+      - name: "Install QEMU"
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qemu-system-x86
+          sudo apt-get install -y --no-install-recommends ovmf qemu-system-x86 qemu-utils
+          sudo modprobe kvm
+          # `sudo usermod -aG kvm $(whoami)` does not take an effect on GHA
+          sudo chown $(whoami) /dev/kvm
+
+      - name: "Install Lima"
+        run: |
+          curl -fsSL https://github.com/lima-vm/lima/releases/download/v${LIMA_VERSION}/lima-${LIMA_VERSION}-Linux-x86_64.tar.gz | sudo tar Cxzvf /usr/local -
+
+      - name: "Cache ~/.cache/lima"
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/lima
+          key: lima-${{ env.LIMA_VERSION }}-rocky-8
+
+      - name: "Start Lima"
+        run: |
+          limactl start --name=default --plain template://rocky-8
+          mkdir -p -m 0700 ~/.ssh
+          cat ~/.lima/default/ssh.config >>~/.ssh/config
+
+      - run: rsync -a -e ssh src/github.com/Mirantis/cri-dockerd/ lima-default:/tmp/cri-dockerd
+      - run: ssh lima-default sudo /tmp/cri-dockerd/scripts/setup-el
+      - run: ssh lima-default make -C /tmp/cri-dockerd cri-dockerd
+      - run: ssh -f lima-default sudo /tmp/cri-dockerd/cri-dockerd --network-plugin="" &
+      - run: ssh lima-default sudo /usr/local/bin/critest -runtime-endpoint=unix:///var/run/cri-dockerd.sock -ginkgo.focus='.*selinux.*' -ginkgo.v

@@ -1,0 +1,18 @@
+#!/bin/bash
+# Set up Docker (with SELinux enabled) and cri-tools, for EL-like distributions
+set -eux -o pipefail
+
+setenforce 1
+
+echo "Installing Docker (with SELinux enabled)"
+mkdir -p /etc/docker
+cat <<EOF >/etc/docker/daemon.json
+{"selinux-enabled": true}
+EOF
+dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+dnf install -y docker-ce git golang make
+sudo systemctl enable --now docker
+
+echo "Installing cri-tools"
+git clone https://github.com/kubernetes-sigs/cri-tools.git
+(cd cri-tools && make && make install)
