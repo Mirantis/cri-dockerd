@@ -73,6 +73,8 @@ github.com/containerd/cgroups/stats/v1
 # github.com/containerd/containerd v1.6.23
 ## explicit; go 1.18
 github.com/containerd/containerd/errdefs
+# github.com/containerd/log v0.1.0
+## explicit; go 1.20
 # github.com/containernetworking/cni v1.1.2
 ## explicit; go 1.14
 github.com/containernetworking/cni/libcni
@@ -106,11 +108,12 @@ github.com/distribution/reference
 # github.com/docker/distribution v2.8.3+incompatible
 ## explicit
 github.com/docker/distribution/reference
-# github.com/docker/docker v24.0.7+incompatible
+# github.com/docker/docker v25.0.3+incompatible
 ## explicit
 github.com/docker/docker/api
 github.com/docker/docker/api/types
 github.com/docker/docker/api/types/blkiodev
+github.com/docker/docker/api/types/checkpoint
 github.com/docker/docker/api/types/container
 github.com/docker/docker/api/types/events
 github.com/docker/docker/api/types/filters
@@ -121,11 +124,14 @@ github.com/docker/docker/api/types/registry
 github.com/docker/docker/api/types/strslice
 github.com/docker/docker/api/types/swarm
 github.com/docker/docker/api/types/swarm/runtime
+github.com/docker/docker/api/types/system
 github.com/docker/docker/api/types/time
 github.com/docker/docker/api/types/versions
 github.com/docker/docker/api/types/volume
 github.com/docker/docker/client
 github.com/docker/docker/errdefs
+github.com/docker/docker/image/spec/specs-go/v1
+github.com/docker/docker/internal/multierror
 github.com/docker/docker/pkg/jsonmessage
 github.com/docker/docker/pkg/stdcopy
 # github.com/docker/go-connections v0.5.0
