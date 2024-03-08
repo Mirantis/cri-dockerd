@@ -169,6 +169,9 @@ func (ds *dockerService) ContainerStats(
 	if err != nil {
 		return nil, err
 	}
+	if stats == nil {
+		return nil, fmt.Errorf("stats for container with id %s not available", r.ContainerId)
+	}
 	return &runtimeapi.ContainerStatsResponse{Stats: stats}, nil
 }
 
@@ -232,7 +235,9 @@ func (ds *dockerService) ListContainerStats(
 				return nil
 			}
 			mu.Lock()
-			results = append(results, stats)
+			if stats != nil {
+				results = append(results, stats)
+			}
 			mu.Unlock()
 			return nil
 		})
