@@ -4,7 +4,9 @@ geekdocNav: false
 geekdocAlign: center
 ---
 
-![docker and kubernetes interact](/images/logo.svg#center)
+<p align="center">
+  <img src="./images/logo.svg" alt="docker and kubernetes interact"/>
+</p>
 
 `cri-dockerd` is an adapter that provides a shim for the [Docker Engine](https://docs.docker.com/engine/)
 that lets you control Docker via the
