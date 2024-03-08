@@ -188,6 +188,6 @@ jobs:
 
       - run: rsync -a -e ssh src/github.com/Mirantis/cri-dockerd/ lima-default:/tmp/cri-dockerd
       - run: ssh lima-default sudo /tmp/cri-dockerd/scripts/setup-el
-      - run: ssh lima-default make -C /tmp/cri-dockerd cri-dockerd
+      - run: ssh lima-default "source ~/.bashrc && make -C /tmp/cri-dockerd cri-dockerd"
       - run: ssh -f lima-default sudo /tmp/cri-dockerd/cri-dockerd --network-plugin="" &
       - run: ssh lima-default sudo /usr/local/bin/critest -runtime-endpoint=unix:///var/run/cri-dockerd.sock -ginkgo.focus='.*selinux.*' -ginkgo.v
