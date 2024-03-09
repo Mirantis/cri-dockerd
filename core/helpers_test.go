@@ -28,6 +28,7 @@ import (
 
 	dockertypes "github.com/docker/docker/api/types"
 	dockermount "github.com/docker/docker/api/types/mount"
+	dockerregistry "github.com/docker/docker/api/types/registry"
 	dockernat "github.com/docker/go-connections/nat"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -141,7 +142,7 @@ func TestParsingCreationConflictError(t *testing.T) {
 
 func TestEnsureSandboxImageExists(t *testing.T) {
 	sandboxImage := "gcr.io/test/image"
-	authConfig := dockertypes.AuthConfig{Username: "user", Password: "pass"}
+	authConfig := dockerregistry.AuthConfig{Username: "user", Password: "pass"}
 	for desc, test := range map[string]struct {
 		injectImage  bool
 		imgNeedsAuth bool

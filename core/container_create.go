@@ -22,7 +22,7 @@ import (
 	"path/filepath"
 
 	"github.com/Mirantis/cri-dockerd/libdocker"
-	"github.com/docker/docker/api/types"
+	dockerbackend "github.com/docker/docker/api/types/backend"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/strslice"
 	"github.com/opencontainers/selinux/go-selinux/label"
@@ -67,7 +67,7 @@ func (ds *dockerService) CreateContainer(
 	containerName := makeContainerName(sandboxConfig, config)
 	mounts := config.GetMounts()
 	terminationMessagePath, _ := config.Annotations["io.kubernetes.container.terminationMessagePath"]
-	createConfig := types.ContainerCreateConfig{
+	createConfig := dockerbackend.ContainerCreateConfig{
 		Name: containerName,
 		Config: &container.Config{
 			Entrypoint: strslice.StrSlice(config.Command),

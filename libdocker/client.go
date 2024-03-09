@@ -21,8 +21,10 @@ import (
 	"time"
 
 	dockertypes "github.com/docker/docker/api/types"
+	dockerbackend "github.com/docker/docker/api/types/backend"
 	dockercontainer "github.com/docker/docker/api/types/container"
 	dockerimagetypes "github.com/docker/docker/api/types/image"
+	dockerregistry "github.com/docker/docker/api/types/registry"
 	dockerapi "github.com/docker/docker/client"
 	"github.com/sirupsen/logrus"
 )
@@ -47,7 +49,7 @@ type DockerClientInterface interface {
 	InspectContainer(id string) (*dockertypes.ContainerJSON, error)
 	InspectContainerWithSize(id string) (*dockertypes.ContainerJSON, error)
 	CreateContainer(
-		dockertypes.ContainerCreateConfig,
+		dockerbackend.ContainerCreateConfig,
 	) (*dockercontainer.CreateResponse, error)
 	StartContainer(id string) error
 	StopContainer(id string, timeout time.Duration) error
@@ -56,7 +58,7 @@ type DockerClientInterface interface {
 	InspectImageByRef(imageRef string) (*dockertypes.ImageInspect, error)
 	InspectImageByID(imageID string) (*dockertypes.ImageInspect, error)
 	ListImages(opts dockertypes.ImageListOptions) ([]dockertypes.ImageSummary, error)
-	PullImage(image string, auth dockertypes.AuthConfig, opts dockertypes.ImagePullOptions) error
+	PullImage(image string, auth dockerregistry.AuthConfig, opts dockertypes.ImagePullOptions) error
 	RemoveImage(
 		image string,
 		opts dockertypes.ImageRemoveOptions,

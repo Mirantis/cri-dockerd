@@ -23,13 +23,15 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
-	"golang.org/x/sys/windows/registry"
 	"os"
 	"regexp"
 	"runtime"
 
+	"golang.org/x/sys/windows/registry"
+
 	"github.com/blang/semver"
 	dockertypes "github.com/docker/docker/api/types"
+	dockerbackend "github.com/docker/docker/api/types/backend"
 	dockercontainer "github.com/docker/docker/api/types/container"
 	dockerfilters "github.com/docker/docker/api/types/filters"
 	"github.com/sirupsen/logrus"
@@ -42,7 +44,7 @@ func DefaultMemorySwap() int64 {
 }
 
 func (ds *dockerService) updateCreateConfig(
-	createConfig *dockertypes.ContainerCreateConfig,
+	createConfig *dockerbackend.ContainerCreateConfig,
 	config *runtimeapi.ContainerConfig,
 	sandboxConfig *runtimeapi.PodSandboxConfig,
 	podSandboxID string, securityOptSep rune, apiVersion *semver.Version) error {
@@ -147,12 +149,12 @@ type containerCleanupInfo struct {
 	gMSARegistryValueName string
 }
 
-// applyPlatformSpecificDockerConfig applies platform-specific configurations to a dockertypes.ContainerCreateConfig struct.
+// applyPlatformSpecificDockerConfig applies platform-specific configurations to a dockerbackend.ContainerCreateConfig struct.
 // The containerCleanupInfo struct it returns will be passed as is to performPlatformSpecificContainerCleanup
 // after either the container creation has failed or the container has been removed.
 func (ds *dockerService) applyPlatformSpecificDockerConfig(
 	request *runtimeapi.CreateContainerRequest,
-	createConfig *dockertypes.ContainerCreateConfig,
+	createConfig *dockerbackend.ContainerCreateConfig,
 ) (*containerCleanupInfo, error) {
 	cleanupInfo := &containerCleanupInfo{}
 
@@ -173,7 +175,7 @@ func (ds *dockerService) applyPlatformSpecificDockerConfig(
 // https://github.com/moby/moby/pull/38777
 func applyGMSAConfig(
 	config *runtimeapi.ContainerConfig,
-	createConfig *dockertypes.ContainerCreateConfig,
+	createConfig *dockerbackend.ContainerCreateConfig,
 	cleanupInfo *containerCleanupInfo,
 ) error {
 	var credSpec string
