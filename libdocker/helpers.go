@@ -226,6 +226,11 @@ func GenerateMountBindings(mounts []*v1.Mount, terminationMessagePath string) []
 		}
 		if m.Readonly {
 			bind.ReadOnly = true
+
+			// Docker v25 treats read-only mounts as recursively read-only by default,
+			// but this appeared to be too much breaking for Kubernetes
+			// https://github.com/Mirantis/cri-dockerd/issues/309
+			bind.BindOptions.ReadOnlyNonRecursive = true
 		}
 		switch m.Propagation {
 		case v1.MountPropagation_PROPAGATION_PRIVATE:

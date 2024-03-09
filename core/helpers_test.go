@@ -330,13 +330,13 @@ func TestGenerateMountBindings(t *testing.T) {
 	}
 	expectedResult := []dockermount.Mount{
 		{Type: dockermount.TypeBind, Source: "/mnt/1", Target: "/var/lib/mysql/1", BindOptions: &dockermount.BindOptions{CreateMountpoint: true}},
-		{Type: dockermount.TypeBind, Source: "/mnt/2", Target: "/var/lib/mysql/2", ReadOnly: true, BindOptions: &dockermount.BindOptions{CreateMountpoint: true}},
+		{Type: dockermount.TypeBind, Source: "/mnt/2", Target: "/var/lib/mysql/2", ReadOnly: true, BindOptions: &dockermount.BindOptions{CreateMountpoint: true, ReadOnlyNonRecursive: true}},
 		{Type: dockermount.TypeBind, Source: "/mnt/3", Target: "/var/lib/mysql/3", BindOptions: &dockermount.BindOptions{CreateMountpoint: true}}, // Relabeling is not handled here
 		{Type: dockermount.TypeBind, Source: "/mnt/4", Target: "/var/lib/mysql/4", BindOptions: &dockermount.BindOptions{CreateMountpoint: true}},
 		{Type: dockermount.TypeBind, Source: "/mnt/5", Target: "/var/lib/mysql/5", BindOptions: &dockermount.BindOptions{CreateMountpoint: true, Propagation: dockermount.PropagationRSlave}},
 		{Type: dockermount.TypeBind, Source: "/mnt/6", Target: "/var/lib/mysql/6", BindOptions: &dockermount.BindOptions{CreateMountpoint: true, Propagation: dockermount.PropagationRShared}},
 		{Type: dockermount.TypeBind, Source: "/mnt/7", Target: "/var/lib/mysql/7", BindOptions: &dockermount.BindOptions{CreateMountpoint: true}},
-		{Type: dockermount.TypeBind, Source: "/mnt/8", Target: "/var/lib/mysql/8", ReadOnly: true, BindOptions: &dockermount.BindOptions{CreateMountpoint: true, Propagation: dockermount.PropagationRShared}}, // Relabeling is not handled here
+		{Type: dockermount.TypeBind, Source: "/mnt/8", Target: "/var/lib/mysql/8", ReadOnly: true, BindOptions: &dockermount.BindOptions{CreateMountpoint: true, ReadOnlyNonRecursive: true, Propagation: dockermount.PropagationRShared}}, // Relabeling is not handled here
 	}
 	result := libdocker.GenerateMountBindings(mounts, "")
 
