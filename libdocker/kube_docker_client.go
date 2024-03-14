@@ -31,8 +31,10 @@ import (
 	"github.com/sirupsen/logrus"
 
 	dockertypes "github.com/docker/docker/api/types"
+	dockerbackend "github.com/docker/docker/api/types/backend"
 	dockercontainer "github.com/docker/docker/api/types/container"
 	dockerimagetypes "github.com/docker/docker/api/types/image"
+	dockerregistry "github.com/docker/docker/api/types/registry"
 	dockerapi "github.com/docker/docker/client"
 	dockermessage "github.com/docker/docker/pkg/jsonmessage"
 	dockerstdcopy "github.com/docker/docker/pkg/stdcopy"
@@ -141,7 +143,7 @@ func (d *kubeDockerClient) InspectContainerWithSize(id string) (*dockertypes.Con
 }
 
 func (d *kubeDockerClient) CreateContainer(
-	opts dockertypes.ContainerCreateConfig,
+	opts dockerbackend.ContainerCreateConfig,
 ) (*dockercontainer.CreateResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), d.timeout)
 	defer cancel()
@@ -283,7 +285,7 @@ func (d *kubeDockerClient) ListImages(
 	return images, nil
 }
 
-func base64EncodeAuth(auth dockertypes.AuthConfig) (string, error) {
+func base64EncodeAuth(auth dockerregistry.AuthConfig) (string, error) {
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(auth); err != nil {
 		return "", err
@@ -394,7 +396,7 @@ func (p *progressReporter) stop() {
 
 func (d *kubeDockerClient) PullImage(
 	image string,
-	auth dockertypes.AuthConfig,
+	auth dockerregistry.AuthConfig,
 	opts dockertypes.ImagePullOptions,
 ) error {
 	// RegistryAuth is the base64 encoded credentials for the registry

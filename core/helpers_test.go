@@ -27,6 +27,8 @@ import (
 	"github.com/Mirantis/cri-dockerd/libdocker"
 
 	dockertypes "github.com/docker/docker/api/types"
+	dockermount "github.com/docker/docker/api/types/mount"
+	dockerregistry "github.com/docker/docker/api/types/registry"
 	dockernat "github.com/docker/go-connections/nat"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -140,7 +142,7 @@ func TestParsingCreationConflictError(t *testing.T) {
 
 func TestEnsureSandboxImageExists(t *testing.T) {
 	sandboxImage := "gcr.io/test/image"
-	authConfig := dockertypes.AuthConfig{Username: "user", Password: "pass"}
+	authConfig := dockerregistry.AuthConfig{Username: "user", Password: "pass"}
 	for desc, test := range map[string]struct {
 		injectImage  bool
 		imgNeedsAuth bool
@@ -326,15 +328,15 @@ func TestGenerateMountBindings(t *testing.T) {
 			Propagation:    runtimeapi.MountPropagation_PROPAGATION_BIDIRECTIONAL,
 		},
 	}
-	expectedResult := []string{
-		"/mnt/1:/var/lib/mysql/1",
-		"/mnt/2:/var/lib/mysql/2:ro",
-		"/mnt/3:/var/lib/mysql/3:Z",
-		"/mnt/4:/var/lib/mysql/4",
-		"/mnt/5:/var/lib/mysql/5:rslave",
-		"/mnt/6:/var/lib/mysql/6:rshared",
-		"/mnt/7:/var/lib/mysql/7",
-		"/mnt/8:/var/lib/mysql/8:ro,Z,rshared",
+	expectedResult := []dockermount.Mount{
+		{Type: dockermount.TypeBind, Source: "/mnt/1", Target: "/var/lib/mysql/1", BindOptions: &dockermount.BindOptions{CreateMountpoint: true}},
+		{Type: dockermount.TypeBind, Source: "/mnt/2", Target: "/var/lib/mysql/2", ReadOnly: true, BindOptions: &dockermount.BindOptions{CreateMountpoint: true, ReadOnlyNonRecursive: true}},
+		{Type: dockermount.TypeBind, Source: "/mnt/3", Target: "/var/lib/mysql/3", BindOptions: &dockermount.BindOptions{CreateMountpoint: true}}, // Relabeling is not handled here
+		{Type: dockermount.TypeBind, Source: "/mnt/4", Target: "/var/lib/mysql/4", BindOptions: &dockermount.BindOptions{CreateMountpoint: true}},
+		{Type: dockermount.TypeBind, Source: "/mnt/5", Target: "/var/lib/mysql/5", BindOptions: &dockermount.BindOptions{CreateMountpoint: true, Propagation: dockermount.PropagationRSlave}},
+		{Type: dockermount.TypeBind, Source: "/mnt/6", Target: "/var/lib/mysql/6", BindOptions: &dockermount.BindOptions{CreateMountpoint: true, Propagation: dockermount.PropagationRShared}},
+		{Type: dockermount.TypeBind, Source: "/mnt/7", Target: "/var/lib/mysql/7", BindOptions: &dockermount.BindOptions{CreateMountpoint: true}},
+		{Type: dockermount.TypeBind, Source: "/mnt/8", Target: "/var/lib/mysql/8", ReadOnly: true, BindOptions: &dockermount.BindOptions{CreateMountpoint: true, ReadOnlyNonRecursive: true, Propagation: dockermount.PropagationRShared}}, // Relabeling is not handled here
 	}
 	result := libdocker.GenerateMountBindings(mounts, "")
 

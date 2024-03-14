@@ -18,9 +18,6 @@ package libdocker
 
 import (
 	"fmt"
-	"github.com/docker/go-connections/nat"
-	v1 "k8s.io/cri-api/pkg/apis/runtime/v1"
-	"k8s.io/kubernetes/pkg/apis/core"
 	"runtime"
 	"strconv"
 	"strings"
@@ -28,8 +25,12 @@ import (
 
 	dockerref "github.com/docker/distribution/reference"
 	dockertypes "github.com/docker/docker/api/types"
+	dockermount "github.com/docker/docker/api/types/mount"
+	"github.com/docker/go-connections/nat"
 	godigest "github.com/opencontainers/go-digest"
 	"github.com/sirupsen/logrus"
+	v1 "k8s.io/cri-api/pkg/apis/runtime/v1"
+	"k8s.io/kubernetes/pkg/apis/core"
 )
 
 const windowsEtcHostsPath = "C:\\Windows\\System32\\drivers\\etc\\hosts"
@@ -202,34 +203,34 @@ func GenerateEnvList(envs []*v1.KeyValue) (result []string) {
 	return
 }
 
-// generateMountBindings converts the mount list to a list of strings that
+// generateMountBindings converts the mount list to a list of [dockermount.Mount] that
 // can be understood by docker.
-// '<HostPath>:<ContainerPath>[:options]', where 'options'
-// is a comma-separated list of the following strings:
-// 'ro', if the path is read only
-// 'Z', if the volume requires SELinux relabeling
-// propagation mode such as 'rslave'
-func GenerateMountBindings(mounts []*v1.Mount, terminationMessagePath string) []string {
+// SELinux labels are not handled here.
+func GenerateMountBindings(mounts []*v1.Mount, terminationMessagePath string) []dockermount.Mount {
 	if terminationMessagePath == "" {
 		terminationMessagePath = core.TerminationMessagePathDefault
 	}
-	result := make([]string, 0, len(mounts))
+	result := make([]dockermount.Mount, 0, len(mounts))
 	for _, m := range mounts {
 		if runtime.GOOS == "windows" && isSingleFileMount(m.HostPath, m.ContainerPath, terminationMessagePath) {
 			logrus.Debugf("skipping mount :%s:%s", m.HostPath, m.ContainerPath)
 			continue
 		}
-		bind := fmt.Sprintf("%s:%s", m.HostPath, m.ContainerPath)
-		var attrs []string
-		if m.Readonly {
-			attrs = append(attrs, "ro")
+		bind := dockermount.Mount{
+			Type:   dockermount.TypeBind,
+			Source: m.HostPath,
+			Target: m.ContainerPath,
+			BindOptions: &dockermount.BindOptions{
+				CreateMountpoint: true,
+			},
 		}
-		// Only request relabeling if the pod provides an SELinux context. If the pod
-		// does not provide an SELinux context relabeling will label the volume with
-		// the container's randomly allocated MCS label. This would restrict access
-		// to the volume to the container which mounts it first.
-		if m.SelinuxRelabel {
-			attrs = append(attrs, "Z")
+		if m.Readonly {
+			bind.ReadOnly = true
+
+			// Docker v25 treats read-only mounts as recursively read-only by default,
+			// but this appeared to be too much breaking for Kubernetes
+			// https://github.com/Mirantis/cri-dockerd/issues/309
+			bind.BindOptions.ReadOnlyNonRecursive = true
 		}
 		switch m.Propagation {
 		case v1.MountPropagation_PROPAGATION_PRIVATE:
@@ -244,17 +245,14 @@ func GenerateMountBindings(mounts []*v1.Mount, terminationMessagePath string) []
 			//
 			// This behavior was introduced in Docker 18.03: https://github.com/moby/moby/pull/36055
 		case v1.MountPropagation_PROPAGATION_BIDIRECTIONAL:
-			attrs = append(attrs, "rshared")
+			bind.BindOptions.Propagation = dockermount.PropagationRShared
 		case v1.MountPropagation_PROPAGATION_HOST_TO_CONTAINER:
-			attrs = append(attrs, "rslave")
+			bind.BindOptions.Propagation = dockermount.PropagationRSlave
 		default:
 			logrus.Infof("Unknown propagation mode for hostPath %s", m.HostPath)
 			// let dockerd decide the propagation
 		}
 
-		if len(attrs) > 0 {
-			bind = fmt.Sprintf("%s:%s", bind, strings.Join(attrs, ","))
-		}
 		result = append(result, bind)
 	}
 	return result

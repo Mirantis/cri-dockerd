@@ -21,8 +21,10 @@ package core
 
 import (
 	"fmt"
+
 	"github.com/blang/semver"
 	dockertypes "github.com/docker/docker/api/types"
+	dockerbackend "github.com/docker/docker/api/types/backend"
 	dockercontainer "github.com/docker/docker/api/types/container"
 	"github.com/sirupsen/logrus"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
@@ -34,7 +36,7 @@ func DefaultMemorySwap() int64 {
 }
 
 func (ds *dockerService) updateCreateConfig(
-	createConfig *dockertypes.ContainerCreateConfig,
+	createConfig *dockerbackend.ContainerCreateConfig,
 	config *runtimeapi.ContainerConfig,
 	sandboxConfig *runtimeapi.PodSandboxConfig,
 	podSandboxID string, securityOptSep rune, apiVersion *semver.Version) error {
@@ -97,12 +99,12 @@ func getNetworkNamespace(c *dockertypes.ContainerJSON) (string, error) {
 
 type containerCleanupInfo struct{}
 
-// applyPlatformSpecificDockerConfig applies platform-specific configurations to a dockertypes.ContainerCreateConfig struct.
+// applyPlatformSpecificDockerConfig applies platform-specific configurations to a dockerbackend.ContainerCreateConfig struct.
 // The containerCleanupInfo struct it returns will be passed as is to performPlatformSpecificContainerCleanup
 // after either the container creation has failed or the container has been removed.
 func (ds *dockerService) applyPlatformSpecificDockerConfig(
 	*runtimeapi.CreateContainerRequest,
-	*dockertypes.ContainerCreateConfig,
+	*dockerbackend.ContainerCreateConfig,
 ) (*containerCleanupInfo, error) {
 	return nil, nil
 }

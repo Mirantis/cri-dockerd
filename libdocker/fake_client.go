@@ -29,8 +29,10 @@ import (
 	"time"
 
 	dockertypes "github.com/docker/docker/api/types"
+	dockerbackend "github.com/docker/docker/api/types/backend"
 	dockercontainer "github.com/docker/docker/api/types/container"
 	dockerimagetypes "github.com/docker/docker/api/types/image"
+	dockerregistry "github.com/docker/docker/api/types/registry"
 
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/utils/clock"
@@ -55,7 +57,7 @@ type FakeDockerClient struct {
 	ContainerMap         map[string]*dockertypes.ContainerJSON
 	ImageInspects        map[string]*dockertypes.ImageInspect
 	Images               []dockertypes.ImageSummary
-	ImageIDsNeedingAuth  map[string]dockertypes.AuthConfig
+	ImageIDsNeedingAuth  map[string]dockerregistry.AuthConfig
 	Errors               map[string]error
 	called               []CalledDetail
 	pulled               []string
@@ -103,7 +105,7 @@ func NewFakeDockerClient() *FakeDockerClient {
 		EnableTrace:         true,
 		ExecInspect:         &dockertypes.ContainerExecInspect{},
 		ImageInspects:       make(map[string]*dockertypes.ImageInspect),
-		ImageIDsNeedingAuth: make(map[string]dockertypes.AuthConfig),
+		ImageIDsNeedingAuth: make(map[string]dockerregistry.AuthConfig),
 		RandGenerator:       rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
 }
@@ -479,7 +481,7 @@ func GetFakeContainerID(name string) string {
 // CreateContainer is a test-spy implementation of DockerClientInterface.CreateContainer.
 // It adds an entry "create" to the internal method call record.
 func (f *FakeDockerClient) CreateContainer(
-	c dockertypes.ContainerCreateConfig,
+	c dockerbackend.ContainerCreateConfig,
 ) (*dockercontainer.CreateResponse, error) {
 	f.Lock()
 	defer f.Unlock()
@@ -657,7 +659,7 @@ func (f *FakeDockerClient) Logs(
 	return f.popError("logs")
 }
 
-func (f *FakeDockerClient) isAuthorizedForImage(image string, auth dockertypes.AuthConfig) bool {
+func (f *FakeDockerClient) isAuthorizedForImage(image string, auth dockerregistry.AuthConfig) bool {
 	if reqd, exists := f.ImageIDsNeedingAuth[image]; !exists {
 		return true // no auth needed
 	} else {
@@ -669,7 +671,7 @@ func (f *FakeDockerClient) isAuthorizedForImage(image string, auth dockertypes.A
 // It adds an entry "pull" to the internal method call record.
 func (f *FakeDockerClient) PullImage(
 	image string,
-	auth dockertypes.AuthConfig,
+	auth dockerregistry.AuthConfig,
 	opts dockertypes.ImagePullOptions,
 ) error {
 	f.Lock()
@@ -779,7 +781,7 @@ func (f *FakeDockerClient) InjectImages(images []dockertypes.ImageSummary) {
 
 func (f *FakeDockerClient) MakeImagesPrivate(
 	images []dockertypes.ImageSummary,
-	auth dockertypes.AuthConfig,
+	auth dockerregistry.AuthConfig,
 ) {
 	f.Lock()
 	defer f.Unlock()
@@ -793,7 +795,7 @@ func (f *FakeDockerClient) ResetImages() {
 	defer f.Unlock()
 	f.Images = []dockertypes.ImageSummary{}
 	f.ImageInspects = make(map[string]*dockertypes.ImageInspect)
-	f.ImageIDsNeedingAuth = make(map[string]dockertypes.AuthConfig)
+	f.ImageIDsNeedingAuth = make(map[string]dockerregistry.AuthConfig)
 }
 
 func (f *FakeDockerClient) InjectImageInspects(inspects []dockertypes.ImageInspect) {
@@ -888,7 +890,7 @@ type FakeDockerPuller struct {
 }
 
 func (f *FakeDockerPuller) Pull(image string, _ []v1.Secret) error {
-	return f.client.PullImage(image, dockertypes.AuthConfig{}, dockertypes.ImagePullOptions{})
+	return f.client.PullImage(image, dockerregistry.AuthConfig{}, dockertypes.ImagePullOptions{})
 }
 
 func (f *FakeDockerPuller) GetImageRef(image string) (string, error) {
