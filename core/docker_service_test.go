@@ -19,6 +19,7 @@ package core
 import (
 	"errors"
 	"math/rand"
+	"runtime"
 	"testing"
 	"time"
 
@@ -161,6 +162,18 @@ func TestStatus(t *testing.T) {
 		runtimeapi.RuntimeReady: true,
 		runtimeapi.NetworkReady: false,
 	}, statusResp.Status)
+}
+
+// TestRuntimeConfig tests the runtime config logic.
+func TestRuntimeConfig(t *testing.T) {
+	ds, _, _ := newTestDockerService()
+	ds.cgroupDriver = "systemd"
+
+	configResp, err := ds.RuntimeConfig(getTestCTX(), &runtimeapi.RuntimeConfigRequest{})
+	require.NoError(t, err)
+	if runtime.GOOS == "linux" {
+		assert.Equal(t, runtimeapi.CgroupDriver_SYSTEMD, configResp.Linux.CgroupDriver)
+	}
 }
 
 func TestVersion(t *testing.T) {
