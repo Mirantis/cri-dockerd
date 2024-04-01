@@ -3,7 +3,7 @@ module github.com/Mirantis/cri-dockerd
 go 1.21
 
 require (
-	github.com/Microsoft/hcsshim v0.12.1
+	github.com/Microsoft/hcsshim v0.12.2
 	github.com/armon/circbuf v0.0.0-20150827004946-bbbad097214e
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/containernetworking/cni v1.1.2
