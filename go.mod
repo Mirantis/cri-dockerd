@@ -33,7 +33,7 @@ require (
 	k8s.io/client-go v0.27.8
 	k8s.io/component-base v0.27.8
 	k8s.io/component-helpers v0.27.8
-	k8s.io/cri-api v0.27.8
+	k8s.io/cri-api v0.28.0
 	k8s.io/cri-api/v1alpha2 v0.25.8
 	k8s.io/kubernetes v1.27.8
 	k8s.io/utils v0.0.0-20230220204549-a5ecb0141aa5
@@ -162,7 +162,7 @@ replace (
 	k8s.io/component-base => k8s.io/component-base v0.27.8
 	k8s.io/component-helpers => k8s.io/component-helpers v0.26.0
 	k8s.io/controller-manager => k8s.io/controller-manager v0.27.8
-	k8s.io/cri-api => k8s.io/cri-api v0.27.8
+	k8s.io/cri-api => k8s.io/cri-api v0.28.0
 	k8s.io/cri-api/v1alpha2 => k8s.io/cri-api v0.25.16
 	k8s.io/csi-translation-lib => k8s.io/csi-translation-lib v0.27.8
 	k8s.io/kube-aggregator => k8s.io/kube-aggregator v0.27.8
