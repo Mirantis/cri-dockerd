@@ -31,8 +31,9 @@ import (
 
 const (
 	// https://docs.docker.com/engine/reference/api/docker_remote_api/
-	// docker version should be at least 1.13.1
-	MinimumDockerAPIVersion = "1.26.0"
+	// docker version should be at least 23.0.0.
+	// https://github.com/moby/moby/commit/304fbf080465e7097a6ab16b1f2a540d02bc7d75
+	MinimumDockerAPIVersion = "1.42.0"
 
 	// Status of a container returned by ListContainers.
 	StatusRunningPrefix = "Up"
