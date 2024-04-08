@@ -3,7 +3,7 @@ module github.com/Mirantis/cri-dockerd
 go 1.21
 
 require (
-	github.com/Microsoft/hcsshim v0.12.1
+	github.com/Microsoft/hcsshim v0.12.2
 	github.com/armon/circbuf v0.0.0-20150827004946-bbbad097214e
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/containernetworking/cni v1.1.2
@@ -24,9 +24,9 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.9.0
 	github.com/vishvananda/netlink v1.2.1-beta.2
-	golang.org/x/sync v0.6.0
-	golang.org/x/sys v0.18.0
-	google.golang.org/grpc v1.62.1
+	golang.org/x/sync v0.7.0
+	golang.org/x/sys v0.19.0
+	google.golang.org/grpc v1.63.2
 	k8s.io/api v0.27.8
 	k8s.io/apimachinery v0.27.8
 	k8s.io/apiserver v0.27.8
@@ -69,7 +69,7 @@ require (
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
-	github.com/golang/protobuf v1.5.3 // indirect
+	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/btree v1.1.2 // indirect
 	github.com/google/cadvisor v0.47.2 // indirect
 	github.com/google/cel-go v0.12.7 // indirect
@@ -126,15 +126,15 @@ require (
 	golang.org/x/crypto v0.21.0 // indirect
 	golang.org/x/mod v0.13.0 // indirect
 	golang.org/x/net v0.23.0 // indirect
-	golang.org/x/oauth2 v0.16.0 // indirect
+	golang.org/x/oauth2 v0.17.0 // indirect
 	golang.org/x/term v0.18.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	golang.org/x/tools v0.14.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
-	google.golang.org/genproto v0.0.0-20240123012728-ef4313101c80 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20240123012728-ef4313101c80 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240123012728-ef4313101c80 // indirect
+	google.golang.org/genproto v0.0.0-20240227224415-6ceb2ff114de // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20240227224415-6ceb2ff114de // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240227224415-6ceb2ff114de // indirect
 	google.golang.org/protobuf v1.33.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
