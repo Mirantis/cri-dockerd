@@ -33,6 +33,7 @@ import (
 	dockercontainer "github.com/docker/docker/api/types/container"
 	dockerimagetypes "github.com/docker/docker/api/types/image"
 	dockerregistry "github.com/docker/docker/api/types/registry"
+	dockersystem "github.com/docker/docker/api/types/system"
 
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/utils/clock"
@@ -56,7 +57,7 @@ type FakeDockerClient struct {
 	ExitedContainerList  []dockertypes.Container
 	ContainerMap         map[string]*dockertypes.ContainerJSON
 	ImageInspects        map[string]*dockertypes.ImageInspect
-	Images               []dockertypes.ImageSummary
+	Images               []dockerimagetypes.Summary
 	ImageIDsNeedingAuth  map[string]dockerregistry.AuthConfig
 	Errors               map[string]error
 	called               []CalledDetail
@@ -73,7 +74,7 @@ type FakeDockerClient struct {
 	ImagesPulled []string
 
 	VersionInfo       dockertypes.Version
-	Information       dockertypes.Info
+	Information       dockersystem.Info
 	ExecInspect       *dockertypes.ContainerExecInspect
 	execCmd           []string
 	EnableSleep       bool
@@ -107,6 +108,15 @@ func NewFakeDockerClient() *FakeDockerClient {
 		ImageInspects:       make(map[string]*dockertypes.ImageInspect),
 		ImageIDsNeedingAuth: make(map[string]dockerregistry.AuthConfig),
 		RandGenerator:       rand.New(rand.NewSource(time.Now().UnixNano())),
+		Information: dockersystem.Info{
+			Runtimes: map[string]dockersystem.RuntimeWithStatus{
+				"runc": dockersystem.RuntimeWithStatus{
+					Runtime: dockersystem.Runtime{
+						Path: "runc",
+					},
+				},
+			},
+		},
 	}
 }
 
@@ -313,7 +323,7 @@ func (f *FakeDockerClient) popError(op string) error {
 // ListContainers is a test-spy implementation of DockerClientInterface.ListContainers.
 // It adds an entry "list" to the internal method call record.
 func (f *FakeDockerClient) ListContainers(
-	options dockertypes.ContainerListOptions,
+	options dockercontainer.ListOptions,
 ) ([]dockertypes.Container, error) {
 	f.Lock()
 	defer f.Unlock()
