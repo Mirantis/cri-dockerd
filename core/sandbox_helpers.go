@@ -58,6 +58,24 @@ var (
 	defaultSandboxGracePeriod = time.Duration(10) * time.Second
 )
 
+// check Runtime correct
+func (ds *dockerService) IsRuntimeConfigured(runtime string) error {
+	info, err := ds.getDockerInfo()
+	if err != nil {
+		return fmt.Errorf("failed to get docker info: %v", err)
+	}
+
+	// ds.runtimeInfoLock.RLock()
+	for r := range info.Runtimes {
+		if r == runtime {
+			return nil
+		}
+	}
+	// ds.runtimeInfoLock.RUnlock()
+
+	return fmt.Errorf("no runtime for %q is configured", runtime)
+}
+
 // Returns whether the sandbox network is ready, and whether the sandbox is known
 func (ds *dockerService) getNetworkReady(podSandboxID string) (bool, bool) {
 	ds.networkReadyLock.Lock()

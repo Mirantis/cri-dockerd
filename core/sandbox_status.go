@@ -19,6 +19,7 @@ package core
 import (
 	"context"
 	"fmt"
+
 	v1 "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
@@ -81,6 +82,7 @@ func (ds *dockerService) PodSandboxStatus(
 				},
 			},
 		},
+		RuntimeHandler: r.HostConfig.Runtime,
 	}
 	// add additional IPs
 	additionalPodIPs := make([]*v1.PodIP, 0, len(ips))
