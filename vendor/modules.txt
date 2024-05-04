@@ -75,6 +75,7 @@ github.com/containerd/cgroups/v3/cgroup1/stats
 github.com/containerd/errdefs
 # github.com/containerd/log v0.1.0
 ## explicit; go 1.20
+github.com/containerd/log
 # github.com/containernetworking/cni v1.1.2
 ## explicit; go 1.14
 github.com/containernetworking/cni/libcni
@@ -133,6 +134,7 @@ github.com/docker/docker/client
 github.com/docker/docker/errdefs
 github.com/docker/docker/internal/multierror
 github.com/docker/docker/pkg/jsonmessage
+github.com/docker/docker/pkg/parsers/kernel
 github.com/docker/docker/pkg/progress
 github.com/docker/docker/pkg/stdcopy
 github.com/docker/docker/pkg/streamformatter
@@ -329,9 +331,10 @@ github.com/opencontainers/runc/libcontainer/devices
 github.com/opencontainers/runc/libcontainer/user
 github.com/opencontainers/runc/libcontainer/userns
 github.com/opencontainers/runc/libcontainer/utils
-# github.com/opencontainers/runtime-spec v1.1.0
+# github.com/opencontainers/runtime-spec v1.2.0
 ## explicit
 github.com/opencontainers/runtime-spec/specs-go
+github.com/opencontainers/runtime-spec/specs-go/features
 # github.com/opencontainers/selinux v1.11.0
 ## explicit; go 1.19
 github.com/opencontainers/selinux/go-selinux
@@ -1203,6 +1206,7 @@ k8s.io/component-helpers/node/util/sysctl/testing
 # k8s.io/cri-api v0.30.1 => k8s.io/cri-api v0.30.1
 ## explicit; go 1.22.0
 k8s.io/cri-api/pkg/apis/runtime/v1
+k8s.io/cri-api/pkg/errors
 # k8s.io/cri-api/v1alpha2 v0.25.8 => k8s.io/cri-api v0.25.16
 ## explicit; go 1.19
 k8s.io/cri-api/v1alpha2/pkg/apis/runtime/v1alpha2
