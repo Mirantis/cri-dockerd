@@ -14,6 +14,7 @@ import (
 	registry "github.com/docker/docker/api/types/registry"
 	container "github.com/docker/docker/api/types/container"
 	image "github.com/docker/docker/api/types/image"
+	system "github.com/docker/docker/api/types/system"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -41,7 +42,7 @@ func (m *MockDockerClientInterface) EXPECT() *MockDockerClientInterfaceMockRecor
 }
 
 // AttachToContainer mocks base method.
-func (m *MockDockerClientInterface) AttachToContainer(arg0 string, arg1 types.ContainerAttachOptions, arg2 libdocker.StreamOptions) error {
+func (m *MockDockerClientInterface) AttachToContainer(arg0 string, arg1 container.AttachOptions, arg2 libdocker.StreamOptions) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AttachToContainer", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)
@@ -115,10 +116,10 @@ func (mr *MockDockerClientInterfaceMockRecorder) ImageHistory(id interface{}) *g
 }
 
 // Info mocks base method.
-func (m *MockDockerClientInterface) Info() (*types.Info, error) {
+func (m *MockDockerClientInterface) Info() (*system.Info, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Info")
-	ret0, _ := ret[0].(*types.Info)
+	ret0, _ := ret[0].(*system.Info)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -205,7 +206,7 @@ func (mr *MockDockerClientInterfaceMockRecorder) InspectImageByRef(imageRef inte
 }
 
 // ListContainers mocks base method.
-func (m *MockDockerClientInterface) ListContainers(options types.ContainerListOptions) ([]types.Container, error) {
+func (m *MockDockerClientInterface) ListContainers(options container.ListOptions) ([]types.Container, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListContainers", options)
 	ret0, _ := ret[0].([]types.Container)
@@ -220,10 +221,10 @@ func (mr *MockDockerClientInterfaceMockRecorder) ListContainers(options interfac
 }
 
 // ListImages mocks base method.
-func (m *MockDockerClientInterface) ListImages(opts types.ImageListOptions) ([]types.ImageSummary, error) {
+func (m *MockDockerClientInterface) ListImages(opts image.ListOptions) ([]image.Summary, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListImages", opts)
-	ret0, _ := ret[0].([]types.ImageSummary)
+	ret0, _ := ret[0].([]image.Summary)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -235,7 +236,7 @@ func (mr *MockDockerClientInterfaceMockRecorder) ListImages(opts interface{}) *g
 }
 
 // Logs mocks base method.
-func (m *MockDockerClientInterface) Logs(arg0 string, arg1 types.ContainerLogsOptions, arg2 libdocker.StreamOptions) error {
+func (m *MockDockerClientInterface) Logs(arg0 string, arg1 container.LogsOptions, arg2 libdocker.StreamOptions) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Logs", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)
@@ -263,7 +264,7 @@ func (mr *MockDockerClientInterfaceMockRecorder) PullImage(image, auth, opts int
 }
 
 // RemoveContainer mocks base method.
-func (m *MockDockerClientInterface) RemoveContainer(id string, opts types.ContainerRemoveOptions) error {
+func (m *MockDockerClientInterface) RemoveContainer(id string, opts container.RemoveOptions) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RemoveContainer", id, opts)
 	ret0, _ := ret[0].(error)
@@ -277,10 +278,10 @@ func (mr *MockDockerClientInterfaceMockRecorder) RemoveContainer(id, opts interf
 }
 
 // RemoveImage mocks base method.
-func (m *MockDockerClientInterface) RemoveImage(image string, opts types.ImageRemoveOptions) ([]types.ImageDeleteResponseItem, error) {
+func (m *MockDockerClientInterface) RemoveImage(imageStr string, opts image.RemoveOptions) ([]image.DeleteResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RemoveImage", image, opts)
-	ret0, _ := ret[0].([]types.ImageDeleteResponseItem)
+	ret := m.ctrl.Call(m, "RemoveImage", imageStr, opts)
+	ret0, _ := ret[0].([]image.DeleteResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

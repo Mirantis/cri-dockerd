@@ -26,7 +26,7 @@ import (
 	"github.com/Mirantis/cri-dockerd/config"
 	"github.com/Mirantis/cri-dockerd/libdocker"
 
-	dockertypes "github.com/docker/docker/api/types"
+	dockerimage "github.com/docker/docker/api/types/image"
 	dockermount "github.com/docker/docker/api/types/mount"
 	dockerregistry "github.com/docker/docker/api/types/registry"
 	dockernat "github.com/docker/go-connections/nat"
@@ -178,7 +178,7 @@ func TestEnsureSandboxImageExists(t *testing.T) {
 		t.Logf("TestCase: %q", desc)
 		_, fakeDocker, _ := newTestDockerService()
 		if test.injectImage {
-			images := []dockertypes.ImageSummary{{ID: sandboxImage}}
+			images := []dockerimage.Summary{{ID: sandboxImage}}
 			fakeDocker.InjectImages(images)
 			if test.imgNeedsAuth {
 				fakeDocker.MakeImagesPrivate(images, authConfig)

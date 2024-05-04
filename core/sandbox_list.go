@@ -21,7 +21,7 @@ import (
 
 	"github.com/Mirantis/cri-dockerd/libdocker"
 	"github.com/Mirantis/cri-dockerd/store"
-	"github.com/docker/docker/api/types"
+	dockercontainer "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/cri-api/pkg/apis/runtime/v1"
@@ -35,7 +35,7 @@ func (ds *dockerService) ListPodSandbox(
 	filter := r.GetFilter()
 
 	// By default, list all containers whether they are running or not.
-	opts := types.ContainerListOptions{All: true}
+	opts := dockercontainer.ListOptions{All: true}
 	filterOutReadySandboxes := false
 
 	opts.Filters = filters.NewArgs()

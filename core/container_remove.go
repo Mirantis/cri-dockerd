@@ -23,6 +23,7 @@ import (
 
 	"github.com/Mirantis/cri-dockerd/libdocker"
 	"github.com/docker/docker/api/types"
+	dockercontainer "github.com/docker/docker/api/types/container"
 	v1 "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
@@ -48,7 +49,7 @@ func (ds *dockerService) RemoveContainer(
 	}
 	err = ds.client.RemoveContainer(
 		r.ContainerId,
-		types.ContainerRemoveOptions{RemoveVolumes: true, Force: true},
+		dockercontainer.RemoveOptions{RemoveVolumes: true, Force: true},
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to remove container %q: %v", r.ContainerId, err)
