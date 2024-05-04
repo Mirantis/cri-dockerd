@@ -77,7 +77,7 @@ jobs:
         with:
           repository: kubernetes-sigs/cri-tools
           path: src/sigs.k8s.io/cri-tools
-          ref: 5fd98895f3bbf8a3ba2d25e93fa95ba1e2ae0923
+          ref: v1.30.0
 
       - name: Build cri-tools
         working-directory: src/sigs.k8s.io/cri-tools
