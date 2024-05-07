@@ -405,7 +405,7 @@ func recoverFromCreationConflictIfNeeded(
 
 	id := matches[1]
 	logrus.Infof("Unable to create pod sandbox due to conflict. Attempting to remove sandbox. Container %v", id)
-	rmErr := client.RemoveContainer(id, dockertypes.ContainerRemoveOptions{RemoveVolumes: true})
+	rmErr := client.RemoveContainer(id, dockercontainer.RemoveOptions{RemoveVolumes: true})
 	if rmErr == nil {
 		logrus.Infof("Successfully removed conflicting container: %v", id)
 		return nil, err

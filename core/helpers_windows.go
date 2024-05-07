@@ -80,7 +80,7 @@ func (ds *dockerService) updateCreateConfig(
 }
 
 func (ds *dockerService) determinePodIPBySandboxID(sandboxID string) []string {
-	opts := dockertypes.ContainerListOptions{
+	opts := dockercontainer.ListOptions{
 		All:     true,
 		Filters: dockerfilters.NewArgs(),
 	}

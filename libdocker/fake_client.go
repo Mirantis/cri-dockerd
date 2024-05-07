@@ -614,7 +614,7 @@ func (f *FakeDockerClient) StopContainer(id string, timeout time.Duration) error
 
 func (f *FakeDockerClient) RemoveContainer(
 	id string,
-	opts dockertypes.ContainerRemoveOptions,
+	opts dockercontainer.RemoveOptions,
 ) error {
 	f.Lock()
 	defer f.Unlock()
@@ -660,7 +660,7 @@ func (f *FakeDockerClient) UpdateContainerResources(
 // It adds an entry "logs" to the internal method call record.
 func (f *FakeDockerClient) Logs(
 	id string,
-	opts dockertypes.ContainerLogsOptions,
+	opts dockercontainer.LogsOptions,
 	sopts StreamOptions,
 ) error {
 	f.Lock()
@@ -710,7 +710,7 @@ func (f *FakeDockerClient) Version() (*dockertypes.Version, error) {
 	return &v, f.popError("version")
 }
 
-func (f *FakeDockerClient) Info() (*dockertypes.Info, error) {
+func (f *FakeDockerClient) Info() (*dockersystem.Info, error) {
 	return &f.Information, nil
 }
 
@@ -738,7 +738,7 @@ func (f *FakeDockerClient) StartExec(
 
 func (f *FakeDockerClient) AttachToContainer(
 	id string,
-	opts dockertypes.ContainerAttachOptions,
+	opts dockercontainer.AttachOptions,
 	sopts StreamOptions,
 ) error {
 	f.Lock()
@@ -753,7 +753,7 @@ func (f *FakeDockerClient) InspectExec(id string) (*dockertypes.ContainerExecIns
 
 func (f *FakeDockerClient) ListImages(
 	opts dockertypes.ImageListOptions,
-) ([]dockertypes.ImageSummary, error) {
+) ([]dockerimagetypes.Summary, error) {
 	f.Lock()
 	defer f.Unlock()
 	f.appendCalled(CalledDetail{name: "list_images"})
@@ -764,7 +764,7 @@ func (f *FakeDockerClient) ListImages(
 func (f *FakeDockerClient) RemoveImage(
 	image string,
 	opts dockertypes.ImageRemoveOptions,
-) ([]dockertypes.ImageDeleteResponseItem, error) {
+) ([]dockerimagetypes.DeleteResponse, error) {
 	f.Lock()
 	defer f.Unlock()
 	f.appendCalled(CalledDetail{name: "remove_image", arguments: []interface{}{image, opts}})
@@ -777,10 +777,10 @@ func (f *FakeDockerClient) RemoveImage(
 			}
 		}
 	}
-	return []dockertypes.ImageDeleteResponseItem{{Deleted: image}}, err
+	return []dockerimagetypes.DeleteResponse{{Deleted: image}}, err
 }
 
-func (f *FakeDockerClient) InjectImages(images []dockertypes.ImageSummary) {
+func (f *FakeDockerClient) InjectImages(images []dockerimagetypes.Summary) {
 	f.Lock()
 	defer f.Unlock()
 	f.Images = append(f.Images, images...)
@@ -790,7 +790,7 @@ func (f *FakeDockerClient) InjectImages(images []dockertypes.ImageSummary) {
 }
 
 func (f *FakeDockerClient) MakeImagesPrivate(
-	images []dockertypes.ImageSummary,
+	images []dockerimagetypes.Summary,
 	auth dockerregistry.AuthConfig,
 ) {
 	f.Lock()
@@ -803,7 +803,7 @@ func (f *FakeDockerClient) MakeImagesPrivate(
 func (f *FakeDockerClient) ResetImages() {
 	f.Lock()
 	defer f.Unlock()
-	f.Images = []dockertypes.ImageSummary{}
+	f.Images = []dockerimagetypes.Summary{}
 	f.ImageInspects = make(map[string]*dockertypes.ImageInspect)
 	f.ImageIDsNeedingAuth = make(map[string]dockerregistry.AuthConfig)
 }
@@ -851,7 +851,7 @@ func createImageInspectFromRef(ref string) *dockertypes.ImageInspect {
 	}
 }
 
-func createImageInspectFromImage(image dockertypes.ImageSummary) *dockertypes.ImageInspect {
+func createImageInspectFromImage(image dockerimagetypes.Summary) *dockertypes.ImageInspect {
 	return &dockertypes.ImageInspect{
 		ID:       image.ID,
 		RepoTags: image.RepoTags,
@@ -862,8 +862,8 @@ func createImageInspectFromImage(image dockertypes.ImageSummary) *dockertypes.Im
 	}
 }
 
-func createImageFromImageInspect(inspect dockertypes.ImageInspect) *dockertypes.ImageSummary {
-	return &dockertypes.ImageSummary{
+func createImageFromImageInspect(inspect dockertypes.ImageInspect) *dockerimagetypes.Summary {
+	return &dockerimagetypes.Summary{
 		ID:       inspect.ID,
 		RepoTags: inspect.RepoTags,
 		// Image size is required to be non-zero for CRI integration.

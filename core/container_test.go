@@ -25,7 +25,7 @@ import (
 	"testing"
 	"time"
 
-	dockertypes "github.com/docker/docker/api/types"
+	dockerimage "github.com/docker/docker/api/types/image"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -260,7 +260,7 @@ func TestContainerStatus(t *testing.T) {
 		Annotations: config.Annotations,
 	}
 
-	fDocker.InjectImages([]dockertypes.ImageSummary{{ID: imageName}})
+	fDocker.InjectImages([]dockerimage.Summary{{ID: imageName}})
 
 	runSandboxResp, err := ds.RunPodSandbox(getTestCTX(), &runtimeapi.RunPodSandboxRequest{
 		Config: sConfig,
