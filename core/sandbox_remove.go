@@ -18,9 +18,10 @@ package core
 
 import (
 	"context"
+
 	"github.com/Mirantis/cri-dockerd/libdocker"
 	"github.com/Mirantis/cri-dockerd/utils/errors"
-	"github.com/docker/docker/api/types"
+	dockercontainer "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 	v1 "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
@@ -34,7 +35,7 @@ func (ds *dockerService) RemovePodSandbox(
 	podSandboxID := r.PodSandboxId
 	var errs []error
 
-	opts := types.ContainerListOptions{All: true}
+	opts := dockercontainer.ListOptions{All: true}
 
 	opts.Filters = filters.NewArgs()
 	f := NewDockerFilter(&opts.Filters)
@@ -56,7 +57,7 @@ func (ds *dockerService) RemovePodSandbox(
 	// Remove the sandbox container.
 	err = ds.client.RemoveContainer(
 		podSandboxID,
-		types.ContainerRemoveOptions{RemoveVolumes: true, Force: true},
+		dockercontainer.RemoveOptions{RemoveVolumes: true, Force: true},
 	)
 	if err == nil || libdocker.IsContainerNotFoundError(err) {
 		// Only clear network ready when the sandbox has actually been

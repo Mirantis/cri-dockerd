@@ -18,17 +18,20 @@ package core
 
 import (
 	"fmt"
-	"github.com/Mirantis/cri-dockerd/libdocker"
-	"github.com/Mirantis/cri-dockerd/utils"
-	"github.com/Mirantis/cri-dockerd/utils/errors"
-	"k8s.io/kubernetes/pkg/credentialprovider"
 	"os"
 	"strings"
 	"time"
 
+	"github.com/Mirantis/cri-dockerd/libdocker"
+	"github.com/Mirantis/cri-dockerd/utils"
+	"github.com/Mirantis/cri-dockerd/utils/errors"
+	"k8s.io/kubernetes/pkg/credentialprovider"
+
 	"github.com/Mirantis/cri-dockerd/config"
 	dockertypes "github.com/docker/docker/api/types"
+	dockerbackend "github.com/docker/docker/api/types/backend"
 	dockercontainer "github.com/docker/docker/api/types/container"
+	dockerregistry "github.com/docker/docker/api/types/registry"
 	"github.com/sirupsen/logrus"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
@@ -54,6 +57,24 @@ var (
 	// Termination grace period
 	defaultSandboxGracePeriod = time.Duration(10) * time.Second
 )
+
+// check Runtime correct
+func (ds *dockerService) IsRuntimeConfigured(runtime string) error {
+	info, err := ds.getDockerInfo()
+	if err != nil {
+		return fmt.Errorf("failed to get docker info: %v", err)
+	}
+
+	// ds.runtimeInfoLock.RLock()
+	for r := range info.Runtimes {
+		if r == runtime {
+			return nil
+		}
+	}
+	// ds.runtimeInfoLock.RUnlock()
+
+	return fmt.Errorf("no runtime for %q is configured", runtime)
+}
 
 // Returns whether the sandbox network is ready, and whether the sandbox is known
 func (ds *dockerService) getNetworkReady(podSandboxID string) (bool, bool) {
@@ -169,7 +190,7 @@ func (ds *dockerService) getPodSandboxDetails(
 func (ds *dockerService) applySandboxLinuxOptions(
 	hc *dockercontainer.HostConfig,
 	lc *runtimeapi.LinuxPodSandboxConfig,
-	createConfig *dockertypes.ContainerCreateConfig,
+	createConfig *dockerbackend.ContainerCreateConfig,
 	image string,
 	separator rune,
 ) error {
@@ -207,11 +228,11 @@ func (ds *dockerService) applySandboxResources(
 	return nil
 }
 
-// makeSandboxDockerConfig returns dockertypes.ContainerCreateConfig based on runtimeapi.PodSandboxConfig.
+// makeSandboxDockerConfig returns dockerbackend.ContainerCreateConfig based on runtimeapi.PodSandboxConfig.
 func (ds *dockerService) makeSandboxDockerConfig(
 	c *runtimeapi.PodSandboxConfig,
 	image string,
-) (*dockertypes.ContainerCreateConfig, error) {
+) (*dockerbackend.ContainerCreateConfig, error) {
 	// Merge annotations and labels because docker supports only labels.
 	labels := makeLabels(c.GetLabels(), c.GetAnnotations())
 	// Apply a label to distinguish sandboxes from regular containers.
@@ -222,7 +243,7 @@ func (ds *dockerService) makeSandboxDockerConfig(
 	hc := &dockercontainer.HostConfig{
 		IpcMode: dockercontainer.IpcMode("shareable"),
 	}
-	createConfig := &dockertypes.ContainerCreateConfig{
+	createConfig := &dockerbackend.ContainerCreateConfig{
 		Name: makeSandboxName(c),
 		Config: &dockercontainer.Config{
 			Hostname: c.Hostname,
@@ -374,7 +395,7 @@ func rewriteFile(filePath, stringToWrite string) error {
 
 func recoverFromCreationConflictIfNeeded(
 	client libdocker.DockerClientInterface,
-	createConfig dockertypes.ContainerCreateConfig,
+	createConfig dockerbackend.ContainerCreateConfig,
 	err error,
 ) (*dockercontainer.CreateResponse, error) {
 	matches := conflictRE.FindStringSubmatch(err.Error())
@@ -384,7 +405,7 @@ func recoverFromCreationConflictIfNeeded(
 
 	id := matches[1]
 	logrus.Infof("Unable to create pod sandbox due to conflict. Attempting to remove sandbox. Container %v", id)
-	rmErr := client.RemoveContainer(id, dockertypes.ContainerRemoveOptions{RemoveVolumes: true})
+	rmErr := client.RemoveContainer(id, dockercontainer.RemoveOptions{RemoveVolumes: true})
 	if rmErr == nil {
 		logrus.Infof("Successfully removed conflicting container: %v", id)
 		return nil, err
@@ -421,7 +442,7 @@ func ensureSandboxImageExists(client libdocker.DockerClientInterface, image stri
 	if !withCredentials {
 		logrus.Infof("Pulling the image without credentials. Image: %v", image)
 
-		err := client.PullImage(image, dockertypes.AuthConfig{}, dockertypes.ImagePullOptions{})
+		err := client.PullImage(image, dockerregistry.AuthConfig{}, dockertypes.ImagePullOptions{})
 		if err != nil {
 			return fmt.Errorf("failed pulling image %q: %v", image, err)
 		}
@@ -431,7 +452,7 @@ func ensureSandboxImageExists(client libdocker.DockerClientInterface, image stri
 
 	var pullErrs []error
 	for _, currentCreds := range creds {
-		authConfig := dockertypes.AuthConfig(currentCreds)
+		authConfig := dockerregistry.AuthConfig(currentCreds)
 		err := client.PullImage(image, authConfig, dockertypes.ImagePullOptions{})
 		// If there was no error, return success
 		if err == nil {

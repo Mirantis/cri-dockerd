@@ -20,8 +20,11 @@ import (
 	"time"
 
 	dockertypes "github.com/docker/docker/api/types"
+	dockerbackend "github.com/docker/docker/api/types/backend"
 	dockercontainer "github.com/docker/docker/api/types/container"
 	dockerimagetypes "github.com/docker/docker/api/types/image"
+	dockerregistry "github.com/docker/docker/api/types/registry"
+	dockersystem "github.com/docker/docker/api/types/system"
 
 	"github.com/Mirantis/cri-dockerd/metrics"
 )
@@ -61,7 +64,7 @@ func recordError(operation string, err error) {
 }
 
 func (in instrumentedInterface) ListContainers(
-	options dockertypes.ContainerListOptions,
+	options dockercontainer.ListOptions,
 ) ([]dockertypes.Container, error) {
 	const operation = "list_containers"
 	defer recordOperation(operation, time.Now())
@@ -92,7 +95,7 @@ func (in instrumentedInterface) InspectContainerWithSize(
 }
 
 func (in instrumentedInterface) CreateContainer(
-	opts dockertypes.ContainerCreateConfig,
+	opts dockerbackend.ContainerCreateConfig,
 ) (*dockercontainer.CreateResponse, error) {
 	const operation = "create_container"
 	defer recordOperation(operation, time.Now())
@@ -122,7 +125,7 @@ func (in instrumentedInterface) StopContainer(id string, timeout time.Duration) 
 
 func (in instrumentedInterface) RemoveContainer(
 	id string,
-	opts dockertypes.ContainerRemoveOptions,
+	opts dockercontainer.RemoveOptions,
 ) error {
 	const operation = "remove_container"
 	defer recordOperation(operation, time.Now())
@@ -164,7 +167,7 @@ func (in instrumentedInterface) InspectImageByID(image string) (*dockertypes.Ima
 
 func (in instrumentedInterface) ListImages(
 	opts dockertypes.ImageListOptions,
-) ([]dockertypes.ImageSummary, error) {
+) ([]dockerimagetypes.Summary, error) {
 	const operation = "list_images"
 	defer recordOperation(operation, time.Now())
 
@@ -175,7 +178,7 @@ func (in instrumentedInterface) ListImages(
 
 func (in instrumentedInterface) PullImage(
 	imageID string,
-	auth dockertypes.AuthConfig,
+	auth dockerregistry.AuthConfig,
 	opts dockertypes.ImagePullOptions,
 ) error {
 	const operation = "pull_image"
@@ -188,7 +191,7 @@ func (in instrumentedInterface) PullImage(
 func (in instrumentedInterface) RemoveImage(
 	image string,
 	opts dockertypes.ImageRemoveOptions,
-) ([]dockertypes.ImageDeleteResponseItem, error) {
+) ([]dockerimagetypes.DeleteResponse, error) {
 	const operation = "remove_image"
 	defer recordOperation(operation, time.Now())
 
@@ -199,7 +202,7 @@ func (in instrumentedInterface) RemoveImage(
 
 func (in instrumentedInterface) Logs(
 	id string,
-	opts dockertypes.ContainerLogsOptions,
+	opts dockercontainer.LogsOptions,
 	sopts StreamOptions,
 ) error {
 	const operation = "logs"
@@ -219,7 +222,7 @@ func (in instrumentedInterface) Version() (*dockertypes.Version, error) {
 	return out, err
 }
 
-func (in instrumentedInterface) Info() (*dockertypes.Info, error) {
+func (in instrumentedInterface) Info() (*dockersystem.Info, error) {
 	const operation = "info"
 	defer recordOperation(operation, time.Now())
 
@@ -264,7 +267,7 @@ func (in instrumentedInterface) InspectExec(id string) (*dockertypes.ContainerEx
 
 func (in instrumentedInterface) AttachToContainer(
 	id string,
-	opts dockertypes.ContainerAttachOptions,
+	opts dockercontainer.AttachOptions,
 	sopts StreamOptions,
 ) error {
 	const operation = "attach"

@@ -28,7 +28,7 @@ import (
 	"github.com/Mirantis/cri-dockerd/config"
 
 	"github.com/armon/circbuf"
-	dockertypes "github.com/docker/docker/api/types"
+	dockercontainer "github.com/docker/docker/api/types/container"
 
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
@@ -68,7 +68,7 @@ func (ds *dockerService) GetContainerLogs(
 	if logOptions.SinceTime != nil {
 		since = logOptions.SinceTime.Unix()
 	}
-	opts := dockertypes.ContainerLogsOptions{
+	opts := dockercontainer.LogsOptions{
 		ShowStdout: true,
 		ShowStderr: true,
 		Since:      strconv.FormatInt(since, 10),

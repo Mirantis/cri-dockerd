@@ -27,6 +27,7 @@ import (
 	"k8s.io/client-go/tools/remotecommand"
 
 	dockertypes "github.com/docker/docker/api/types"
+	dockercontainer "github.com/docker/docker/api/types/container"
 
 	"k8s.io/kubernetes/pkg/kubelet/cri/streaming"
 
@@ -139,7 +140,7 @@ func attachContainer(
 		client.ResizeContainerTTY(containerID, uint(size.Height), uint(size.Width))
 	})
 
-	opts := dockertypes.ContainerAttachOptions{
+	opts := dockercontainer.AttachOptions{
 		Stream: true,
 		Stdin:  stdin != nil,
 		Stdout: stdout != nil,

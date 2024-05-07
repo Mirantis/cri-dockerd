@@ -19,6 +19,8 @@ package core
 import (
 	"errors"
 	"math/rand"
+	"runtime"
+	"sync"
 	"testing"
 	"time"
 
@@ -45,6 +47,7 @@ func newTestNetworkPlugin(t *testing.T) *nettest.MockNetworkPlugin {
 }
 
 type mockCheckpointManager struct {
+	lock       sync.Mutex
 	checkpoint map[string]*PodSandboxCheckpoint
 }
 
@@ -52,7 +55,9 @@ func (ckm *mockCheckpointManager) CreateCheckpoint(
 	checkpointKey string,
 	checkpoint store.Checkpoint,
 ) error {
+	ckm.lock.Lock()
 	ckm.checkpoint[checkpointKey] = checkpoint.(*PodSandboxCheckpoint)
+	ckm.lock.Unlock()
 	return nil
 }
 
@@ -60,11 +65,15 @@ func (ckm *mockCheckpointManager) GetCheckpoint(
 	checkpointKey string,
 	checkpoint store.Checkpoint,
 ) error {
+	ckm.lock.Lock()
+	defer ckm.lock.Unlock()
 	*(checkpoint.(*PodSandboxCheckpoint)) = *(ckm.checkpoint[checkpointKey])
 	return nil
 }
 
 func (ckm *mockCheckpointManager) RemoveCheckpoint(checkpointKey string) error {
+	ckm.lock.Lock()
+	defer ckm.lock.Unlock()
 	_, ok := ckm.checkpoint[checkpointKey]
 	if ok {
 		delete(ckm.checkpoint, "moo")
@@ -74,6 +83,8 @@ func (ckm *mockCheckpointManager) RemoveCheckpoint(checkpointKey string) error {
 
 func (ckm *mockCheckpointManager) ListCheckpoints() ([]string, error) {
 	var keys []string
+	ckm.lock.Lock()
+	defer ckm.lock.Unlock()
 	for key := range ckm.checkpoint {
 		keys = append(keys, key)
 	}
@@ -81,7 +92,10 @@ func (ckm *mockCheckpointManager) ListCheckpoints() ([]string, error) {
 }
 
 func newMockCheckpointManager() store.CheckpointManager {
-	return &mockCheckpointManager{checkpoint: make(map[string]*PodSandboxCheckpoint)}
+	return &mockCheckpointManager{
+		checkpoint: make(map[string]*PodSandboxCheckpoint),
+		lock:       sync.Mutex{},
+	}
 }
 
 func newTestDockerService() (*dockerService, *libdocker.FakeDockerClient, *clock.FakeClock) {
@@ -161,6 +175,18 @@ func TestStatus(t *testing.T) {
 		runtimeapi.RuntimeReady: true,
 		runtimeapi.NetworkReady: false,
 	}, statusResp.Status)
+}
+
+// TestRuntimeConfig tests the runtime config logic.
+func TestRuntimeConfig(t *testing.T) {
+	ds, _, _ := newTestDockerService()
+	ds.cgroupDriver = "systemd"
+
+	configResp, err := ds.RuntimeConfig(getTestCTX(), &runtimeapi.RuntimeConfigRequest{})
+	require.NoError(t, err)
+	if runtime.GOOS == "linux" {
+		assert.Equal(t, runtimeapi.CgroupDriver_SYSTEMD, configResp.Linux.CgroupDriver)
+	}
 }
 
 func TestVersion(t *testing.T) {

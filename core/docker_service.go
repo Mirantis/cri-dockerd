@@ -41,6 +41,7 @@ import (
 	"github.com/Mirantis/cri-dockerd/utils"
 	"github.com/blang/semver"
 	dockertypes "github.com/docker/docker/api/types"
+	dockersystem "github.com/docker/docker/api/types/system"
 	"github.com/sirupsen/logrus"
 
 	v1 "k8s.io/api/core/v1"
@@ -286,6 +287,8 @@ type dockerService struct {
 	// methods for more info).
 	containerCleanupInfos map[string]*containerCleanupInfo
 	cleanupInfosLock      sync.RWMutex
+
+	// runtimeInfoLock sync.RWMutex
 }
 
 type dockerServiceAlpha struct {
@@ -356,14 +359,14 @@ func fixAPIVersion(v *dockertypes.Version) {
 }
 
 // getDockerInfo gets the information of "docker info".
-func (ds *dockerService) getDockerInfo() (*dockertypes.Info, error) {
+func (ds *dockerService) getDockerInfo() (*dockersystem.Info, error) {
 	res, err := ds.systemInfoCache.Memoize("docker_info", systemInfoCacheMinTTL, func() (interface{}, error) {
 		return ds.client.Info()
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get docker info from dockerd: %v", err)
 	}
-	info := res.(*dockertypes.Info)
+	info := res.(*dockersystem.Info)
 	return info, nil
 }
 
@@ -442,6 +445,26 @@ func (ds *dockerService) Status(
 		}
 		resp.Info = make(map[string]string)
 		resp.Info["config"] = string(configByt)
+	}
+	return resp, nil
+}
+
+// RuntimeConfig returns the config of the runtime.
+func (ds *dockerService) RuntimeConfig(
+	_ context.Context,
+	r *runtimeapi.RuntimeConfigRequest,
+) (*runtimeapi.RuntimeConfigResponse, error) {
+	resp := &runtimeapi.RuntimeConfigResponse{}
+	if runtime.GOOS == "linux" {
+		resp.Linux = &runtimeapi.LinuxRuntimeConfiguration{}
+		switch ds.cgroupDriver {
+		case "cgroupfs":
+			resp.Linux.CgroupDriver = runtimeapi.CgroupDriver_CGROUPFS
+		case "systemd":
+			resp.Linux.CgroupDriver = runtimeapi.CgroupDriver_SYSTEMD
+		default:
+			return nil, fmt.Errorf("unknown cgroup driver: %s", ds.cgroupDriver)
+		}
 	}
 	return resp, nil
 }

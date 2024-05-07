@@ -20,7 +20,7 @@ import (
 	"context"
 
 	"github.com/Mirantis/cri-dockerd/libdocker"
-	"github.com/docker/docker/api/types"
+	dockercontainer "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/cri-api/pkg/apis/runtime/v1"
@@ -32,7 +32,7 @@ func (ds *dockerService) ListContainers(
 	r *v1.ListContainersRequest,
 ) (*v1.ListContainersResponse, error) {
 	filter := r.GetFilter()
-	opts := types.ContainerListOptions{All: true}
+	opts := dockercontainer.ListOptions{All: true}
 
 	opts.Filters = filters.NewArgs()
 	f := NewDockerFilter(&opts.Filters)

@@ -19,6 +19,9 @@ package core
 import (
 	"reflect"
 	"testing"
+
+	"github.com/opencontainers/selinux/go-selinux"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestModifySecurityOptions(t *testing.T) {
@@ -55,5 +58,17 @@ func TestModifySecurityOptions(t *testing.T) {
 				actual,
 			)
 		}
+	}
+}
+
+func TestSELinuxMountLabel(t *testing.T) {
+	selinuxOpts := inputSELinuxOptions()
+	s, err := selinuxMountLabel(selinuxOpts)
+	assert.NoError(t, err)
+	t.Logf("mount label for %+v=%q", selinuxOpts, s)
+	if selinux.GetEnabled() {
+		assert.NotEmpty(t, s)
+	} else {
+		assert.Empty(t, s)
 	}
 }

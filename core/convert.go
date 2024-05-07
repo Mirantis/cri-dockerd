@@ -37,7 +37,7 @@ import (
 // This file contains helper functions to convert docker API types to runtime
 // API types, or vice versa.
 
-func imageToRuntimeAPIImage(image *dockertypes.ImageSummary, pinned bool) (*runtimeapi.Image, error) {
+func imageToRuntimeAPIImage(image *dockerimagetypes.Summary, pinned bool) (*runtimeapi.Image, error) {
 	if image == nil {
 		return nil, fmt.Errorf("unable to convert a nil pointer to a runtime API image")
 	}

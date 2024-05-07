@@ -29,8 +29,11 @@ import (
 	"time"
 
 	dockertypes "github.com/docker/docker/api/types"
+	dockerbackend "github.com/docker/docker/api/types/backend"
 	dockercontainer "github.com/docker/docker/api/types/container"
 	dockerimagetypes "github.com/docker/docker/api/types/image"
+	dockerregistry "github.com/docker/docker/api/types/registry"
+	dockersystem "github.com/docker/docker/api/types/system"
 
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/utils/clock"
@@ -54,8 +57,8 @@ type FakeDockerClient struct {
 	ExitedContainerList  []dockertypes.Container
 	ContainerMap         map[string]*dockertypes.ContainerJSON
 	ImageInspects        map[string]*dockertypes.ImageInspect
-	Images               []dockertypes.ImageSummary
-	ImageIDsNeedingAuth  map[string]dockertypes.AuthConfig
+	Images               []dockerimagetypes.Summary
+	ImageIDsNeedingAuth  map[string]dockerregistry.AuthConfig
 	Errors               map[string]error
 	called               []CalledDetail
 	pulled               []string
@@ -71,7 +74,7 @@ type FakeDockerClient struct {
 	ImagesPulled []string
 
 	VersionInfo       dockertypes.Version
-	Information       dockertypes.Info
+	Information       dockersystem.Info
 	ExecInspect       *dockertypes.ContainerExecInspect
 	execCmd           []string
 	EnableSleep       bool
@@ -81,7 +84,7 @@ type FakeDockerClient struct {
 
 const (
 	// Notice that if someday we also have minimum docker version requirement, this should also be updated.
-	fakeDockerVersion = "1.13.1"
+	fakeDockerVersion = "23.0.0"
 
 	fakeImageSize = 1024
 
@@ -103,8 +106,17 @@ func NewFakeDockerClient() *FakeDockerClient {
 		EnableTrace:         true,
 		ExecInspect:         &dockertypes.ContainerExecInspect{},
 		ImageInspects:       make(map[string]*dockertypes.ImageInspect),
-		ImageIDsNeedingAuth: make(map[string]dockertypes.AuthConfig),
+		ImageIDsNeedingAuth: make(map[string]dockerregistry.AuthConfig),
 		RandGenerator:       rand.New(rand.NewSource(time.Now().UnixNano())),
+		Information: dockersystem.Info{
+			Runtimes: map[string]dockersystem.RuntimeWithStatus{
+				"runc": dockersystem.RuntimeWithStatus{
+					Runtime: dockersystem.Runtime{
+						Path: "runc",
+					},
+				},
+			},
+		},
 	}
 }
 
@@ -311,7 +323,7 @@ func (f *FakeDockerClient) popError(op string) error {
 // ListContainers is a test-spy implementation of DockerClientInterface.ListContainers.
 // It adds an entry "list" to the internal method call record.
 func (f *FakeDockerClient) ListContainers(
-	options dockertypes.ContainerListOptions,
+	options dockercontainer.ListOptions,
 ) ([]dockertypes.Container, error) {
 	f.Lock()
 	defer f.Unlock()
@@ -479,7 +491,7 @@ func GetFakeContainerID(name string) string {
 // CreateContainer is a test-spy implementation of DockerClientInterface.CreateContainer.
 // It adds an entry "create" to the internal method call record.
 func (f *FakeDockerClient) CreateContainer(
-	c dockertypes.ContainerCreateConfig,
+	c dockerbackend.ContainerCreateConfig,
 ) (*dockercontainer.CreateResponse, error) {
 	f.Lock()
 	defer f.Unlock()
@@ -602,7 +614,7 @@ func (f *FakeDockerClient) StopContainer(id string, timeout time.Duration) error
 
 func (f *FakeDockerClient) RemoveContainer(
 	id string,
-	opts dockertypes.ContainerRemoveOptions,
+	opts dockercontainer.RemoveOptions,
 ) error {
 	f.Lock()
 	defer f.Unlock()
@@ -648,7 +660,7 @@ func (f *FakeDockerClient) UpdateContainerResources(
 // It adds an entry "logs" to the internal method call record.
 func (f *FakeDockerClient) Logs(
 	id string,
-	opts dockertypes.ContainerLogsOptions,
+	opts dockercontainer.LogsOptions,
 	sopts StreamOptions,
 ) error {
 	f.Lock()
@@ -657,7 +669,7 @@ func (f *FakeDockerClient) Logs(
 	return f.popError("logs")
 }
 
-func (f *FakeDockerClient) isAuthorizedForImage(image string, auth dockertypes.AuthConfig) bool {
+func (f *FakeDockerClient) isAuthorizedForImage(image string, auth dockerregistry.AuthConfig) bool {
 	if reqd, exists := f.ImageIDsNeedingAuth[image]; !exists {
 		return true // no auth needed
 	} else {
@@ -669,7 +681,7 @@ func (f *FakeDockerClient) isAuthorizedForImage(image string, auth dockertypes.A
 // It adds an entry "pull" to the internal method call record.
 func (f *FakeDockerClient) PullImage(
 	image string,
-	auth dockertypes.AuthConfig,
+	auth dockerregistry.AuthConfig,
 	opts dockertypes.ImagePullOptions,
 ) error {
 	f.Lock()
@@ -698,7 +710,7 @@ func (f *FakeDockerClient) Version() (*dockertypes.Version, error) {
 	return &v, f.popError("version")
 }
 
-func (f *FakeDockerClient) Info() (*dockertypes.Info, error) {
+func (f *FakeDockerClient) Info() (*dockersystem.Info, error) {
 	return &f.Information, nil
 }
 
@@ -726,7 +738,7 @@ func (f *FakeDockerClient) StartExec(
 
 func (f *FakeDockerClient) AttachToContainer(
 	id string,
-	opts dockertypes.ContainerAttachOptions,
+	opts dockercontainer.AttachOptions,
 	sopts StreamOptions,
 ) error {
 	f.Lock()
@@ -741,7 +753,7 @@ func (f *FakeDockerClient) InspectExec(id string) (*dockertypes.ContainerExecIns
 
 func (f *FakeDockerClient) ListImages(
 	opts dockertypes.ImageListOptions,
-) ([]dockertypes.ImageSummary, error) {
+) ([]dockerimagetypes.Summary, error) {
 	f.Lock()
 	defer f.Unlock()
 	f.appendCalled(CalledDetail{name: "list_images"})
@@ -752,7 +764,7 @@ func (f *FakeDockerClient) ListImages(
 func (f *FakeDockerClient) RemoveImage(
 	image string,
 	opts dockertypes.ImageRemoveOptions,
-) ([]dockertypes.ImageDeleteResponseItem, error) {
+) ([]dockerimagetypes.DeleteResponse, error) {
 	f.Lock()
 	defer f.Unlock()
 	f.appendCalled(CalledDetail{name: "remove_image", arguments: []interface{}{image, opts}})
@@ -765,10 +777,10 @@ func (f *FakeDockerClient) RemoveImage(
 			}
 		}
 	}
-	return []dockertypes.ImageDeleteResponseItem{{Deleted: image}}, err
+	return []dockerimagetypes.DeleteResponse{{Deleted: image}}, err
 }
 
-func (f *FakeDockerClient) InjectImages(images []dockertypes.ImageSummary) {
+func (f *FakeDockerClient) InjectImages(images []dockerimagetypes.Summary) {
 	f.Lock()
 	defer f.Unlock()
 	f.Images = append(f.Images, images...)
@@ -778,8 +790,8 @@ func (f *FakeDockerClient) InjectImages(images []dockertypes.ImageSummary) {
 }
 
 func (f *FakeDockerClient) MakeImagesPrivate(
-	images []dockertypes.ImageSummary,
-	auth dockertypes.AuthConfig,
+	images []dockerimagetypes.Summary,
+	auth dockerregistry.AuthConfig,
 ) {
 	f.Lock()
 	defer f.Unlock()
@@ -791,9 +803,9 @@ func (f *FakeDockerClient) MakeImagesPrivate(
 func (f *FakeDockerClient) ResetImages() {
 	f.Lock()
 	defer f.Unlock()
-	f.Images = []dockertypes.ImageSummary{}
+	f.Images = []dockerimagetypes.Summary{}
 	f.ImageInspects = make(map[string]*dockertypes.ImageInspect)
-	f.ImageIDsNeedingAuth = make(map[string]dockertypes.AuthConfig)
+	f.ImageIDsNeedingAuth = make(map[string]dockerregistry.AuthConfig)
 }
 
 func (f *FakeDockerClient) InjectImageInspects(inspects []dockertypes.ImageInspect) {
@@ -839,7 +851,7 @@ func createImageInspectFromRef(ref string) *dockertypes.ImageInspect {
 	}
 }
 
-func createImageInspectFromImage(image dockertypes.ImageSummary) *dockertypes.ImageInspect {
+func createImageInspectFromImage(image dockerimagetypes.Summary) *dockertypes.ImageInspect {
 	return &dockertypes.ImageInspect{
 		ID:       image.ID,
 		RepoTags: image.RepoTags,
@@ -850,8 +862,8 @@ func createImageInspectFromImage(image dockertypes.ImageSummary) *dockertypes.Im
 	}
 }
 
-func createImageFromImageInspect(inspect dockertypes.ImageInspect) *dockertypes.ImageSummary {
-	return &dockertypes.ImageSummary{
+func createImageFromImageInspect(inspect dockertypes.ImageInspect) *dockerimagetypes.Summary {
+	return &dockerimagetypes.Summary{
 		ID:       inspect.ID,
 		RepoTags: inspect.RepoTags,
 		// Image size is required to be non-zero for CRI integration.
@@ -888,7 +900,7 @@ type FakeDockerPuller struct {
 }
 
 func (f *FakeDockerPuller) Pull(image string, _ []v1.Secret) error {
-	return f.client.PullImage(image, dockertypes.AuthConfig{}, dockertypes.ImagePullOptions{})
+	return f.client.PullImage(image, dockerregistry.AuthConfig{}, dockertypes.ImagePullOptions{})
 }
 
 func (f *FakeDockerPuller) GetImageRef(image string) (string, error) {

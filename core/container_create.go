@@ -22,9 +22,10 @@ import (
 	"path/filepath"
 
 	"github.com/Mirantis/cri-dockerd/libdocker"
-	"github.com/docker/docker/api/types"
+	dockerbackend "github.com/docker/docker/api/types/backend"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/strslice"
+	"github.com/opencontainers/selinux/go-selinux/label"
 	v1 "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
@@ -64,8 +65,14 @@ func (ds *dockerService) CreateContainer(
 		image = iSpec.Image
 	}
 	containerName := makeContainerName(sandboxConfig, config)
+	mounts := config.GetMounts()
 	terminationMessagePath, _ := config.Annotations["io.kubernetes.container.terminationMessagePath"]
-	createConfig := types.ContainerCreateConfig{
+
+	sandboxInfo, err := ds.client.InspectContainer(r.GetPodSandboxId())
+	if err != nil {
+		return nil, fmt.Errorf("unable to get container's sandbox ID: %v", err)
+	}
+	createConfig := dockerbackend.ContainerCreateConfig{
 		Name: containerName,
 		Config: &container.Config{
 			Entrypoint: strslice.StrSlice(config.Command),
@@ -85,11 +92,34 @@ func (ds *dockerService) CreateContainer(
 			},
 		},
 		HostConfig: &container.HostConfig{
-			Binds: libdocker.GenerateMountBindings(config.GetMounts(), terminationMessagePath),
+			Mounts: libdocker.GenerateMountBindings(mounts, terminationMessagePath),
 			RestartPolicy: container.RestartPolicy{
 				Name: "no",
 			},
+			Runtime: sandboxInfo.HostConfig.Runtime,
 		},
+	}
+
+	// Only request relabeling if the pod provides an SELinux context. If the pod
+	// does not provide an SELinux context relabeling will label the volume with
+	// the container's randomly allocated MCS label. This would restrict access
+	// to the volume to the container which mounts it first.
+	if selinuxOpts := config.GetLinux().GetSecurityContext().GetSelinuxOptions(); selinuxOpts != nil {
+		mountLabel, err := selinuxMountLabel(selinuxOpts)
+		if err != nil {
+			return nil, fmt.Errorf("unable to generate SELinux mount label: %v", err)
+		}
+		if mountLabel != "" {
+			// Equates to "Z" in the old bind API
+			const shared = false
+			for _, m := range mounts {
+				if m.SelinuxRelabel {
+					if err := label.Relabel(m.HostPath, mountLabel, shared); err != nil {
+						return nil, fmt.Errorf("unable to relabel %q with %q: %v", m.HostPath, mountLabel, err)
+					}
+				}
+			}
+		}
 	}
 
 	hc := createConfig.HostConfig

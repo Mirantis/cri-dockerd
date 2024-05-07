@@ -21,16 +21,20 @@ import (
 	"time"
 
 	dockertypes "github.com/docker/docker/api/types"
+	dockerbackend "github.com/docker/docker/api/types/backend"
 	dockercontainer "github.com/docker/docker/api/types/container"
 	dockerimagetypes "github.com/docker/docker/api/types/image"
+	dockerregistry "github.com/docker/docker/api/types/registry"
+	dockersystem "github.com/docker/docker/api/types/system"
 	dockerapi "github.com/docker/docker/client"
 	"github.com/sirupsen/logrus"
 )
 
 const (
 	// https://docs.docker.com/engine/reference/api/docker_remote_api/
-	// docker version should be at least 1.13.1
-	MinimumDockerAPIVersion = "1.26.0"
+	// docker version should be at least 23.0.0.
+	// https://github.com/moby/moby/commit/304fbf080465e7097a6ab16b1f2a540d02bc7d75
+	MinimumDockerAPIVersion = "1.42.0"
 
 	// Status of a container returned by ListContainers.
 	StatusRunningPrefix = "Up"
@@ -43,32 +47,32 @@ const (
 
 // DockerClientInterface is an abstract interface for testability.  It abstracts the interface of docker client.
 type DockerClientInterface interface {
-	ListContainers(options dockertypes.ContainerListOptions) ([]dockertypes.Container, error)
+	ListContainers(options dockercontainer.ListOptions) ([]dockertypes.Container, error)
 	InspectContainer(id string) (*dockertypes.ContainerJSON, error)
 	InspectContainerWithSize(id string) (*dockertypes.ContainerJSON, error)
 	CreateContainer(
-		dockertypes.ContainerCreateConfig,
+		dockerbackend.ContainerCreateConfig,
 	) (*dockercontainer.CreateResponse, error)
 	StartContainer(id string) error
 	StopContainer(id string, timeout time.Duration) error
 	UpdateContainerResources(id string, updateConfig dockercontainer.UpdateConfig) error
-	RemoveContainer(id string, opts dockertypes.ContainerRemoveOptions) error
+	RemoveContainer(id string, opts dockercontainer.RemoveOptions) error
 	InspectImageByRef(imageRef string) (*dockertypes.ImageInspect, error)
 	InspectImageByID(imageID string) (*dockertypes.ImageInspect, error)
-	ListImages(opts dockertypes.ImageListOptions) ([]dockertypes.ImageSummary, error)
-	PullImage(image string, auth dockertypes.AuthConfig, opts dockertypes.ImagePullOptions) error
+	ListImages(opts dockertypes.ImageListOptions) ([]dockerimagetypes.Summary, error)
+	PullImage(image string, auth dockerregistry.AuthConfig, opts dockertypes.ImagePullOptions) error
 	RemoveImage(
 		image string,
 		opts dockertypes.ImageRemoveOptions,
-	) ([]dockertypes.ImageDeleteResponseItem, error)
+	) ([]dockerimagetypes.DeleteResponse, error)
 	ImageHistory(id string) ([]dockerimagetypes.HistoryResponseItem, error)
-	Logs(string, dockertypes.ContainerLogsOptions, StreamOptions) error
+	Logs(string, dockercontainer.LogsOptions, StreamOptions) error
 	Version() (*dockertypes.Version, error)
-	Info() (*dockertypes.Info, error)
+	Info() (*dockersystem.Info, error)
 	CreateExec(string, dockertypes.ExecConfig) (*dockertypes.IDResponse, error)
 	StartExec(string, dockertypes.ExecStartCheck, StreamOptions) error
 	InspectExec(id string) (*dockertypes.ContainerExecInspect, error)
-	AttachToContainer(string, dockertypes.ContainerAttachOptions, StreamOptions) error
+	AttachToContainer(string, dockercontainer.AttachOptions, StreamOptions) error
 	ResizeContainerTTY(id string, height, width uint) error
 	ResizeExecTTY(id string, height, width uint) error
 	GetContainerStats(id string) (*dockertypes.StatsJSON, error)

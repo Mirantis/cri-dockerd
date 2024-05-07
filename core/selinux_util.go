@@ -19,6 +19,7 @@ package core
 import (
 	"fmt"
 
+	"github.com/opencontainers/selinux/go-selinux/label"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
@@ -87,4 +88,27 @@ func modifySecurityOption(config []string, name, value string) []string {
 	}
 
 	return config
+}
+
+func selinuxMountLabel(selinuxOpts *runtimeapi.SELinuxOption) (string, error) {
+	var opts []string
+	if selinuxOpts != nil {
+		if selinuxOpts.User != "" {
+			opts = append(opts, "user:"+selinuxOpts.User)
+		}
+		if selinuxOpts.Role != "" {
+			opts = append(opts, "role:"+selinuxOpts.Role)
+		}
+		if selinuxOpts.Type != "" {
+			opts = append(opts, "type:"+selinuxOpts.Type)
+		}
+		if selinuxOpts.Level != "" {
+			opts = append(opts, "level:"+selinuxOpts.Level)
+		}
+	}
+	if len(opts) == 0 {
+		opts = []string{"disable"}
+	}
+	_, s, err := label.InitLabels(opts)
+	return s, err
 }
