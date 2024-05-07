@@ -42,139 +42,32 @@ We can be found on the [Kubernetes Slack](https://communityinviter.com/apps/kube
 
 ### Install
 
-The easiest way to install `cri-dockerd` is to use one of the pre-built binaries or
-packages from the [releases page](https://github.com/Mirantis/cri-dockerd/releases).
-There are numerous supported platforms and using a pre-built package will install
-the binary and setup your system to run it as a service.
-
-Please refer to your platform's documentation for how to install a package for
-additional help with these.
+Refer to the [install page](https://mirantis.github.io/cri-dockerd/usage/install/) for instructions on how to install `cri-dockerd` using a package manager.
 
 ## Advanced Setup
 
 ### Installing manually
 
-> Note: the release packages will install to /usr/bin which is reserved for
-> binaries managed by a package manager. Manual installation doesn't involve a
-> package manager and thus uses /usr/local/bin and the service file must be edited
-> to reflect this.
-
-If you would like to install the project manually, you will need to place the binary
-somewhere in your `PATH` and setup a service to run it. The following command is
-a manual install for a Linux system using systemd:
-
-```shell
-git clone https://github.com/Mirantis/cri-dockerd.git
-```
-
-The above step creates a local directory called `cri-dockerd` which you will need for the following steps.
-
-To build this code (in a POSIX environment):
-
-<https://go.dev/doc/install>
-
-```shell
-cd cri-dockerd
-make cri-dockerd
-```
-
-To build for a specific architecture, add `ARCH=` as an argument, where `ARCH` is a known build target for golang
-
-You can find pre-compiled binaries and deb/rpm packages under:
-
-<https://github.com/Mirantis/cri-dockerd/releases>
-
-Where `VERSION` is the latest available cri-dockerd version:
-
-`https://github.com/Mirantis/cri-dockerd/releases/download/v${VERSION}/cri-dockerd-${VERSION}.${ARCH}.tgz`
-
-To install, on a Linux system that uses systemd, and already has Docker Engine installed
-
-```shell
-# Run these commands as root
-
-cd cri-dockerd
-mkdir -p /usr/local/bin
-install -o root -g root -m 0755 cri-dockerd /usr/local/bin/cri-dockerd
-install packaging/systemd/* /etc/systemd/system
-sed -i -e 's,/usr/bin/cri-dockerd,/usr/local/bin/cri-dockerd,' /etc/systemd/system/cri-docker.service
-systemctl daemon-reload
-systemctl enable --now cri-docker.socket
-```
+If you want to run `cri-dockerd` on an unsupported platform, instructions can be found on the [manual install page](https://mirantis.github.io/cri-dockerd/usage/manual-install/).
 
 ### To use with Kubernetes
 
-The default network plugin for `cri-dockerd` is set to `cni` on Linux. There are
-a few ways to change this depending on how you are running the binary.
+If you want to use `cri-dockerd` with Kubernetes, you can find instructions on the [Kubernetes page](https://mirantis.github.io/cri-dockerd/usage/kubernetes/).
 
-`--network-plugin=${plugin}` can be passed in as a command line argument when
- - running the binary directly
- - adding to `/usr/lib/systemd/system/cri-docker.service` if a service isn't enabled
- - adding to `/etc/systemd/system/multi-user.target.wants/cri-docker.service` if a service is enabled
+## Developing cri-dockerd
 
-Run `systemctl daemon-reload` to restart the service if it was already running.
+We welcome contributions to `cri-dockerd`. If you would like to contribute, please refer to the development section of the [official docs](https://mirantis.github.io/cri-dockerd/development/).
 
-## Development
+## Documentation
 
-### Building
-
-If you would like to build the project yourself, you will need to have Go installed.
-You can find directions for installing the latest version on its website:
-
-[Install the latest version of Go](https://golang.org/doc/install)
-
-Once you have Go installed, you can build the project by running the following command:
-
-```shell
-make cri-dockerd
-```
-
-This will output the binary to the project's root directory as `cri-dockerd`.
-You can then run it directly or install it using the manual process above.
-
-To build for a specific architecture, add `ARCH=` as an argument, where `ARCH`
-is a known build target for Go.
-
-```shell
-ARCH=amd64 make cri-dockerd
-```
-
-### Development Setup
-
-When developing, it is nice to have a separate environment to test in so that
-you don't have to worry about breaking your system. An easy way to do this is
-by setting up a minikube cluster since it uses `cri-dockerd` by default. Follow
-the [minikube installation instructions](https://minikube.sigs.k8s.io/docs/start/)
-to get it installed.
-
-You'll then be able to create a cluster in minikube's VM by running:
-
-```shell
-minikube start
-```
-
-Once the cluster is up, we have a `make` command that will build `cri-dockerd`
-and swap it out for the version running in the cluster. You can run this command
-by running:
-
-```shell
-make dev
-```
-
-## Docs
-
-This folder contains the files used to generate the `cri-dockerd` documentation.
-
-The docs are generated using [Hugo](https://gohugo.io/) and the [Geekdocs](https://themes.gohugo.io/hugo-geekdoc/) theme.
+The docs are generated using [Hugo](https://gohugo.io/) and the [Geekdocs](https://themes.gohugo.io/hugo-geekdoc/) theme. Hugo will need to be installed to generate the docs found in the `docs/` directory.
 
 ### Editing Docs
 
-The docs can be ran locally with hot-reloading to make editing easier. To do so,
-run the following command in the project's root directory:
+The docs can be ran locally with hot-reloading to make editing easier. To do so, run the following command in the project's root directory:
 
 ```bash
 make docs
 ```
 
-This will launch the development server that is included with Hugo. You can then
-access the docs at http://localhost:1313/
+This will launch the development server that is included with Hugo. You can then access the docs at http://localhost:1313/
