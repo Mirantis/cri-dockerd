@@ -106,7 +106,7 @@ github.com/distribution/reference
 # github.com/docker/distribution v2.8.3+incompatible
 ## explicit
 github.com/docker/distribution/reference
-# github.com/docker/docker v24.0.7+incompatible
+# github.com/docker/docker v24.0.9+incompatible
 ## explicit
 github.com/docker/docker/api
 github.com/docker/docker/api/types
@@ -185,8 +185,8 @@ github.com/golang/groupcache/lru
 # github.com/golang/mock v1.6.0
 ## explicit; go 1.11
 github.com/golang/mock/gomock
-# github.com/golang/protobuf v1.5.3
-## explicit; go 1.9
+# github.com/golang/protobuf v1.5.4
+## explicit; go 1.17
 github.com/golang/protobuf/proto
 github.com/golang/protobuf/ptypes/timestamp
 # github.com/google/btree v1.1.2
@@ -486,7 +486,7 @@ go.uber.org/zap/zapgrpc
 ## explicit; go 1.18
 golang.org/x/crypto/cryptobyte
 golang.org/x/crypto/cryptobyte/asn1
-# golang.org/x/mod v0.13.0
+# golang.org/x/mod v0.14.0
 ## explicit; go 1.18
 golang.org/x/mod/semver
 # golang.org/x/net v0.23.0
@@ -511,7 +511,6 @@ golang.org/x/sync/errgroup
 golang.org/x/sync/singleflight
 # golang.org/x/sys v0.18.0
 ## explicit; go 1.18
-golang.org/x/sys/execabs
 golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
@@ -529,7 +528,7 @@ golang.org/x/text/width
 # golang.org/x/time v0.3.0
 ## explicit
 golang.org/x/time/rate
-# golang.org/x/tools v0.13.0
+# golang.org/x/tools v0.16.1
 ## explicit; go 1.18
 golang.org/x/tools/cmd/stringer
 golang.org/x/tools/go/gcexportdata
@@ -548,6 +547,7 @@ golang.org/x/tools/internal/pkgbits
 golang.org/x/tools/internal/tokeninternal
 golang.org/x/tools/internal/typeparams
 golang.org/x/tools/internal/typesinternal
+golang.org/x/tools/internal/versions
 # google.golang.org/appengine v1.6.8
 ## explicit; go 1.11
 google.golang.org/appengine/internal
@@ -677,7 +677,7 @@ gopkg.in/yaml.v2
 # gopkg.in/yaml.v3 v3.0.1
 ## explicit
 gopkg.in/yaml.v3
-# k8s.io/api v0.27.8 => k8s.io/api v0.27.8
+# k8s.io/api v0.27.13 => k8s.io/api v0.27.8
 ## explicit; go 1.20
 k8s.io/api/admission/v1
 k8s.io/api/admission/v1beta1
@@ -733,7 +733,7 @@ k8s.io/api/scheduling/v1beta1
 k8s.io/api/storage/v1
 k8s.io/api/storage/v1alpha1
 k8s.io/api/storage/v1beta1
-# k8s.io/apimachinery v0.27.8 => k8s.io/apimachinery v0.27.8
+# k8s.io/apimachinery v0.27.13 => k8s.io/apimachinery v0.27.8
 ## explicit; go 1.20
 k8s.io/apimachinery/pkg/api/equality
 k8s.io/apimachinery/pkg/api/errors
@@ -793,7 +793,7 @@ k8s.io/apimachinery/pkg/watch
 k8s.io/apimachinery/third_party/forked/golang/json
 k8s.io/apimachinery/third_party/forked/golang/netutil
 k8s.io/apimachinery/third_party/forked/golang/reflect
-# k8s.io/apiserver v0.27.8 => k8s.io/apiserver v0.27.8
+# k8s.io/apiserver v0.27.8 => k8s.io/apiserver v0.27.13
 ## explicit; go 1.20
 k8s.io/apiserver/pkg/admission
 k8s.io/apiserver/pkg/admission/cel
@@ -908,7 +908,7 @@ k8s.io/apiserver/pkg/util/wsstream
 k8s.io/apiserver/pkg/util/x509metrics
 k8s.io/apiserver/pkg/warning
 k8s.io/apiserver/plugin/pkg/authenticator/token/webhook
-# k8s.io/client-go v0.27.8 => k8s.io/client-go v0.27.8
+# k8s.io/client-go v0.27.13 => k8s.io/client-go v0.27.8
 ## explicit; go 1.20
 k8s.io/client-go/applyconfigurations/admissionregistration/v1
 k8s.io/client-go/applyconfigurations/admissionregistration/v1alpha1
@@ -1164,7 +1164,7 @@ k8s.io/client-go/util/workqueue
 # k8s.io/cloud-provider v0.27.8 => k8s.io/cloud-provider v0.27.8
 ## explicit; go 1.20
 k8s.io/cloud-provider
-# k8s.io/component-base v0.27.8 => k8s.io/component-base v0.27.8
+# k8s.io/component-base v0.27.13 => k8s.io/component-base v0.27.8
 ## explicit; go 1.20
 k8s.io/component-base/cli/flag
 k8s.io/component-base/featuregate
@@ -1223,7 +1223,7 @@ k8s.io/kube-openapi/pkg/validation/errors
 k8s.io/kube-openapi/pkg/validation/spec
 k8s.io/kube-openapi/pkg/validation/strfmt
 k8s.io/kube-openapi/pkg/validation/strfmt/bson
-# k8s.io/kubernetes v1.27.8
+# k8s.io/kubernetes v1.27.13
 ## explicit; go 1.20
 k8s.io/kubernetes/pkg/api/legacyscheme
 k8s.io/kubernetes/pkg/api/v1/pod
@@ -1309,7 +1309,7 @@ sigs.k8s.io/yaml
 # google.golang.org/grpc/naming => google.golang.org/grpc v1.29.0
 # k8s.io/api => k8s.io/api v0.27.8
 # k8s.io/apimachinery => k8s.io/apimachinery v0.27.8
-# k8s.io/apiserver => k8s.io/apiserver v0.27.8
+# k8s.io/apiserver => k8s.io/apiserver v0.27.13
 # k8s.io/cli-runtime => k8s.io/cli-runtime v0.27.8
 # k8s.io/client-go => k8s.io/client-go v0.27.8
 # k8s.io/cloud-provider => k8s.io/cloud-provider v0.27.8
