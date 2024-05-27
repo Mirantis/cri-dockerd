@@ -202,6 +202,8 @@ func toRuntimeAPIContainer(c *dockertypes.Container) (*runtimeapi.Container, err
 	if err != nil {
 		return nil, err
 	}
+	// TODO: Currently docker ContainerList api doesn't return annotations, so annotations
+	//       still need to be extracted from labels here.
 	labels, annotations := extractLabels(c.Labels)
 	sandboxID := c.Labels[sandboxIDLabelKey]
 	// The timestamp in dockertypes.Container is in seconds.
@@ -269,6 +271,8 @@ func containerToRuntimeAPISandbox(c *dockertypes.Container) (*runtimeapi.PodSand
 	if err != nil {
 		return nil, err
 	}
+	// TODO: Currently docker ContainerList api doesn't return annotations, so annotations
+	//       still need to be extracted from labels here.
 	labels, annotations := extractLabels(c.Labels)
 	// The timestamp in dockertypes.Container is in seconds.
 	createdAt := c.Created * int64(time.Second)

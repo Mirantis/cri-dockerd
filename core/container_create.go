@@ -47,6 +47,8 @@ func (ds *dockerService) CreateContainer(
 		return nil, fmt.Errorf("sandbox config is nil for container %q", config.Metadata.Name)
 	}
 
+	// TODO: Docker supports annotations for now, so labels and annotations might be separated
+	//       in the future. Keeping them merged is just for backward compatibility.
 	labels := makeLabels(config.GetLabels(), config.GetAnnotations())
 	// Apply a the container type label.
 	labels[containerTypeLabelKey] = containerTypeLabelContainer
@@ -54,6 +56,12 @@ func (ds *dockerService) CreateContainer(
 	labels[containerLogPathLabelKey] = filepath.Join(sandboxConfig.LogDirectory, config.LogPath)
 	// Write the sandbox ID in the labels.
 	labels[sandboxIDLabelKey] = podSandboxID
+
+	// Set container annotations.
+	annotations := config.GetAnnotations()
+	annotations[containerTypeLabelKey] = containerTypeLabelContainer
+	annotations[containerLogPathLabelKey] = filepath.Join(sandboxConfig.LogDirectory, config.LogPath)
+	annotations[sandboxIDLabelKey] = podSandboxID
 
 	apiVersion, err := ds.getDockerAPIVersion()
 	if err != nil {
@@ -96,7 +104,8 @@ func (ds *dockerService) CreateContainer(
 			RestartPolicy: container.RestartPolicy{
 				Name: "no",
 			},
-			Runtime: sandboxInfo.HostConfig.Runtime,
+			Runtime:     sandboxInfo.HostConfig.Runtime,
+			Annotations: annotations,
 		},
 	}
 

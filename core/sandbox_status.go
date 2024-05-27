@@ -62,14 +62,14 @@ func (ds *dockerService) PodSandboxStatus(
 		ips = ips[1:]
 	}
 
-	labels, annotations := extractLabels(r.Config.Labels)
+	labels, _ := extractLabels(r.Config.Labels)
 	status := &v1.PodSandboxStatus{
 		Id:          r.ID,
 		State:       state,
 		CreatedAt:   ct,
 		Metadata:    metadata,
 		Labels:      labels,
-		Annotations: annotations,
+		Annotations: r.HostConfig.Annotations,
 		Network: &v1.PodSandboxNetworkStatus{
 			Ip: ip,
 		},
