@@ -23,7 +23,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"regexp"
 	"sync"
 	"time"
@@ -642,10 +641,10 @@ func (d *kubeDockerClient) redirectResponseToOutputStream(
 	resp io.Reader,
 ) error {
 	if outputStream == nil {
-		outputStream = ioutil.Discard
+		outputStream = io.Discard
 	}
 	if errorStream == nil {
-		errorStream = ioutil.Discard
+		errorStream = io.Discard
 	}
 	var err error
 	if tty {
