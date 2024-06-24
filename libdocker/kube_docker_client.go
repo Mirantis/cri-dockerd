@@ -311,26 +311,30 @@ func (p *progress) set(msg *dockermessage.JSONMessage) {
 	p.timestamp = time.Now()
 }
 
-func (p *progress) get() (string, time.Time) {
+func (p *progress) get() (*dockermessage.JSONMessage, time.Time) {
 	p.RLock()
 	defer p.RUnlock()
-	if p.message == nil {
-		return "No progress", p.timestamp
+	return p.message, p.timestamp
+}
+
+func formatProgress(msg *dockermessage.JSONMessage) string {
+	if msg == nil {
+		return "No progress"
 	}
 	// The following code is based on JSONMessage.Display
 	var prefix string
-	if p.message.ID != "" {
-		prefix = fmt.Sprintf("%s: ", p.message.ID)
+	if msg.ID != "" {
+		prefix = fmt.Sprintf("%s: ", msg.ID)
 	}
-	if p.message.Progress == nil {
-		return fmt.Sprintf("%s%s", prefix, p.message.Status), p.timestamp
+	if msg.Progress == nil {
+		return fmt.Sprintf("%s%s", prefix, msg.Status)
 	}
 	return fmt.Sprintf(
 		"%s%s %s",
 		prefix,
-		p.message.Status,
-		p.message.Progress.String(),
-	), p.timestamp
+		msg.Status,
+		msg.Progress.String(),
+	)
 }
 
 // progressReporter keeps the newest image pulling progress and periodically report the newest progress.
@@ -362,25 +366,29 @@ func (p *progressReporter) start() {
 	go func() {
 		ticker := time.NewTicker(defaultImagePullingProgressReportInterval)
 		defer ticker.Stop()
+		downloaded := false
 		for {
 			select {
 			case <-ticker.C:
 				progress, timestamp := p.progress.get()
-				// If there is no progress for p.imagePullProgressDeadline, cancel the operation.
-				if time.Since(timestamp) > p.imagePullProgressDeadline {
+				if progress.Status == "Extracting" {
+					downloaded = true
+				}
+				// If there is no progress for p.imagePullProgressDeadline in 'downloading' phase, cancel the operation.
+				if !downloaded && time.Since(timestamp) > p.imagePullProgressDeadline {
 					logrus.Errorf(
 						"Cancel pulling image %s because it exceeded image pull deadline %s. Latest progress %s",
 						p.image,
 						p.imagePullProgressDeadline.String(),
-						progress,
+						formatProgress(progress),
 					)
 					p.cancel()
 					return
 				}
-				logrus.Infof("Pulling image %s: %s", p.image, progress)
+				logrus.Infof("Pulling image %s: %s", p.image, formatProgress(progress))
 			case <-p.stopCh:
 				progress, _ := p.progress.get()
-				logrus.Infof("Stop pulling image %s: %s", p.image, progress)
+				logrus.Infof("Stop pulling image %s: %s", p.image, formatProgress(progress))
 				return
 			}
 		}
