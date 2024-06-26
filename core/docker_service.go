@@ -17,6 +17,7 @@ limitations under the License.
 package core
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -26,6 +27,7 @@ import (
 	"path"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"sync"
 	"time"
 
@@ -42,6 +44,7 @@ import (
 	"github.com/blang/semver"
 	dockertypes "github.com/docker/docker/api/types"
 	dockersystem "github.com/docker/docker/api/types/system"
+	ociruntimefeatures "github.com/opencontainers/runtime-spec/specs-go/features"
 	"github.com/sirupsen/logrus"
 
 	v1 "k8s.io/api/core/v1"
@@ -370,6 +373,59 @@ func (ds *dockerService) getDockerInfo() (*dockersystem.Info, error) {
 	return info, nil
 }
 
+func (ds *dockerService) getRuntimeHandlers() ([]*runtimeapi.RuntimeHandler, error) {
+	info, err := ds.getDockerInfo()
+	if err != nil {
+		return nil, err
+	}
+	handlersX, err := ds.systemInfoCache.Memoize("docker_info_handlers", systemInfoCacheMinTTL, func() (interface{}, error) {
+		return getRuntimeHandlers(info)
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get runtime handlers: %v", err)
+	}
+	return handlersX.([]*runtimeapi.RuntimeHandler), nil
+}
+
+func getRuntimeHandlers(info *dockersystem.Info) ([]*runtimeapi.RuntimeHandler, error) {
+	var handlers []*runtimeapi.RuntimeHandler
+	for dockerName, dockerRT := range info.Runtimes {
+		var rro bool
+		if kernelSupportsRRO {
+			if ociFeaturesStr, ok := dockerRT.Status["org.opencontainers.runtime-spec.features"]; ok {
+				// "org.opencontainers.runtime-spec.features" status is available since Docker v25 (API v1.44)
+				var ociFeatures ociruntimefeatures.Features
+				if err := json.Unmarshal([]byte(ociFeaturesStr), &ociFeatures); err != nil {
+					return handlers, fmt.Errorf("failed to unmarshal %q: %v", ociFeaturesStr, err)
+				}
+				// "rro" mount type is supported since runc v1.1
+				rro = slices.Contains(ociFeatures.MountOptions, "rro")
+			}
+		}
+		features := &runtimeapi.RuntimeHandlerFeatures{
+			RecursiveReadOnlyMounts: rro,
+			UserNamespaces:          false, // TODO
+		}
+		handlers = append(handlers, &runtimeapi.RuntimeHandler{
+			Name:     dockerName,
+			Features: features,
+		})
+		if dockerName == info.DefaultRuntime {
+			handlers = append([]*runtimeapi.RuntimeHandler{
+				&runtimeapi.RuntimeHandler{
+					Name:     "",
+					Features: features,
+				},
+			}, handlers...)
+		}
+	}
+	// info.Runtimes is unmarshalized as a map in Go, so we cannot preserve the original ordering
+	slices.SortStableFunc(handlers, func(a, b *runtimeapi.RuntimeHandler) int {
+		return cmp.Compare(a.Name, b.Name)
+	})
+	return handlers, nil
+}
+
 // UpdateRuntimeConfig updates the runtime config. Currently only handles podCIDR updates.
 func (ds *dockerService) UpdateRuntimeConfig(
 	_ context.Context,
@@ -429,7 +485,14 @@ func (ds *dockerService) Status(
 		networkReady.Message = fmt.Sprintf("docker: network plugin is not ready: %v", err)
 	}
 	status := &runtimeapi.RuntimeStatus{Conditions: conditions}
-	resp := &runtimeapi.StatusResponse{Status: status}
+	handlers, err := ds.getRuntimeHandlers()
+	if err != nil {
+		return nil, err
+	}
+	resp := &runtimeapi.StatusResponse{
+		Status:          status,
+		RuntimeHandlers: handlers,
+	}
 	if r.Verbose {
 		image := defaultSandboxImage
 		podSandboxImage := ds.podSandboxImage

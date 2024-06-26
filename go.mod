@@ -1,6 +1,6 @@
 module github.com/Mirantis/cri-dockerd
 
-go 1.21
+go 1.22.0
 
 require (
 	github.com/Microsoft/hcsshim v0.12.1
@@ -17,6 +17,7 @@ require (
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.1.0
 	github.com/opencontainers/runc v1.1.12
+	github.com/opencontainers/runtime-spec v1.2.0
 	github.com/opencontainers/selinux v1.11.0
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.3
@@ -33,7 +34,7 @@ require (
 	k8s.io/client-go v0.27.8
 	k8s.io/component-base v0.27.8
 	k8s.io/component-helpers v0.27.8
-	k8s.io/cri-api v0.28.0
+	k8s.io/cri-api v0.30.1
 	k8s.io/cri-api/v1alpha2 v0.25.8
 	k8s.io/kubernetes v1.27.8
 	k8s.io/utils v0.0.0-20230220204549-a5ecb0141aa5
@@ -69,7 +70,7 @@ require (
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
-	github.com/golang/protobuf v1.5.3 // indirect
+	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/btree v1.1.2 // indirect
 	github.com/google/cadvisor v0.47.2 // indirect
 	github.com/google/cel-go v0.12.7 // indirect
@@ -97,7 +98,6 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
-	github.com/opencontainers/runtime-spec v1.1.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_golang v1.14.0 // indirect
 	github.com/prometheus/client_model v0.3.0 // indirect
@@ -163,7 +163,7 @@ replace (
 	k8s.io/component-base => k8s.io/component-base v0.27.8
 	k8s.io/component-helpers => k8s.io/component-helpers v0.26.0
 	k8s.io/controller-manager => k8s.io/controller-manager v0.27.8
-	k8s.io/cri-api => k8s.io/cri-api v0.28.0
+	k8s.io/cri-api => k8s.io/cri-api v0.30.1
 	k8s.io/cri-api/v1alpha2 => k8s.io/cri-api v0.25.16
 	k8s.io/csi-translation-lib => k8s.io/csi-translation-lib v0.27.8
 	k8s.io/kube-aggregator => k8s.io/kube-aggregator v0.27.8

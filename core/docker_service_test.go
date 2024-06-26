@@ -17,6 +17,7 @@ limitations under the License.
 package core
 
 import (
+	"encoding/json"
 	"errors"
 	"math/rand"
 	"runtime"
@@ -28,7 +29,9 @@ import (
 
 	"github.com/blang/semver"
 	dockertypes "github.com/docker/docker/api/types"
+	dockersystem "github.com/docker/docker/api/types/system"
 	"github.com/golang/mock/gomock"
+	ociruntimefeatures "github.com/opencontainers/runtime-spec/specs-go/features"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
@@ -210,4 +213,74 @@ func TestAPIVersionWithCache(t *testing.T) {
 	version, err := ds.getDockerAPIVersion()
 	require.NoError(t, err)
 	assert.Equal(t, expected, version)
+}
+
+func TestGetRuntimeHandlers(t *testing.T) {
+	runcFeatures := ociruntimefeatures.Features{
+		MountOptions: []string{"rro"},
+	}
+	runcFeaturesJSON, err := json.Marshal(runcFeatures)
+	assert.NoError(t, err)
+	info := &dockersystem.Info{
+		Runtimes: map[string]dockersystem.RuntimeWithStatus{
+			"io.containerd.runc.v2": dockersystem.RuntimeWithStatus{
+				Runtime: dockersystem.Runtime{
+					Path: "runc",
+				},
+				Status: map[string]string{
+					"org.opencontainers.runtime-spec.features": string(runcFeaturesJSON),
+				},
+			},
+			"runc": dockersystem.RuntimeWithStatus{
+				Runtime: dockersystem.Runtime{
+					Path: "runc",
+				},
+				Status: map[string]string{
+					"org.opencontainers.runtime-spec.features": string(runcFeaturesJSON),
+				},
+			},
+			"runsc": dockersystem.RuntimeWithStatus{
+				Runtime: dockersystem.Runtime{
+					Path: "/usr/local/bin/runsc",
+				},
+			},
+		},
+		DefaultRuntime: "runc",
+	}
+
+	handlers, err := getRuntimeHandlers(info)
+	assert.NoError(t, err)
+
+	expectedHandlers := []runtimeapi.RuntimeHandler{
+		{
+			Name: "",
+			Features: &runtimeapi.RuntimeHandlerFeatures{
+				RecursiveReadOnlyMounts: true,
+			},
+		},
+		{
+			Name: "io.containerd.runc.v2",
+			Features: &runtimeapi.RuntimeHandlerFeatures{
+				RecursiveReadOnlyMounts: true,
+			},
+		},
+		{
+			Name: "runc",
+			Features: &runtimeapi.RuntimeHandlerFeatures{
+				RecursiveReadOnlyMounts: true,
+			},
+		},
+
+		{
+			Name: "runsc",
+			Features: &runtimeapi.RuntimeHandlerFeatures{
+				RecursiveReadOnlyMounts: false,
+			},
+		},
+	}
+	for i, f := range handlers {
+		assert.Equal(t, expectedHandlers[i].Name, f.Name)
+		assert.Equal(t, expectedHandlers[i].Features, f.Features)
+		// ignore protobuf fields
+	}
 }
