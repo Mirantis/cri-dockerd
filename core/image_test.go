@@ -21,6 +21,7 @@ import (
 	"testing"
 
 	dockertypes "github.com/docker/docker/api/types"
+	dockerimage "github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -41,11 +42,11 @@ func TestRemoveImage(t *testing.T) {
 				libdocker.NewCalledDetail("inspect_image", nil),
 				libdocker.NewCalledDetail(
 					"remove_image",
-					[]interface{}{"foo", dockertypes.ImageRemoveOptions{PruneChildren: true}},
+					[]interface{}{"foo", dockerimage.RemoveOptions{PruneChildren: true}},
 				),
 				libdocker.NewCalledDetail(
 					"remove_image",
-					[]interface{}{"1111", dockertypes.ImageRemoveOptions{PruneChildren: true}},
+					[]interface{}{"1111", dockerimage.RemoveOptions{PruneChildren: true}},
 				),
 			},
 		},
@@ -55,15 +56,15 @@ func TestRemoveImage(t *testing.T) {
 				libdocker.NewCalledDetail("inspect_image", nil),
 				libdocker.NewCalledDetail(
 					"remove_image",
-					[]interface{}{"foo", dockertypes.ImageRemoveOptions{PruneChildren: true}},
+					[]interface{}{"foo", dockerimage.RemoveOptions{PruneChildren: true}},
 				),
 				libdocker.NewCalledDetail(
 					"remove_image",
-					[]interface{}{"bar", dockertypes.ImageRemoveOptions{PruneChildren: true}},
+					[]interface{}{"bar", dockerimage.RemoveOptions{PruneChildren: true}},
 				),
 				libdocker.NewCalledDetail(
 					"remove_image",
-					[]interface{}{"2222", dockertypes.ImageRemoveOptions{PruneChildren: true}},
+					[]interface{}{"2222", dockerimage.RemoveOptions{PruneChildren: true}},
 				),
 			},
 		},
@@ -77,22 +78,22 @@ func TestRemoveImage(t *testing.T) {
 				libdocker.NewCalledDetail("inspect_image", nil),
 				libdocker.NewCalledDetail(
 					"remove_image",
-					[]interface{}{"foo", dockertypes.ImageRemoveOptions{PruneChildren: true}},
+					[]interface{}{"foo", dockerimage.RemoveOptions{PruneChildren: true}},
 				),
 				libdocker.NewCalledDetail(
 					"remove_image",
-					[]interface{}{"foo@3333", dockertypes.ImageRemoveOptions{PruneChildren: true}},
+					[]interface{}{"foo@3333", dockerimage.RemoveOptions{PruneChildren: true}},
 				),
 				libdocker.NewCalledDetail(
 					"remove_image",
 					[]interface{}{
 						"example.com/foo@3333",
-						dockertypes.ImageRemoveOptions{PruneChildren: true},
+						dockerimage.RemoveOptions{PruneChildren: true},
 					},
 				),
 				libdocker.NewCalledDetail(
 					"remove_image",
-					[]interface{}{"3333", dockertypes.ImageRemoveOptions{PruneChildren: true}},
+					[]interface{}{"3333", dockerimage.RemoveOptions{PruneChildren: true}},
 				),
 			},
 		},
@@ -106,18 +107,18 @@ func TestRemoveImage(t *testing.T) {
 				libdocker.NewCalledDetail("inspect_image", nil),
 				libdocker.NewCalledDetail(
 					"remove_image",
-					[]interface{}{"foo@4444", dockertypes.ImageRemoveOptions{PruneChildren: true}},
+					[]interface{}{"foo@4444", dockerimage.RemoveOptions{PruneChildren: true}},
 				),
 				libdocker.NewCalledDetail(
 					"remove_image",
 					[]interface{}{
 						"example.com/foo@4444",
-						dockertypes.ImageRemoveOptions{PruneChildren: true},
+						dockerimage.RemoveOptions{PruneChildren: true},
 					},
 				),
 				libdocker.NewCalledDetail(
 					"remove_image",
-					[]interface{}{"4444", dockertypes.ImageRemoveOptions{PruneChildren: true}},
+					[]interface{}{"4444", dockerimage.RemoveOptions{PruneChildren: true}},
 				),
 			},
 		},

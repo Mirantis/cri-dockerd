@@ -24,6 +24,7 @@ import (
 	"time"
 
 	dockertypes "github.com/docker/docker/api/types"
+	dockercontainer "github.com/docker/docker/api/types/container"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/client-go/tools/remotecommand"
@@ -39,7 +40,7 @@ func TestExecInContainer(t *testing.T) {
 		returnCreateExec1  *dockertypes.IDResponse
 		returnCreateExec2  error
 		returnStartExec    error
-		returnInspectExec1 *dockertypes.ContainerExecInspect
+		returnInspectExec1 *dockercontainer.ExecInspect
 		returnInspectExec2 error
 		expectError        error
 	}{{
@@ -48,7 +49,7 @@ func TestExecInContainer(t *testing.T) {
 		returnCreateExec1: &dockertypes.IDResponse{ID: "12345678"},
 		returnCreateExec2: nil,
 		returnStartExec:   nil,
-		returnInspectExec1: &dockertypes.ContainerExecInspect{
+		returnInspectExec1: &dockercontainer.ExecInspect{
 			ExecID:      "200",
 			ContainerID: "12345678",
 			Running:     false,
@@ -91,7 +92,7 @@ func TestExecInContainer(t *testing.T) {
 		returnCreateExec1: &dockertypes.IDResponse{ID: "12345678"},
 		returnCreateExec2: nil,
 		returnStartExec:   context.DeadlineExceeded,
-		returnInspectExec1: &dockertypes.ContainerExecInspect{
+		returnInspectExec1: &dockercontainer.ExecInspect{
 			ExecID:      "200",
 			ContainerID: "12345678",
 			Running:     true,
@@ -148,7 +149,6 @@ func TestExecInContainer(t *testing.T) {
 		assert.Equal(t, tc.expectError, err)
 	}
 }
-
 
 func getFakeContainerJSON() *dockertypes.ContainerJSON {
 	return &dockertypes.ContainerJSON{

@@ -59,23 +59,20 @@ type DockerClientInterface interface {
 	RemoveContainer(id string, opts dockercontainer.RemoveOptions) error
 	InspectImageByRef(imageRef string) (*dockertypes.ImageInspect, error)
 	InspectImageByID(imageID string) (*dockertypes.ImageInspect, error)
-	ListImages(opts dockertypes.ImageListOptions) ([]dockerimagetypes.Summary, error)
-	PullImage(image string, auth dockerregistry.AuthConfig, opts dockertypes.ImagePullOptions) error
-	RemoveImage(
-		image string,
-		opts dockertypes.ImageRemoveOptions,
-	) ([]dockerimagetypes.DeleteResponse, error)
+	ListImages(opts dockerimagetypes.ListOptions) ([]dockerimagetypes.Summary, error)
+	PullImage(image string, auth dockerregistry.AuthConfig, opts dockerimagetypes.PullOptions) error
+	RemoveImage(imageStr string, opts dockerimagetypes.RemoveOptions) ([]dockerimagetypes.DeleteResponse, error)
 	ImageHistory(id string) ([]dockerimagetypes.HistoryResponseItem, error)
 	Logs(string, dockercontainer.LogsOptions, StreamOptions) error
 	Version() (*dockertypes.Version, error)
 	Info() (*dockersystem.Info, error)
-	CreateExec(string, dockertypes.ExecConfig) (*dockertypes.IDResponse, error)
-	StartExec(string, dockertypes.ExecStartCheck, StreamOptions) error
-	InspectExec(id string) (*dockertypes.ContainerExecInspect, error)
+	CreateExec(string, dockercontainer.ExecOptions) (*dockertypes.IDResponse, error)
+	StartExec(string, dockercontainer.ExecStartOptions, StreamOptions) error
+	InspectExec(id string) (*dockercontainer.ExecInspect, error)
 	AttachToContainer(string, dockercontainer.AttachOptions, StreamOptions) error
 	ResizeContainerTTY(id string, height, width uint) error
 	ResizeExecTTY(id string, height, width uint) error
-	GetContainerStats(id string) (*dockertypes.StatsJSON, error)
+	GetContainerStats(id string) (*dockercontainer.StatsResponse, error)
 }
 
 // Get a *dockerapi.Client, either using the endpoint passed in, or using

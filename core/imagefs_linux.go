@@ -23,7 +23,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/image"
 	"github.com/sirupsen/logrus"
 
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
@@ -43,7 +43,7 @@ func (ds *dockerService) imageFsInfo() (*runtimeapi.ImageFsInfoResponse, error) 
 	logrus.Debugf("Filesystem usage containing '%s': usedBytes=%v, iNodesUsed=%v", ds.dockerRootDir, usedBytes, iNodesUsed)
 
 	// compute total used bytes by docker images
-	images, err := ds.client.ListImages(types.ImageListOptions{All: true, SharedSize: true})
+	images, err := ds.client.ListImages(image.ListOptions{All: true, SharedSize: true})
 	if err != nil {
 		logrus.Error(err, "Failed to get image list from docker")
 		return nil, err
