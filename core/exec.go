@@ -22,9 +22,10 @@ import (
 	"io"
 	"time"
 
+	dockertypes "github.com/docker/docker/api/types"
 	"k8s.io/client-go/tools/remotecommand"
 
-	dockertypes "github.com/docker/docker/api/types"
+	dockercontainer "github.com/docker/docker/api/types/container"
 	"github.com/sirupsen/logrus"
 
 	"github.com/Mirantis/cri-dockerd/libdocker"
@@ -33,7 +34,7 @@ import (
 )
 
 type dockerExitError struct {
-	Inspect *dockertypes.ContainerExecInspect
+	Inspect *dockercontainer.ExecInspect
 }
 
 func (d *dockerExitError) String() string {
@@ -87,7 +88,7 @@ func (*NativeExecHandler) ExecInContainer(
 	done := make(chan struct{})
 	defer close(done)
 
-	createOpts := dockertypes.ExecConfig{
+	createOpts := dockercontainer.ExecOptions{
 		Cmd:          cmd,
 		AttachStdin:  stdin != nil,
 		AttachStdout: stdout != nil,
@@ -119,7 +120,7 @@ func (*NativeExecHandler) ExecInContainer(
 		})
 	}()
 
-	startOpts := dockertypes.ExecStartCheck{Detach: false, Tty: tty}
+	startOpts := dockercontainer.ExecStartOptions{Detach: false, Tty: tty}
 	streamOpts := libdocker.StreamOptions{
 		InputStream:  stdin,
 		OutputStream: stdout,

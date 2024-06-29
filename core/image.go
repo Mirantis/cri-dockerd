@@ -23,8 +23,8 @@ import (
 	"strconv"
 	"strings"
 
-	dockertypes "github.com/docker/docker/api/types"
 	dockerfilters "github.com/docker/docker/api/types/filters"
+	dockerimage "github.com/docker/docker/api/types/image"
 	dockerregistry "github.com/docker/docker/api/types/registry"
 	"github.com/docker/docker/pkg/jsonmessage"
 
@@ -62,7 +62,7 @@ func (ds *dockerService) ListImages(
 	r *runtimeapi.ListImagesRequest,
 ) (*runtimeapi.ListImagesResponse, error) {
 	filter := r.GetFilter()
-	opts := dockertypes.ImageListOptions{}
+	opts := dockerimage.ListOptions{}
 	if filter != nil {
 		if filter.GetImage().GetImage() != "" {
 			opts.Filters = dockerfilters.NewArgs()
@@ -149,7 +149,7 @@ func (ds *dockerService) PullImage(
 	}
 	err := ds.client.PullImage(image.Image,
 		authConfig,
-		dockertypes.ImagePullOptions{},
+		dockerimage.PullOptions{},
 	)
 	if err != nil {
 		return nil, filterHTTPError(err, image.Image)
@@ -193,7 +193,7 @@ func (ds *dockerService) RemoveImage(
 	images = append(images, image.Image)
 
 	for _, image := range images {
-		if _, err := ds.client.RemoveImage(image, dockertypes.ImageRemoveOptions{PruneChildren: true}); err != nil &&
+		if _, err := ds.client.RemoveImage(image, dockerimage.RemoveOptions{PruneChildren: true}); err != nil &&
 			!libdocker.IsImageNotFoundError(err) {
 			return nil, err
 		}
