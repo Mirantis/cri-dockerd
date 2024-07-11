@@ -5,7 +5,7 @@ on:
 
 jobs:
   integration:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     timeout-minutes: 60
     steps:
       - name: Checkout cri-dockerd
@@ -61,7 +61,8 @@ jobs:
            stable"
           sudo apt-get update
           sudo apt-cache madison docker-ce
-          sudo apt-get install docker-ce docker-ce-cli containerd.io
+          VERSION_STRING=5:26.1.4-1~ubuntu.22.04~jammy
+          sudo apt-get install docker-ce=$VERSION_STRING docker-ce-cli=$VERSION_STRING containerd.io
 
           # Restart docker daemon.
           sudo service docker restart
