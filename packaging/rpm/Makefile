@@ -43,7 +43,7 @@ SOURCE_FILES=app.tgz cri-docker.service cri-docker.socket LICENSE
 SOURCES=$(addprefix rpmbuild/SOURCES/, $(SOURCE_FILES))
 
 FEDORA_RELEASES := fedora-36 fedora-35
-CENTOS_RELEASES := centos-stream centos-7
+CENTOS_RELEASES :=
 
 .PHONY: help
 help: ## show make targets
