@@ -1,6 +1,6 @@
 ARG GO_IMAGE
-ARG DISTRO=tgagor/centos
-ARG SUITE=stream8
+ARG DISTRO=aepifanov/centos7.vault
+ARG SUITE=latest
 ARG BUILD_IMAGE=${DISTRO}:${SUITE}
 
 FROM ${GO_IMAGE} AS golang
