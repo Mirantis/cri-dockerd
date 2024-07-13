@@ -65,6 +65,11 @@ func (ds *dockerService) CreateContainer(
 	}
 	containerName := makeContainerName(sandboxConfig, config)
 	terminationMessagePath, _ := config.Annotations["io.kubernetes.container.terminationMessagePath"]
+
+	sandboxInfo, err := ds.client.InspectContainer(r.GetPodSandboxId())
+	if err != nil {
+		return nil, fmt.Errorf("unable to get container's sandbox ID: %v", err)
+	}
 	createConfig := types.ContainerCreateConfig{
 		Name: containerName,
 		Config: &container.Config{
@@ -89,6 +94,7 @@ func (ds *dockerService) CreateContainer(
 			RestartPolicy: container.RestartPolicy{
 				Name: "no",
 			},
+			Runtime: sandboxInfo.HostConfig.Runtime,
 		},
 	}
 

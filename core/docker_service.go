@@ -286,6 +286,8 @@ type dockerService struct {
 	// methods for more info).
 	containerCleanupInfos map[string]*containerCleanupInfo
 	cleanupInfosLock      sync.RWMutex
+
+	// runtimeInfoLock sync.RWMutex
 }
 
 type dockerServiceAlpha struct {
