@@ -42,7 +42,7 @@ RUN?=$(RPMBUILD) rpmbuild-$@/$(ARCH) $(RPMBUILD_FLAGS)
 SOURCE_FILES=app.tgz cri-docker.service cri-docker.socket LICENSE
 SOURCES=$(addprefix rpmbuild/SOURCES/, $(SOURCE_FILES))
 
-FEDORA_RELEASES := fedora-36 fedora-35
+FEDORA_RELEASES := fedora-39 fedora-40
 CENTOS_RELEASES :=
 
 .PHONY: help
