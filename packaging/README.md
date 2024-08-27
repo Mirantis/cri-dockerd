@@ -13,4 +13,6 @@ The scripts will build for this list of packages types:
 * DEB packages for Debian 11 Bullseye
 * RPM packages for Fedora 41
 * RPM packages for Fedora 40
+* RPM packages for AlmaLinux 9
+* RPM packages for AlmaLinux 8
 * TGZ and ZIP files with static binaries
