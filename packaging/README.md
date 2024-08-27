@@ -13,4 +13,6 @@ The scripts will build for this list of packages types:
 * DEB packages for Debian 9 Stretch
 * RPM packages for Fedora 40
 * RPM packages for Fedora 39
+* RPM packages for AlmaLinux 8
+* RPM packages for AlmaLinux 9
 * TGZ and ZIP files with static binaries
