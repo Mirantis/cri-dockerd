@@ -76,7 +76,16 @@ func (ds *dockerService) imageFsInfo() (*runtimeapi.ImageFsInfoResponse, error) 
 				InodesUsed: &runtimeapi.UInt64Value{
 					Value: iNodesUsed,
 				},
-			},
-		},
+			}},
+		ContainerFilesystems: []*runtimeapi.FilesystemUsage{
+			{
+				Timestamp: time.Now().UnixNano(),
+				FsId: &runtimeapi.FilesystemIdentifier{
+					Mountpoint: ds.dockerRootDir,
+				},
+				UsedBytes: &runtimeapi.UInt64Value{
+					Value: ds.containerStatsCache.getWriteableLayer(),
+				},
+			}},
 	}, nil
 }
