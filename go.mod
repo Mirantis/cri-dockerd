@@ -2,8 +2,6 @@ module github.com/Mirantis/cri-dockerd
 
 go 1.23.3
 
-toolchain go1.23.3
-
 require (
 	github.com/Microsoft/hcsshim v0.11.4
 	github.com/armon/circbuf v0.0.0-20150827004946-bbbad097214e
