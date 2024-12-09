@@ -34,6 +34,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
+	crierrors "k8s.io/cri-api/pkg/errors"
 )
 
 func TestLabelsAndAnnotationsRoundTrip(t *testing.T) {
@@ -338,9 +339,76 @@ func TestGenerateMountBindings(t *testing.T) {
 		{Type: dockermount.TypeBind, Source: "/mnt/7", Target: "/var/lib/mysql/7", BindOptions: &dockermount.BindOptions{CreateMountpoint: true}},
 		{Type: dockermount.TypeBind, Source: "/mnt/8", Target: "/var/lib/mysql/8", ReadOnly: true, BindOptions: &dockermount.BindOptions{CreateMountpoint: true, ReadOnlyNonRecursive: true, Propagation: dockermount.PropagationRShared}}, // Relabeling is not handled here
 	}
-	result := libdocker.GenerateMountBindings(mounts, "")
-
+	result, err := libdocker.GenerateMountBindings(mounts, "", nil)
+	assert.NoError(t, err)
 	assert.Equal(t, expectedResult, result)
+}
+
+func TestGenerateMountBindingsRRO(t *testing.T) {
+	handler := &runtimeapi.RuntimeHandler{
+		Name: "",
+		Features: &runtimeapi.RuntimeHandlerFeatures{
+			RecursiveReadOnlyMounts: true,
+		},
+	}
+
+	t.Run("Valid", func(t *testing.T) {
+		result, err := libdocker.GenerateMountBindings([]*runtimeapi.Mount{
+			{
+				HostPath:          "/foo",
+				ContainerPath:     "/foo",
+				Readonly:          true,
+				RecursiveReadOnly: true,
+			},
+		}, "", handler)
+		assert.NoError(t, err)
+		assert.Equal(t, []dockermount.Mount{
+			{
+				Type:        dockermount.TypeBind,
+				Source:      "/foo",
+				Target:      "/foo",
+				ReadOnly:    true,
+				BindOptions: &dockermount.BindOptions{CreateMountpoint: true, ReadOnlyNonRecursive: false},
+			},
+		}, result)
+	})
+
+	t.Run("InvalidPropagation", func(t *testing.T) {
+		_, err := libdocker.GenerateMountBindings([]*runtimeapi.Mount{
+			{
+				HostPath:          "/foo",
+				ContainerPath:     "/foo",
+				Readonly:          true,
+				RecursiveReadOnly: true,
+				Propagation:       runtimeapi.MountPropagation_PROPAGATION_BIDIRECTIONAL,
+			},
+		}, "", handler)
+		assert.ErrorContains(t, err, "recursive read-only mount needs private propagation")
+	})
+
+	t.Run("InvalidMode", func(t *testing.T) {
+		_, err := libdocker.GenerateMountBindings([]*runtimeapi.Mount{
+			{
+				HostPath:          "/foo",
+				ContainerPath:     "/foo",
+				Readonly:          false,
+				RecursiveReadOnly: true,
+			},
+		}, "", handler)
+		assert.ErrorContains(t, err, "recursive read-only mount conflicts with RW mount")
+	})
+
+	t.Run("Unsupported", func(t *testing.T) {
+		_, err := libdocker.GenerateMountBindings([]*runtimeapi.Mount{
+			{
+				HostPath:          "/foo",
+				ContainerPath:     "/foo",
+				Readonly:          true,
+				RecursiveReadOnly: true,
+			},
+		}, "", nil)
+		assert.ErrorIs(t, err, crierrors.ErrRROUnsupported)
+	})
 }
 
 func TestLimitedWriter(t *testing.T) {
