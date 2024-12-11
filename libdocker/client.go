@@ -49,11 +49,12 @@ const (
 // ContainerCreateConfig is the parameter set to ContainerCreate()
 // Deprecated from the docker/docker api
 type ContainerCreateConfig struct {
-	Name             string
-	Config           *container.Config
-	HostConfig       *container.HostConfig
-	NetworkingConfig *network.NetworkingConfig
-	Platform         *ocispec.Platform
+	Name                        string
+	Config                      *container.Config
+	HostConfig                  *container.HostConfig
+	NetworkingConfig            *network.NetworkingConfig
+	Platform                    *ocispec.Platform
+	DefaultReadOnlyNonRecursive bool
 }
 
 // DockerClientInterface is an abstract interface for testability.  It abstracts the interface of docker client.
