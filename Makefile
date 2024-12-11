@@ -83,11 +83,15 @@ vendor: ## Go mod tidy and vendor
 integration: ## Run integration tests
 	sudo critest -runtime-endpoint=unix:///var/run/cri-dockerd.sock -ginkgo.skip="runtime should support apparmor|runtime should support reopening container log|runtime should support execSync with timeout|runtime should support selinux|.*should support propagation.*"
 
-# This needs the archived version of mockgen
-# https://github.com/golang/mock.PHONY: test
+.PHONY: test
 test: ## Run unit tests
-	mockgen -source libdocker/client.go -destination libdocker/testing/mock_client.go -package testing
 	go test ./...
+
+# This needs the archived version of mockgen
+# https://github.com/golang/mock
+.PHONY: mock
+mock: ## Generate the test mocks
+	mockgen -source libdocker/client.go -destination libdocker/testing/mock_client.go -package testing
 
 ### Documentation
 .PHONY: docs
