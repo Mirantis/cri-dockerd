@@ -73,13 +73,20 @@ run: cri-dockerd ## Run cri-docker in a running minikube
 dev: cri-dockerd ## Run cri-docker in a running minikube
 	./scripts/replace-in-minikube
 
+.PHONY: vendor
+vendor: ## Go mod tidy and vendor
+	go mod tidy
+	go mod vendor
+
 #### Testing
 .PHONY: integration
 integration: ## Run integration tests
 	sudo critest -runtime-endpoint=unix:///var/run/cri-dockerd.sock -ginkgo.skip="runtime should support apparmor|runtime should support reopening container log|runtime should support execSync with timeout|runtime should support selinux|.*should support propagation.*"
 
-.PHONY: test
+# This needs the archived version of mockgen
+# https://github.com/golang/mock.PHONY: test
 test: ## Run unit tests
+	mockgen -source libdocker/client.go -destination libdocker/testing/mock_client.go -package testing
 	go test ./...
 
 ### Documentation

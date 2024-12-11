@@ -22,7 +22,6 @@ import (
 	"path/filepath"
 
 	"github.com/Mirantis/cri-dockerd/libdocker"
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/strslice"
 	v1 "k8s.io/cri-api/pkg/apis/runtime/v1"
@@ -65,7 +64,7 @@ func (ds *dockerService) CreateContainer(
 	}
 	containerName := makeContainerName(sandboxConfig, config)
 	terminationMessagePath, _ := config.Annotations["io.kubernetes.container.terminationMessagePath"]
-	createConfig := types.ContainerCreateConfig{
+	createConfig := libdocker.ContainerCreateConfig{
 		Name: containerName,
 		Config: &container.Config{
 			Entrypoint: strslice.StrSlice(config.Command),
