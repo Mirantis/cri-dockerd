@@ -209,7 +209,7 @@ func (ds *dockerService) applySandboxResources(
 	return nil
 }
 
-// makeSandboxDockerConfig returns dockertypes.ContainerCreateConfig based on runtimeapi.PodSandboxConfig.
+// makeSandboxDockerConfig returns libdocker.ContainerCreateConfig based on runtimeapi.PodSandboxConfig.
 func (ds *dockerService) makeSandboxDockerConfig(
 	c *runtimeapi.PodSandboxConfig,
 	image string,

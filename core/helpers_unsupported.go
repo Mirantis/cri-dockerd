@@ -67,7 +67,7 @@ func getNetworkNamespace(c *dockertypes.ContainerJSON) (string, error) {
 
 type containerCleanupInfo struct{}
 
-// applyPlatformSpecificDockerConfig applies platform-specific configurations to a dockertypes.ContainerCreateConfig struct.
+// applyPlatformSpecificDockerConfig applies platform-specific configurations to a libdocker.ContainerCreateConfig struct.
 // The containerCleanupInfo struct it returns will be passed as is to performPlatformSpecificContainerCleanup
 // after either the container creation has failed or the container has been removed.
 func (ds *dockerService) applyPlatformSpecificDockerConfig(
