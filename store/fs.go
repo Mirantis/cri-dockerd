@@ -17,7 +17,7 @@ limitations under the License.
 package store
 
 import (
-	"io/ioutil"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"time"
@@ -67,28 +67,41 @@ func (DefaultFs) Remove(name string) error {
 	return os.Remove(name)
 }
 
-// ReadFile via ioutil.ReadFile
+// ReadFile via os.ReadFile
 func (DefaultFs) ReadFile(filename string) ([]byte, error) {
-	return ioutil.ReadFile(filename)
+	return os.ReadFile(filename)
 }
 
-// TempDir via ioutil.TempDir
+// TempDir via os.MkdirTemp
 func (DefaultFs) TempDir(dir, prefix string) (string, error) {
-	return ioutil.TempDir(dir, prefix)
+	return os.MkdirTemp(dir, prefix)
 }
 
-// TempFile via ioutil.TempFile
+// TempFile via os.CreateTemp
 func (DefaultFs) TempFile(dir, prefix string) (File, error) {
-	file, err := ioutil.TempFile(dir, prefix)
+	file, err := os.CreateTemp(dir, prefix)
 	if err != nil {
 		return nil, err
 	}
 	return &defaultFile{file}, nil
 }
 
-// ReadDir via ioutil.ReadDir
+// ReadDir via os.ReadDir
 func (DefaultFs) ReadDir(dirname string) ([]os.FileInfo, error) {
-	return ioutil.ReadDir(dirname)
+	entries, err := os.ReadDir(dirname)
+	if err != nil {
+		return nil, err
+	}
+	infos := make([]fs.FileInfo, 0, len(entries))
+	for _, entry := range entries {
+		info, err := entry.Info()
+		if err != nil {
+			return nil, err
+		}
+		infos = append(infos, info)
+	}
+
+	return infos, nil
 }
 
 // Walk via filepath.Walk
