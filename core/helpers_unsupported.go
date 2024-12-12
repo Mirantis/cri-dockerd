@@ -22,6 +22,7 @@ package core
 import (
 	"fmt"
 
+	"github.com/Mirantis/cri-dockerd/libdocker"
 	"github.com/blang/semver"
 	dockertypes "github.com/docker/docker/api/types"
 	"github.com/sirupsen/logrus"
@@ -47,7 +48,7 @@ func (ds *dockerService) getSandBoxSecurityOpts(separator rune) []string {
 }
 
 func (ds *dockerService) updateCreateConfig(
-	createConfig *dockertypes.ContainerCreateConfig,
+	createConfig *libdocker.ContainerCreateConfig,
 	config *runtimeapi.ContainerConfig,
 	sandboxConfig *runtimeapi.PodSandboxConfig,
 	podSandboxID string, securityOptSep rune, apiVersion *semver.Version) error {
@@ -66,12 +67,12 @@ func getNetworkNamespace(c *dockertypes.ContainerJSON) (string, error) {
 
 type containerCleanupInfo struct{}
 
-// applyPlatformSpecificDockerConfig applies platform-specific configurations to a dockertypes.ContainerCreateConfig struct.
+// applyPlatformSpecificDockerConfig applies platform-specific configurations to a libdocker.ContainerCreateConfig struct.
 // The containerCleanupInfo struct it returns will be passed as is to performPlatformSpecificContainerCleanup
 // after either the container creation has failed or the container has been removed.
 func (ds *dockerService) applyPlatformSpecificDockerConfig(
 	*runtimeapi.CreateContainerRequest,
-	*dockertypes.ContainerCreateConfig,
+	*libdocker.ContainerCreateConfig,
 ) (*containerCleanupInfo, error) {
 	return nil, nil
 }

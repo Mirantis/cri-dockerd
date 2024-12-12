@@ -73,6 +73,11 @@ run: cri-dockerd ## Run cri-docker in a running minikube
 dev: cri-dockerd ## Run cri-docker in a running minikube
 	./scripts/replace-in-minikube
 
+.PHONY: vendor
+vendor: ## Go mod tidy and vendor
+	go mod tidy
+	go mod vendor
+
 #### Testing
 .PHONY: integration
 integration: ## Run integration tests
@@ -81,6 +86,12 @@ integration: ## Run integration tests
 .PHONY: test
 test: ## Run unit tests
 	go test ./...
+
+# This needs the archived version of mockgen
+# https://github.com/golang/mock
+.PHONY: mock
+mock: ## Generate the test mocks
+	mockgen -source libdocker/client.go -destination libdocker/testing/mock_client.go -package testing
 
 ### Documentation
 .PHONY: docs

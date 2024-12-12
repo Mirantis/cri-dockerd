@@ -33,6 +33,7 @@ import (
 	dockertypes "github.com/docker/docker/api/types"
 	dockercontainer "github.com/docker/docker/api/types/container"
 	dockerimagetypes "github.com/docker/docker/api/types/image"
+	dockerregistry "github.com/docker/docker/api/types/registry"
 	dockerapi "github.com/docker/docker/client"
 	dockermessage "github.com/docker/docker/pkg/jsonmessage"
 	dockerstdcopy "github.com/docker/docker/pkg/stdcopy"
@@ -98,7 +99,7 @@ func newKubeDockerClient(
 }
 
 func (d *kubeDockerClient) ListContainers(
-	options dockertypes.ContainerListOptions,
+	options dockercontainer.ListOptions,
 ) ([]dockertypes.Container, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), d.timeout)
 	defer cancel()
@@ -141,7 +142,7 @@ func (d *kubeDockerClient) InspectContainerWithSize(id string) (*dockertypes.Con
 }
 
 func (d *kubeDockerClient) CreateContainer(
-	opts dockertypes.ContainerCreateConfig,
+	opts ContainerCreateConfig,
 ) (*dockercontainer.CreateResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), d.timeout)
 	defer cancel()
@@ -169,7 +170,7 @@ func (d *kubeDockerClient) CreateContainer(
 func (d *kubeDockerClient) StartContainer(id string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), d.timeout)
 	defer cancel()
-	err := d.client.ContainerStart(ctx, id, dockertypes.ContainerStartOptions{})
+	err := d.client.ContainerStart(ctx, id, dockercontainer.StartOptions{})
 	if ctxErr := contextError(ctx); ctxErr != nil {
 		return ctxErr
 	}
@@ -193,7 +194,7 @@ func (d *kubeDockerClient) StopContainer(id string, timeout time.Duration) error
 
 func (d *kubeDockerClient) RemoveContainer(
 	id string,
-	opts dockertypes.ContainerRemoveOptions,
+	opts dockercontainer.RemoveOptions,
 ) error {
 	ctx, cancel := context.WithTimeout(context.Background(), d.timeout)
 	defer cancel()
@@ -270,7 +271,7 @@ func (d *kubeDockerClient) ImageHistory(id string) ([]dockerimagetypes.HistoryRe
 
 func (d *kubeDockerClient) ListImages(
 	opts dockertypes.ImageListOptions,
-) ([]dockertypes.ImageSummary, error) {
+) ([]dockerimagetypes.Summary, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), d.timeout)
 	defer cancel()
 	images, err := d.client.ImageList(ctx, opts)
@@ -283,7 +284,7 @@ func (d *kubeDockerClient) ListImages(
 	return images, nil
 }
 
-func base64EncodeAuth(auth dockertypes.AuthConfig) (string, error) {
+func base64EncodeAuth(auth dockerregistry.AuthConfig) (string, error) {
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(auth); err != nil {
 		return "", err
@@ -402,7 +403,7 @@ func (p *progressReporter) stop() {
 
 func (d *kubeDockerClient) PullImage(
 	image string,
-	auth dockertypes.AuthConfig,
+	auth dockerregistry.AuthConfig,
 	opts dockertypes.ImagePullOptions,
 ) error {
 	// RegistryAuth is the base64 encoded credentials for the registry
