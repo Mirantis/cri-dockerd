@@ -24,7 +24,7 @@ jobs:
 
     - name: Upload
       if: ${{ github.event_name == 'release' }}
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: cri-dockerd
         retention-days: 5
@@ -51,7 +51,7 @@ jobs:
       run: make deb
 
     - name: Upload
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: cri-dockerd
         retention-days: 5
@@ -78,7 +78,7 @@ jobs:
       run: make rpm
 
     - name: Upload
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: cri-dockerd
         retention-days: 5
@@ -105,7 +105,7 @@ jobs:
       run: make cross-arm
 
     - name: Upload
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: cri-dockerd
         retention-days: 5
@@ -132,7 +132,7 @@ jobs:
 
     - name: Upload
       if: ${{ github.event_name == 'release' }}
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: cri-dockerd
         retention-days: 5
@@ -159,7 +159,7 @@ jobs:
 
     - name: Upload
       if: ${{ github.event_name == 'release' }}
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: cri-dockerd
         retention-days: 5
