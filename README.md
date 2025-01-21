@@ -48,7 +48,7 @@ Refer to the [install page](https://mirantis.github.io/cri-dockerd/usage/install
 
 ### Installing manually
 
-If you want to run `cri-dockerd` on an unsupported platform, instructions can be found on the [manual install page](https://mirantis.github.io/cri-dockerd/usage/manual-install/).
+If you want to run `cri-dockerd` on an unsupported platform, instructions can be found on the [manual install page](https://mirantis.github.io/cri-dockerd/usage/install-manually/).
 
 ### To use with Kubernetes
 
