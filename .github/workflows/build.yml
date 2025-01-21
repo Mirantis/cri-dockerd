@@ -26,7 +26,7 @@ jobs:
       if: ${{ github.event_name == 'release' }}
       uses: actions/upload-artifact@v4
       with:
-        name: cri-dockerd
+        name: cri-dockerd.ubuntu
         retention-days: 5
         path: |
           packaging/static/**/**/**/*.tgz
@@ -53,7 +53,7 @@ jobs:
     - name: Upload
       uses: actions/upload-artifact@v4
       with:
-        name: cri-dockerd
+        name: cri-dockerd.deb
         retention-days: 5
         path: |
           packaging/deb/**/**/**/*.deb
@@ -80,7 +80,7 @@ jobs:
     - name: Upload
       uses: actions/upload-artifact@v4
       with:
-        name: cri-dockerd
+        name: cri-dockerd.rpm
         retention-days: 5
         path: |
           packaging/rpm/**/**/**/*.rpm
@@ -107,7 +107,7 @@ jobs:
     - name: Upload
       uses: actions/upload-artifact@v4
       with:
-        name: cri-dockerd
+        name: cri-dockerd.arm
         retention-days: 5
         path: |
           packaging/static/**/**/**/*.tgz
@@ -134,7 +134,7 @@ jobs:
       if: ${{ github.event_name == 'release' }}
       uses: actions/upload-artifact@v4
       with:
-        name: cri-dockerd
+        name: cri-dockerd.win
         retention-days: 5
         path: |
           packaging/static/**/**/**/*.zip
@@ -161,7 +161,7 @@ jobs:
       if: ${{ github.event_name == 'release' }}
       uses: actions/upload-artifact@v4
       with:
-        name: cri-dockerd
+        name: cri-dockerd.darwin
         retention-days: 5
         path: |
           packaging/static/**/**/**/*.tgz
