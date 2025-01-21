@@ -37,8 +37,8 @@ SOURCE_FILES=app.tgz cri-docker.service cri-docker.socket
 SOURCES=$(addprefix sources/, $(SOURCE_FILES))
 
 DEBIAN_VERSIONS := debian-bullseye debian-bookworm
-#UBUNTU_VERSIONS := ubuntu-xenial ubuntu-bionic
-UBUNTU_VERSIONS := ubuntu-focal ubuntu-jammy ubuntu-noble
+#UBUNTU_VERSIONS := ubuntu-xenial ubuntu-bionic ubuntu-cosmic ubuntu-disco ubuntu-eoan
+UBUNTU_VERSIONS := ubuntu-bionic ubuntu-focal ubuntu-jammy
 RASPBIAN_VERSIONS := raspbian-bullseye
 DISTROS := $(DEBIAN_VERSIONS) $(UBUNTU_VERSIONS) $(RASPBIAN_VERSIONS)
 
