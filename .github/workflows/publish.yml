@@ -7,7 +7,7 @@ jobs:
   publish-binaries:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: cri-dockerd
       - name: Push binaries
