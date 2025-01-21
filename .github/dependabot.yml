@@ -19,3 +19,45 @@ updates:
           - "*/opencontainers/*"
           - "*/cri-api/*"
           - "*/kubernetes/*"
+
+  # 0.3 branch updates
+  - package-ecosystem: gomod
+    target-branch: "release/0.3"
+    directory: "/"
+    schedule:
+      interval: 'weekly'
+    labels:
+      - 'dependabot'
+    open-pull-requests-limit: 5
+    groups:
+      # We are less concerned about the minor dependencies
+      minor-dependencies:
+        patterns:
+          - "*"
+        # Skip docker and k8 dependencies. We want to manually keep an eye on these
+        exclude-patterns:
+          - "*/docker/*"
+          - "*/moby/*"
+          - "*/opencontainers/*"
+          - "*/cri-api/*"
+          - "*/kubernetes/*"
+  - package-ecosystem: gomod
+    target-branch: "release/0.3"
+    directory: "/"
+    schedule:
+      interval: 'weekly'
+    labels:
+      - 'dependabot'
+    open-pull-requests-limit: 5
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    groups:
+      major-dependencies:
+        patterns:
+          - "*/docker/*"
+          - "*/moby/*"
+          - "*/opencontainers/*"
+          - "*/cri-api/*"
+          - "*/kubernetes/*"
+
