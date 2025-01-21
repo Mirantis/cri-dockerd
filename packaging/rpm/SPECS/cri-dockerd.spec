@@ -25,7 +25,10 @@ Requires: (iptables or nftables)
 Requires: iptables
 %endif
 %if %{undefined suse_version}
+%if %{undefined rhel} || 0%{?rhel} < 9
+# Libcgroup is no longer available in RHEL/CentOS >= 9 distros.
 Requires: libcgroup
+%endif
 %endif
 Requires: containerd.io >= 1.2.2-3
 Requires: tar
