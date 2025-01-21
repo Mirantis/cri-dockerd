@@ -166,7 +166,7 @@ func (in instrumentedInterface) InspectImageByID(image string) (*dockertypes.Ima
 }
 
 func (in instrumentedInterface) ListImages(
-	opts dockertypes.ImageListOptions,
+	opts dockerimagetypes.ListOptions,
 ) ([]dockerimagetypes.Summary, error) {
 	const operation = "list_images"
 	defer recordOperation(operation, time.Now())
@@ -179,7 +179,7 @@ func (in instrumentedInterface) ListImages(
 func (in instrumentedInterface) PullImage(
 	imageID string,
 	auth dockerregistry.AuthConfig,
-	opts dockertypes.ImagePullOptions,
+	opts dockerimagetypes.PullOptions,
 ) error {
 	const operation = "pull_image"
 	defer recordOperation(operation, time.Now())
@@ -190,7 +190,7 @@ func (in instrumentedInterface) PullImage(
 
 func (in instrumentedInterface) RemoveImage(
 	image string,
-	opts dockertypes.ImageRemoveOptions,
+	opts dockerimagetypes.RemoveOptions,
 ) ([]dockerimagetypes.DeleteResponse, error) {
 	const operation = "remove_image"
 	defer recordOperation(operation, time.Now())
@@ -233,7 +233,7 @@ func (in instrumentedInterface) Info() (*dockersystem.Info, error) {
 
 func (in instrumentedInterface) CreateExec(
 	id string,
-	opts dockertypes.ExecConfig,
+	opts dockercontainer.ExecOptions,
 ) (*dockertypes.IDResponse, error) {
 	const operation = "create_exec"
 	defer recordOperation(operation, time.Now())
@@ -245,7 +245,7 @@ func (in instrumentedInterface) CreateExec(
 
 func (in instrumentedInterface) StartExec(
 	startExec string,
-	opts dockertypes.ExecStartCheck,
+	opts dockercontainer.ExecStartOptions,
 	sopts StreamOptions,
 ) error {
 	const operation = "start_exec"
@@ -307,7 +307,7 @@ func (in instrumentedInterface) ResizeContainerTTY(id string, height, width uint
 	return err
 }
 
-func (in instrumentedInterface) GetContainerStats(id string) (*dockertypes.StatsJSON, error) {
+func (in instrumentedInterface) GetContainerStats(id string) (*dockercontainer.StatsResponse, error) {
 	const operation = "stats"
 	defer recordOperation(operation, time.Now())
 

@@ -31,6 +31,7 @@ import (
 	dockertypes "github.com/docker/docker/api/types"
 	dockerbackend "github.com/docker/docker/api/types/backend"
 	dockercontainer "github.com/docker/docker/api/types/container"
+	dockerimage "github.com/docker/docker/api/types/image"
 	dockerregistry "github.com/docker/docker/api/types/registry"
 	"github.com/sirupsen/logrus"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
@@ -442,7 +443,7 @@ func ensureSandboxImageExists(client libdocker.DockerClientInterface, image stri
 	if !withCredentials {
 		logrus.Infof("Pulling the image without credentials. Image: %v", image)
 
-		err := client.PullImage(image, dockerregistry.AuthConfig{}, dockertypes.ImagePullOptions{})
+		err := client.PullImage(image, dockerregistry.AuthConfig{}, dockerimage.PullOptions{})
 		if err != nil {
 			return fmt.Errorf("failed pulling image %q: %v", image, err)
 		}
@@ -453,7 +454,7 @@ func ensureSandboxImageExists(client libdocker.DockerClientInterface, image stri
 	var pullErrs []error
 	for _, currentCreds := range creds {
 		authConfig := dockerregistry.AuthConfig(currentCreds)
-		err := client.PullImage(image, authConfig, dockertypes.ImagePullOptions{})
+		err := client.PullImage(image, authConfig, dockerimage.PullOptions{})
 		// If there was no error, return success
 		if err == nil {
 			return nil

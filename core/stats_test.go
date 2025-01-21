@@ -19,7 +19,6 @@ package core
 import (
 	"testing"
 
-	dockertypes "github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/stretchr/testify/assert"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
@@ -32,7 +31,7 @@ func TestContainerStats(t *testing.T) {
 	tests := map[string]struct {
 		containerID    string
 		container      *libdocker.FakeContainer
-		containerStats *dockertypes.StatsJSON
+		containerStats *container.StatsResponse
 		calledDetails  []libdocker.CalledDetail
 	}{
 		"container exists": {
@@ -44,7 +43,7 @@ func TestContainerStats(t *testing.T) {
 					Labels: labels,
 				},
 			},
-			&dockertypes.StatsJSON{},
+			&container.StatsResponse{},
 			[]libdocker.CalledDetail{
 				libdocker.NewCalledDetail("list", nil),
 				libdocker.NewCalledDetail("get_container_stats", nil),
@@ -59,7 +58,7 @@ func TestContainerStats(t *testing.T) {
 					Labels: labels,
 				},
 			},
-			&dockertypes.StatsJSON{},
+			&container.StatsResponse{},
 			[]libdocker.CalledDetail{
 				libdocker.NewCalledDetail("list", nil),
 			},
@@ -71,7 +70,7 @@ func TestContainerStats(t *testing.T) {
 			ds, fakeDocker, _ := newTestDockerService()
 			fakeDocker.SetFakeContainers([]*libdocker.FakeContainer{test.container})
 			fakeDocker.InjectContainerStats(
-				map[string]*dockertypes.StatsJSON{test.container.ID: test.containerStats},
+				map[string]*container.StatsResponse{test.container.ID: test.containerStats},
 			)
 			ds.ContainerStats(
 				getTestCTX(),
