@@ -52,7 +52,7 @@ If you want to run `cri-dockerd` on an unsupported platform, instructions can be
 
 ### To use with Kubernetes
 
-If you want to use `cri-dockerd` with Kubernetes, you can find instructions on the [Kubernetes page](https://mirantis.github.io/cri-dockerd/usage/kubernetes/).
+If you want to use `cri-dockerd` with Kubernetes, you can find instructions on the [Kubernetes page](https://mirantis.github.io/cri-dockerd/usage/using-with-kubernetes/).
 
 ## Developing cri-dockerd
 
