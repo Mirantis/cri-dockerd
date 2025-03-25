@@ -27,12 +27,15 @@ import (
 	"strings"
 
 	"github.com/Mirantis/cri-dockerd/config"
+	"github.com/sirupsen/logrus"
 
 	dockercontainer "github.com/docker/docker/api/types/container"
 
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 
 	knetwork "github.com/Mirantis/cri-dockerd/network"
+
+	"github.com/opencontainers/runtime-spec/specs-go"
 )
 
 // applySandboxSecurityContext updates docker sandbox options according to security context.
@@ -249,7 +252,7 @@ func modifyHostOptionsForContainer(
 	}
 }
 
-func getSeccompDockerOpts(seccomp *runtimeapi.SecurityProfile) ([]DockerOpt, error) {
+func getSeccompDockerOpts(seccomp *runtimeapi.SecurityProfile, privileged bool) ([]DockerOpt, error) {
 
 	if seccomp == nil || seccomp.GetProfileType() == runtimeapi.SecurityProfile_Unconfined {
 		// return early the default
@@ -279,6 +282,36 @@ func getSeccompDockerOpts(seccomp *runtimeapi.SecurityProfile) ([]DockerOpt, err
 		return nil, fmt.Errorf("cannot load seccomp profile %q: %v", fname, err)
 	}
 
+	seccompSpec := &specs.LinuxSeccomp{}
+	if err := json.Unmarshal(file, seccompSpec); err != nil {
+		return nil, fmt.Errorf("decoding seccomp profile failed %q: %v", fname, err)
+	}
+	// https://github.com/kubernetes-sigs/cri-tools/blob/8869f48d4b120b5f775413b2ca7f8073586d08b4/pkg/validate/security_context_linux.go#L891
+	var filteredSyscalls []specs.LinuxSyscall
+	for _, scall := range seccompSpec.Syscalls {
+		var filteredSyscallNames []string
+		for _, name := range scall.Names {
+			if privileged && name == "sethostname" && scall.Action == specs.ActErrno {
+				logrus.Info("Ignore the seccomp rule that blocks setting hostname when privileged ")
+				continue
+			}
+			filteredSyscallNames = append(filteredSyscallNames, name)
+		}
+		if len(filteredSyscallNames) == 0 {
+			continue
+		}
+		scall.Names = filteredSyscallNames
+		filteredSyscalls = append(filteredSyscalls, scall)
+	}
+	if len(filteredSyscalls) == 0 {
+		return nil, nil
+	}
+	seccompSpec.Syscalls = filteredSyscalls
+	file, err = json.Marshal(seccompSpec)
+	if err != nil {
+		return nil, fmt.Errorf("re-encoding seccomp profile failed %q: %v", fname, err)
+	}
+
 	b := bytes.NewBuffer(nil)
 	if err := json.Compact(b, file); err != nil {
 		return nil, err
@@ -291,8 +324,8 @@ func getSeccompDockerOpts(seccomp *runtimeapi.SecurityProfile) ([]DockerOpt, err
 
 // getSeccompSecurityOpts gets container seccomp options from container seccomp profile.
 // It is an experimental feature and may be promoted to official runtime api in the future.
-func getSeccompSecurityOpts(seccompProfile *runtimeapi.SecurityProfile, separator rune) ([]string, error) {
-	seccompOpts, err := getSeccompDockerOpts(seccompProfile)
+func getSeccompSecurityOpts(seccompProfile *runtimeapi.SecurityProfile, privileged bool, separator rune) ([]string, error) {
+	seccompOpts, err := getSeccompDockerOpts(seccompProfile, privileged)
 	if err != nil {
 		return nil, err
 	}

@@ -35,7 +35,7 @@ func DefaultMemorySwap() int64 {
 }
 
 func (ds *dockerService) getSecurityOpts(
-	seccompProfile *runtimeapi.SecurityProfile,
+	seccompProfile *runtimeapi.SecurityProfile, privileged bool,
 	separator rune,
 ) ([]string, error) {
 	logrus.Info("getSecurityOpts is unsupported in this build")
