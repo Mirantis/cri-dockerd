@@ -24,9 +24,9 @@ import (
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
-func (ds *dockerService) getSecurityOpts(seccomp *runtimeapi.SecurityProfile, separator rune) ([]string, error) {
+func (ds *dockerService) getSecurityOpts(seccomp *runtimeapi.SecurityProfile, privileged bool, separator rune) ([]string, error) {
 	// Apply seccomp options.
-	seccompSecurityOpts, err := getSeccompSecurityOpts(seccomp, separator)
+	seccompSecurityOpts, err := getSeccompSecurityOpts(seccomp, privileged, separator)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate seccomp security options for container: %v", err)
 	}

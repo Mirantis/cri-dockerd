@@ -27,6 +27,7 @@ import (
 
 func (ds *dockerService) getSecurityOpts(
 	seccompProfile *v1.SecurityProfile,
+	privileged bool,
 	separator rune,
 ) ([]string, error) {
 	if seccompProfile != nil {

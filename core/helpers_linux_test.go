@@ -21,7 +21,6 @@ package core
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -63,7 +62,7 @@ func TestGetSeccompSecurityOpts(t *testing.T) {
 	}}
 
 	for i, test := range tests {
-		opts, err := getSeccompSecurityOpts(test.seccompProfile, '=')
+		opts, err := getSeccompSecurityOpts(test.seccompProfile, false, '=')
 		assert.NoError(t, err, "TestCase[%d]: %s", i, test.msg)
 		assert.Len(t, opts, len(test.expectedOpts), "TestCase[%d]: %s", i, test.msg)
 		for _, opt := range test.expectedOpts {
@@ -73,25 +72,53 @@ func TestGetSeccompSecurityOpts(t *testing.T) {
 }
 
 func TestLoadSeccompLocalhostProfiles(t *testing.T) {
-	tmpdir, err := ioutil.TempDir("", "seccomp-local-profile-test")
+	tmpdir, err := os.MkdirTemp("", "seccomp-local-profile-test")
 	require.NoError(t, err)
 	defer os.RemoveAll(tmpdir)
-	testProfile := `{"foo": "bar"}`
-	err = ioutil.WriteFile(filepath.Join(tmpdir, "test"), []byte(testProfile), 0644)
+
+	chmodProfile := `{"defaultAction": "SCMP_ACT_ALLOW",
+     "syscalls": [
+         {
+             "names": ["chmod", "fchmodat"],
+             "action": "SCMP_ACT_ERRNO"
+         }
+     ]
+	}`
+	err = os.WriteFile(filepath.Join(tmpdir, "chmodProfile"), []byte(chmodProfile), 0644)
+	require.NoError(t, err)
+
+	sethostnameProfile := `{"defaultAction": "SCMP_ACT_ALLOW",
+     "syscalls": [
+         {
+             "names": ["sethostname"],
+             "action": "SCMP_ACT_ERRNO"
+         }
+     ]}`
+	err = os.WriteFile(filepath.Join(tmpdir, "sethostnameProfile"), []byte(sethostnameProfile), 0644)
 	require.NoError(t, err)
 
 	tests := []struct {
 		msg            string
 		seccompProfile *runtimeapi.SecurityProfile
+		privileged     bool
 		expectedOpts   []string
 		expectErr      bool
 	}{{
-		msg: "Seccomp localhost/test profile should return correct seccomp profiles",
+		msg: "Seccomp localhost/chmodProfile should return correct seccomp profiles",
 		seccompProfile: &runtimeapi.SecurityProfile{
 			ProfileType:  runtimeapi.SecurityProfile_Localhost,
-			LocalhostRef: filepath.Join(tmpdir, "test"),
+			LocalhostRef: filepath.Join(tmpdir, "chmodProfile"),
 		},
-		expectedOpts: []string{`seccomp={"foo":"bar"}`},
+		expectedOpts: []string{"seccomp={\"defaultAction\":\"SCMP_ACT_ALLOW\",\"syscalls\":[{\"names\":[\"chmod\",\"fchmodat\"],\"action\":\"SCMP_ACT_ERRNO\"}]}"},
+		expectErr:    false,
+	}, {
+		msg: "Seccomp localhost/sethostnameProfile profile should ignore sethostname when priviledged",
+		seccompProfile: &runtimeapi.SecurityProfile{
+			ProfileType:  runtimeapi.SecurityProfile_Localhost,
+			LocalhostRef: filepath.Join(tmpdir, "sethostnameProfile"),
+		},
+		privileged:   true,
+		expectedOpts: nil,
 		expectErr:    false,
 	}, {
 		msg: "Non-existent profile should return error",
@@ -112,15 +139,15 @@ func TestLoadSeccompLocalhostProfiles(t *testing.T) {
 	}}
 
 	for i, test := range tests {
-		opts, err := getSeccompSecurityOpts(test.seccompProfile, '=')
+		opts, err := getSeccompSecurityOpts(test.seccompProfile, test.privileged, '=')
 		if test.expectErr {
 			assert.Error(t, err, fmt.Sprintf("TestCase[%d]: %s", i, test.msg))
 			continue
 		}
 		assert.NoError(t, err, "TestCase[%d]: %s", i, test.msg)
 		assert.Len(t, opts, len(test.expectedOpts), "TestCase[%d]: %s", i, test.msg)
-		for _, opt := range test.expectedOpts {
-			assert.Contains(t, opts, opt, "TestCase[%d]: %s", i, test.msg)
+		for k, opt := range test.expectedOpts {
+			assert.Equal(t, opts[k], opt, "TestCase[%d]: %s", i, test.msg)
 		}
 	}
 }

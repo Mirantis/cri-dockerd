@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"runtime"
 
 	"github.com/Mirantis/cri-dockerd/libdocker"
 	dockerbackend "github.com/docker/docker/api/types/backend"
@@ -160,16 +161,22 @@ func (ds *dockerService) CreateContainer(
 	}
 	hc.Resources.Devices = devices
 
-	securityOpts, err := ds.getSecurityOpts(
-		config.GetLinux().GetSecurityContext().GetSeccomp(),
-		securityOptSeparator,
-	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"failed to generate security options for container %q: %v",
-			config.Metadata.Name,
-			err,
-		)
+	var securityOpts []string
+	if runtime.GOOS == "linux" {
+		securityContext := config.GetLinux().GetSecurityContext()
+		if securityContext != nil {
+			securityOpts, err = ds.getSecurityOpts(
+				securityContext.GetSeccomp(), securityContext.Privileged,
+				securityOptSeparator,
+			)
+			if err != nil {
+				return nil, fmt.Errorf(
+					"failed to generate security options for container %q: %v",
+					config.Metadata.Name,
+					err,
+				)
+			}
+		}
 	}
 
 	hc.SecurityOpt = append(hc.SecurityOpt, securityOpts...)
