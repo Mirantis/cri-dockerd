@@ -28,7 +28,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
-	"k8s.io/kubernetes/pkg/kubelet/types"
+	"k8s.io/kubelet/pkg/types"
 
 	"github.com/Mirantis/cri-dockerd/config"
 	"github.com/Mirantis/cri-dockerd/libdocker"
