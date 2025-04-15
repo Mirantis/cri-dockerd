@@ -18,15 +18,17 @@ package libdocker
 
 import (
 	"fmt"
+	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/docker/go-connections/nat"
+
 	dockerref "github.com/docker/distribution/reference"
 	dockertypes "github.com/docker/docker/api/types"
 	dockermount "github.com/docker/docker/api/types/mount"
-	"github.com/docker/go-connections/nat"
 	godigest "github.com/opencontainers/go-digest"
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/cri-api/pkg/apis/runtime/v1"
@@ -217,14 +219,26 @@ func GenerateMountBindings(mounts []*v1.Mount, terminationMessagePath string, rt
 	}
 	result := make([]dockermount.Mount, 0, len(mounts))
 	for _, m := range mounts {
-		if runtime.GOOS == "windows" && isSingleFileMount(m.HostPath, m.ContainerPath, terminationMessagePath) {
-			logrus.Debugf("skipping mount :%s:%s", m.HostPath, m.ContainerPath)
-			continue
+		hostPath, containerPath := m.HostPath, m.ContainerPath
+		if runtime.GOOS == "windows" {
+			if isSingleFileMount(hostPath, containerPath, terminationMessagePath) {
+				logrus.Debugf("skipping mount :%s:%s", m.HostPath, m.ContainerPath)
+				continue
+			}
+			if !isNamedPipe(hostPath) {
+				hostPath = filepath.Clean(hostPath)
+			}
+			if !isNamedPipe(containerPath) {
+				containerPath = filepath.Clean(containerPath)
+				if containerPath[0] == '\\' {
+					containerPath = "C:" + containerPath
+				}
+			}
 		}
 		bind := dockermount.Mount{
 			Type:   dockermount.TypeBind,
-			Source: m.HostPath,
-			Target: m.ContainerPath,
+			Source: hostPath,
+			Target: containerPath,
 			BindOptions: &dockermount.BindOptions{
 				CreateMountpoint: true,
 			},
@@ -333,4 +347,8 @@ func MakePortsAndBindings(
 		}
 	}
 	return exposedPorts, portBindings
+}
+
+func isNamedPipe(s string) bool {
+	return strings.HasPrefix(s, `\\.\pipe\`)
 }
