@@ -7,6 +7,7 @@ Requires=cri-docker.socket
 
 [Service]
 Type=notify
+User=root
 ExecStart=/usr/bin/cri-dockerd --container-runtime-endpoint fd://
 ExecReload=/bin/kill -s HUP $MAINPID
 TimeoutSec=0
