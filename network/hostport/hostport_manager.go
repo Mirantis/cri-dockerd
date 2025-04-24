@@ -215,7 +215,8 @@ func (hm *hostportManager) Add(
 			isIPv6,
 		)
 		for _, port := range conntrackPortsToRemove {
-			err = conntrack.ClearEntriesForPort(hm.execer, port, isIPv6, v1.ProtocolUDP)
+			conntrackExecer := conntrack.NewExec(hm.execer)
+			err = conntrackExecer.ClearEntriesForPort(port, isIPv6, v1.ProtocolUDP)
 			if err != nil {
 				logrus.Errorf("Failed to clear udp conntrack for port %d: %v", port, err)
 			}
