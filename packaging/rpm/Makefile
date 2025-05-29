@@ -44,6 +44,7 @@ SOURCES=$(addprefix rpmbuild/SOURCES/, $(SOURCE_FILES))
 
 FEDORA_RELEASES := fedora-36 fedora-35
 CENTOS_RELEASES :=
+ROCKYLINUX_RELEASES := rockylinux-9
 
 .PHONY: help
 help: ## show make targets
@@ -55,7 +56,7 @@ clean: ## remove build artifacts
 	$(RM) -r rpmbuild/
 
 .PHONY: rpm
-rpm: fedora centos ## build all rpm packages
+rpm: fedora centos rockylinux ## build all rpm packages
 
 .PHONY: fedora
 fedora: $(FEDORA_RELEASES) ## build all fedora rpm packages
@@ -63,8 +64,11 @@ fedora: $(FEDORA_RELEASES) ## build all fedora rpm packages
 .PHONY: centos
 centos: $(CENTOS_RELEASES) ## build all centos rpm packages
 
-.PHONY: $(FEDORA_RELEASES) $(CENTOS_RELEASES)
-$(FEDORA_RELEASES) $(CENTOS_RELEASES): $(SOURCES)
+.PHONY: rockylinux
+rockylinux: $(ROCKYLINUX_RELEASES) ## build all rocky rpm packages
+
+.PHONY: $(FEDORA_RELEASES) $(CENTOS_RELEASES) $(ROCKYLINUX_RELEASES)
+$(FEDORA_RELEASES) $(CENTOS_RELEASES) $(ROCKYLINUX_RELEASES): $(SOURCES)
 	@echo "${APP_DIR}"
 	@echo "${VERSION}"
 	@echo "$(shell ./gen-rpm-ver $(APP_DIR) $(VERSION))"
