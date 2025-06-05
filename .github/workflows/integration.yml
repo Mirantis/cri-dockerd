@@ -58,7 +58,8 @@ jobs:
           # Install docker.
           sudo apt-cache madison docker-ce
           VERSION_STRING=5:26.1.4-1~ubuntu.22.04~jammy
-          sudo apt-get install -y docker-ce=$VERSION_STRING docker-ce-cli=$VERSION_STRING containerd.io
+          sudo apt-get install -y --allow-downgrades \
+            docker-ce=$VERSION_STRING docker-ce-cli=$VERSION_STRING containerd.io
 
           # Restart docker daemon.
           sudo service docker restart
