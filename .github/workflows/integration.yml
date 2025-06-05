@@ -35,11 +35,18 @@ jobs:
       - name: Install docker
         shell: bash
         run: |
-          arch=$(dpkg --print-architecture)
+          # Add Docker's official GPG key:
+          sudo apt-get update
+          sudo apt-get install -y ca-certificates curl
+          sudo install -m 0755 -d /etc/apt/keyrings
+          sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+          sudo chmod a+r /etc/apt/keyrings/docker.asc
 
-          # Workarounds for error "Failed to fetch https://packagecloud.io/github/git-lfs/ubuntu/dists/trusty/InRelease"
-          # TODO: remove it after the issue fixed in git-lfs.
-          sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 6B05F25D762E3157
+          # Add the repository to Apt sources:
+          echo \
+            "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+            $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}") stable" | \
+            sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
           sudo apt-get update
 
           # Install prereqs
@@ -48,18 +55,6 @@ jobs:
             libseccomp2
 
           # Install docker.
-          sudo apt-get install -y \
-            apt-transport-https \
-            ca-certificates \
-            curl socat \
-            gnupg-agent \
-            software-properties-common
-          curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-          sudo add-apt-repository \
-          "deb [arch=$arch] https://download.docker.com/linux/ubuntu \
-           $(lsb_release -cs) \
-           stable"
-          sudo apt-get update
           sudo apt-cache madison docker-ce
           VERSION_STRING=5:26.1.4-1~ubuntu.22.04~jammy
           sudo apt-get install docker-ce=$VERSION_STRING docker-ce-cli=$VERSION_STRING containerd.io
