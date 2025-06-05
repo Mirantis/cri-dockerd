@@ -35,8 +35,14 @@ jobs:
       - name: Install docker
         shell: bash
         run: |
-          # Add Docker's official GPG key:
           sudo apt-get update
+
+          # Install prereqs
+          sudo apt-get install -y \
+            conntrack iptables iproute2 ethtool socat util-linux mount ebtables udev kmod \
+            libseccomp2
+
+          # Add Docker's official GPG key:
           sudo apt-get install -y ca-certificates curl
           sudo install -m 0755 -d /etc/apt/keyrings
           sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
@@ -48,11 +54,6 @@ jobs:
             $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}") stable" | \
             sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
           sudo apt-get update
-
-          # Install prereqs
-          sudo apt-get install -y \
-            conntrack iptables iproute2 ethtool socat util-linux mount ebtables udev kmod \
-            libseccomp2
 
           # Install docker.
           sudo apt-cache madison docker-ce
