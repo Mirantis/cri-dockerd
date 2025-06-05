@@ -35,7 +35,7 @@ require (
 	k8s.io/cri-api v0.29.10
 	k8s.io/cri-api/v1alpha2 v0.29.10
 	k8s.io/kubelet v0.0.0
-	k8s.io/kubernetes v1.29.10
+	k8s.io/kubernetes v1.29.15
 	k8s.io/utils v0.0.0-20230726121419-3b25d923346b
 )
 
