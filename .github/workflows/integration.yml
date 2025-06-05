@@ -9,7 +9,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Checkout cri-dockerd
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: ${{ github.repository }}
           path: src/github.com/Mirantis/cri-dockerd
@@ -70,7 +70,7 @@ jobs:
           sudo cp $(command -v ginkgo) /usr/local/bin
 
       - name: Check out cri-tools
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: kubernetes-sigs/cri-tools
           path: src/sigs.k8s.io/cri-tools
@@ -148,7 +148,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout cri-dockerd
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: ${{ github.repository }}
           path: src/github.com/Mirantis/cri-dockerd

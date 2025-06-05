@@ -10,7 +10,7 @@ jobs:
     steps:
 
       - name: Checkout cri-dockerd
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: ${{ github.repository }}
           path: src/github.com/Mirantis/cri-dockerd
@@ -91,14 +91,14 @@ jobs:
           sleep 10
 
       - name: Check out kubernetes
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: kubernetes/kubernetes
           path: src/k8s.io/kubernetes
           ref: 84c8abfb8bf900ce36f7ebfbc52794bad972d8cc
 
       - name: Checkout test-infra for kubetest
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: kubernetes/test-infra
           path: src/k8s.io/test-infra
