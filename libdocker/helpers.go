@@ -26,7 +26,7 @@ import (
 
 	"github.com/docker/go-connections/nat"
 
-	dockerref "github.com/docker/distribution/reference"
+	dockerref "github.com/distribution/reference"
 	dockertypes "github.com/docker/docker/api/types"
 	dockermount "github.com/docker/docker/api/types/mount"
 	godigest "github.com/opencontainers/go-digest"
@@ -51,7 +51,7 @@ func ParseDockerTimestamp(s string) (time.Time, error) {
 // (`foo@sha256:xyz`).
 func matchImageTagOrSHA(inspected dockertypes.ImageInspect, image string) bool {
 	// The image string follows the grammar specified here
-	// https://github.com/docker/distribution/blob/master/reference/reference.go#L4
+	// https://github.com/distribution/reference/blob/master/reference.go#L4
 	named, err := dockerref.ParseNormalizedNamed(image)
 	if err != nil {
 		logrus.Errorf("Couldn't parse image (%s) reference: %v", image, err)
