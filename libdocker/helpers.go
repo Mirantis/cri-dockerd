@@ -18,15 +18,16 @@ package libdocker
 
 import (
 	"fmt"
-	"github.com/docker/go-connections/nat"
-	v1 "k8s.io/cri-api/pkg/apis/runtime/v1"
-	"k8s.io/kubernetes/pkg/apis/core"
 	"runtime"
 	"strconv"
 	"strings"
 	"time"
 
-	dockerref "github.com/docker/distribution/reference"
+	"github.com/docker/go-connections/nat"
+	v1 "k8s.io/cri-api/pkg/apis/runtime/v1"
+	"k8s.io/kubernetes/pkg/apis/core"
+
+	dockerref "github.com/distribution/reference"
 	dockertypes "github.com/docker/docker/api/types"
 	godigest "github.com/opencontainers/go-digest"
 	"github.com/sirupsen/logrus"
@@ -47,7 +48,7 @@ func ParseDockerTimestamp(s string) (time.Time, error) {
 // (`foo@sha256:xyz`).
 func matchImageTagOrSHA(inspected dockertypes.ImageInspect, image string) bool {
 	// The image string follows the grammar specified here
-	// https://github.com/docker/distribution/blob/master/reference/reference.go#L4
+	// https://github.com/distribution/reference/blob/master/reference.go#L4
 	named, err := dockerref.ParseNormalizedNamed(image)
 	if err != nil {
 		logrus.Errorf("Couldn't parse image (%s) reference: %v", image, err)
