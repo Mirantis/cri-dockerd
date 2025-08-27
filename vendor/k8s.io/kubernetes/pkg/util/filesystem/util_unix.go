@@ -22,6 +22,7 @@ package filesystem
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 )
 
 // IsUnixDomainSocket returns whether a given file is a AF_UNIX socket file
@@ -44,4 +45,9 @@ func Chmod(name string, mode os.FileMode) error {
 // MkdirAll is the same as os.MkdirAll on Linux.
 func MkdirAll(path string, perm os.FileMode) error {
 	return os.MkdirAll(path, perm)
+}
+
+// IsAbs is same as filepath.IsAbs on Unix.
+func IsAbs(path string) bool {
+	return filepath.IsAbs(path)
 }
