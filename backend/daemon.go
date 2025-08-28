@@ -25,7 +25,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
-	runtimeapi_alpha "k8s.io/cri-api/v1alpha2/pkg/apis/runtime/v1alpha2"
 	"k8s.io/kubernetes/pkg/kubelet/util"
 
 	"github.com/Mirantis/cri-dockerd/core"
@@ -86,10 +85,6 @@ func (s *CriDockerService) Start() error {
 
 	runtimeapi.RegisterRuntimeServiceServer(s.server, s.service)
 	runtimeapi.RegisterImageServiceServer(s.server, s.service)
-
-	as := core.NewDockerServiceAlpha(s.service)
-	runtimeapi_alpha.RegisterRuntimeServiceServer(s.server, as)
-	runtimeapi_alpha.RegisterImageServiceServer(s.server, as)
 
 	go func() {
 		if err := s.server.Serve(l); err != nil {
