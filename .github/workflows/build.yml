@@ -33,7 +33,10 @@ jobs:
 
   deb:
     if: ${{ github.event_name == 'release' }}
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [amd64, arm64]
+    runs-on: ${{ matrix.arch == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-latest' }}
     steps:
     - uses: actions/checkout@v3
 
@@ -48,12 +51,12 @@ jobs:
         go-version: ${{ env.GO_VERSION }}
 
     - name: Build
-      run: make deb
+      run: make ARCH=${{ matrix.arch }} deb
 
     - name: Upload
       uses: actions/upload-artifact@v4
       with:
-        name: cri-dockerd.deb
+        name: cri-dockerd.deb-${{ matrix.arch }}
         retention-days: 5
         path: |
           packaging/deb/**/**/**/*.deb
