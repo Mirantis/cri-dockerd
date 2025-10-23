@@ -50,6 +50,11 @@ cross-mac: ## build static packages
 	echo ${SOURCE_DATE_EPOCH}
 	$(MAKE) APP_DIR=$(APP_DIR) -C $(PACKAGING_DIR) cross-mac
 
+.PHONY: cross-mac-amd64
+cross-mac-amd64: ## build static packages
+	echo ${SOURCE_DATE_EPOCH}
+	$(MAKE) APP_DIR=$(APP_DIR) -C $(PACKAGING_DIR) cross-mac-amd64
+
 .PHONY: cross-win
 cross-win: ## build static packages
 	$(MAKE) APP_DIR=$(APP_DIR) -C $(PACKAGING_DIR) cross-win

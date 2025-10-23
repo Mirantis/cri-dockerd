@@ -44,7 +44,7 @@ clean: ## remove build artifacts
 	$(RM) -r build
 
 .PHONY: static
-static: static-linux cross-mac cross-win cross-arm ## create all static packages
+static: static-linux cross-mac cross-mac-amd64 cross-win cross-arm ## create all static packages
 
 .PHONY: static-linux
 static-linux:
@@ -61,9 +61,17 @@ hash_files:
 .PHONY: cross-mac
 cross-mac:
 	mkdir -p build/mac/cri-dockerd
-	cd $(APP_DIR) && env CGO_ENABLED=$(CGO_ENABLED) GOOS=darwin GOARCH=$(ARCH) go build -trimpath ${CRI_DOCKERD_LDFLAGS} -o cri-dockerd-darwin-${ARCH}
-	mv $(APP_DIR)/cri-dockerd-darwin-${ARCH} build/mac/cri-dockerd/cri-dockerd
-	tar -C build/mac -c -z -f build/mac/cri-dockerd-$(VERSION).darwin.${ARCH}.tgz cri-dockerd
+	cd $(APP_DIR) && env CGO_ENABLED=$(CGO_ENABLED) GOOS=darwin GOARCH=arm64 go build -trimpath ${CRI_DOCKERD_LDFLAGS} -o cri-dockerd-darwin-arm64
+	mv $(APP_DIR)/cri-dockerd-darwin-arm64 build/mac/cri-dockerd/cri-dockerd
+	tar -C build/mac -c -z -f build/mac/cri-dockerd-$(VERSION).darwin.arm64.tgz cri-dockerd
+
+.PHONY: cross-mac-amd64
+cross-mac-amd64:
+	mkdir -p build/mac/cri-dockerd
+	cd $(APP_DIR) && env CGO_ENABLED=$(CGO_ENABLED) GOOS=darwin GOARCH=amd64 go build -trimpath ${CRI_DOCKERD_LDFLAGS} -o cri-dockerd-darwin-amd64
+	mv $(APP_DIR)/cri-dockerd-darwin-amd64 build/mac/cri-dockerd/cri-dockerd
+	tar -C build/mac -c -z -f build/mac/cri-dockerd-$(VERSION).darwin.amd64.tgz cri-dockerd
+
 
 .PHONY: cross-win
 cross-win:
