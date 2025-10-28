@@ -35,7 +35,7 @@ func (ds *dockerService) imageFsInfo() (*runtimeapi.ImageFsInfoResponse, error) 
 	stat := &syscall.Statfs_t{}
 	err := syscall.Statfs(ds.dockerRootDir, stat)
 	if err != nil {
-		logrus.Error(err, "Failed to get filesystem info for %s", ds.dockerRootDir)
+		logrus.Errorf("Failed to get filesystem info for %s: %v", ds.dockerRootDir, err)
 		return nil, err
 	}
 	usedBytes := (stat.Blocks - stat.Bfree) * uint64(stat.Bsize)
@@ -45,7 +45,7 @@ func (ds *dockerService) imageFsInfo() (*runtimeapi.ImageFsInfoResponse, error) 
 	// compute total used bytes by docker images
 	images, err := ds.client.ListImages(types.ImageListOptions{All: true, SharedSize: true})
 	if err != nil {
-		logrus.Error(err, "Failed to get image list from docker")
+		logrus.Errorf("Failed to get image list from docker: %v", err)
 		return nil, err
 	}
 	var totalImageSize uint64

@@ -18,7 +18,6 @@ package hairpin
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net"
 	"os"
 	"path"
@@ -104,5 +103,5 @@ func setUpInterface(ifName string) error {
 		return nil
 	}
 	hairpinModeFile := path.Join(brportPath, hairpinModeRelativePath)
-	return ioutil.WriteFile(hairpinModeFile, []byte(hairpinEnable), 0644)
+	return os.WriteFile(hairpinModeFile, []byte(hairpinEnable), 0644)
 }

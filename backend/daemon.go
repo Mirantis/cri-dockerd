@@ -69,7 +69,7 @@ func getListener(addr string) (net.Listener, error) {
 func (s *CriDockerService) Start() error {
 	// Start the internal service.
 	if err := s.service.Start(); err != nil {
-		logrus.Error(err, "Unable to start cri-dockerd service")
+		logrus.Errorf("Unable to start cri-dockerd service: %v", err)
 		return err
 	}
 
@@ -93,7 +93,7 @@ func (s *CriDockerService) Start() error {
 
 	go func() {
 		if err := s.server.Serve(l); err != nil {
-			logrus.Error(err, "Failed to serve connections from cri-dockerd")
+			logrus.Errorf("Failed to serve connections from cri-dockerd: %v", err)
 			os.Exit(1)
 		}
 	}()
