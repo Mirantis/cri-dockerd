@@ -1,16 +1,16 @@
 # Github code owners
 
 # All .go file changes require the team to review
-*.go @yevchuk-kostiantyn @anaxdev @awmirantis @smerkviladze @mlimardo1984
+*.go @yevchuk-kostiantyn @athongsamai @awmirantis @smerkviladze @mlimardo1984
 
 # Build / infra files
-Makefile @yevchuk-kostiantyn @anaxdev @awmirantis @smerkviladze @mlimardo1984
+Makefile @yevchuk-kostiantyn @athongsamai @awmirantis @smerkviladze @mlimardo1984
 
 # Config files
-*.yml @yevchuk-kostiantyn @anaxdev @awmirantis @smerkviladze @mlimardo1984
-*.json @yevchuk-kostiantyn @anaxdev @awmirantis @smerkviladze @mlimardo1984
-*.env @yevchuk-kostiantyn @anaxdev @awmirantis @smerkviladze @mlimardo1984
+*.yml @yevchuk-kostiantyn @athongsamai @awmirantis @smerkviladze @mlimardo1984
+*.json @yevchuk-kostiantyn @athongsamai @awmirantis @smerkviladze @mlimardo1984
+*.env @yevchuk-kostiantyn @athongsamai @awmirantis @smerkviladze @mlimardo1984
 
 # Documentation files
-*.md @yevchuk-kostiantyn @anaxdev @awmirantis @smerkviladze @mlimardo1984
-LICENSE @yevchuk-kostiantyn @anaxdev @awmirantis @smerkviladze @mlimardo1984
+*.md @yevchuk-kostiantyn @athongsamai @awmirantis @smerkviladze @mlimardo1984
+LICENSE @yevchuk-kostiantyn @athongsamai @awmirantis @smerkviladze @mlimardo1984

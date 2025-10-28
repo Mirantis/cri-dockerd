@@ -61,9 +61,9 @@ hash_files:
 .PHONY: cross-mac
 cross-mac:
 	mkdir -p build/mac/cri-dockerd
-	cd $(APP_DIR) && env CGO_ENABLED=$(CGO_ENABLED) GOOS=darwin GOARCH=$(ARCH) go build -trimpath ${CRI_DOCKERD_LDFLAGS} -o cri-dockerd-darwin-amd64
-	mv $(APP_DIR)/cri-dockerd-darwin-amd64 build/mac/cri-dockerd/cri-dockerd
-	tar -C build/mac -c -z -f build/mac/cri-dockerd-$(VERSION).darwin.amd64.tgz cri-dockerd
+	cd $(APP_DIR) && env CGO_ENABLED=$(CGO_ENABLED) GOOS=darwin GOARCH=arm64 go build -trimpath ${CRI_DOCKERD_LDFLAGS} -o cri-dockerd-darwin-arm64
+	mv $(APP_DIR)/cri-dockerd-darwin-arm64 build/mac/cri-dockerd/cri-dockerd
+	tar -C build/mac -c -z -f build/mac/cri-dockerd-$(VERSION).darwin.arm64.tgz cri-dockerd
 
 .PHONY: cross-win
 cross-win:
