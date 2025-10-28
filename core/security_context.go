@@ -21,7 +21,7 @@ import (
 	"crypto/md5"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -277,7 +277,7 @@ func getSeccompDockerOpts(seccomp *runtimeapi.SecurityProfile, privileged bool) 
 			fname,
 		)
 	}
-	file, err := ioutil.ReadFile(filepath.FromSlash(fname))
+	file, err := os.ReadFile(filepath.FromSlash(fname))
 	if err != nil {
 		return nil, fmt.Errorf("cannot load seccomp profile %q: %v", fname, err)
 	}
