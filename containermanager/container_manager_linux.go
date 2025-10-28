@@ -28,8 +28,10 @@ import (
 
 	"github.com/opencontainers/runc/libcontainer/cgroups"
 	cgroupfs "github.com/opencontainers/runc/libcontainer/cgroups/fs"
+	cgroupfs2 "github.com/opencontainers/runc/libcontainer/cgroups/fs2"
 	"github.com/opencontainers/runc/libcontainer/configs"
 	"github.com/opencontainers/runc/libcontainer/devices"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	utilversion "k8s.io/apimachinery/pkg/util/version"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -77,7 +79,7 @@ func (m *containerManager) Start() error {
 	if len(m.cgroupsName) != 0 {
 		manager, err := createCgroupManager(m.cgroupsName)
 		if err != nil {
-			return err
+			return errors.Wrapf(err, "failed to create cgroup manager %s", m.cgroupsName)
 		}
 		m.cgroupsManager = manager
 	}
@@ -136,6 +138,9 @@ func createCgroupManager(name string) (cgroups.Manager, error) {
 				},
 			},
 		},
+	}
+	if cgroups.IsCgroup2UnifiedMode() {
+		return cgroupfs2.NewManager(cg, "")
 	}
 	return cgroupfs.NewManager(cg, nil)
 }
