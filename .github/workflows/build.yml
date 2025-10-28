@@ -164,7 +164,7 @@ jobs:
       if: ${{ github.event_name == 'release' }}
       uses: actions/upload-artifact@v4
       with:
-        name: cri-dockerd.darwin
+        name: cri-dockerd.darwin-${{ matrix.arch }}
         retention-days: 5
         path: |
           packaging/static/**/**/**/*.tgz

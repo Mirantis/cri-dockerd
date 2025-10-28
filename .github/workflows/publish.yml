@@ -24,7 +24,7 @@ jobs:
           name: cri-dockerd.win
       - uses: actions/download-artifact@v4
         with:
-          pattern: cri-dockerd.darwin.*
+          pattern: cri-dockerd.darwin-*
           merge-multiple: true
       - name: Push binaries
         uses: softprops/action-gh-release@v1
