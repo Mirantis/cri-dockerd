@@ -1,3 +1,4 @@
+//go:build linux
 // +build linux
 
 /*
@@ -22,7 +23,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"math/rand"
 	"net"
 	"os"
@@ -327,8 +327,8 @@ func TestCNIPlugin(t *testing.T) {
 	if err != nil {
 		t.Errorf("Expected nil: %v", err)
 	}
-	eo, eerr := ioutil.ReadFile(outputEnv)
-	output, err := ioutil.ReadFile(outputFile)
+	eo, eerr := os.ReadFile(outputEnv)
+	output, err := os.ReadFile(outputFile)
 	if err != nil || eerr != nil {
 		t.Errorf("Failed to read output file %s: %v (env %s err %v)", outputFile, err, eo, eerr)
 	}
@@ -350,7 +350,7 @@ func TestCNIPlugin(t *testing.T) {
 			IPRanges     [][]map[string]interface{} `json:"IPRanges"`
 		} `json:"runtimeConfig"`
 	}{}
-	inputBytes, inerr := ioutil.ReadFile(inputFile)
+	inputBytes, inerr := os.ReadFile(inputFile)
 	parseerr := json.Unmarshal(inputBytes, &inputConfig)
 	if inerr != nil || parseerr != nil {
 		t.Errorf(
@@ -411,7 +411,7 @@ func TestCNIPlugin(t *testing.T) {
 	if err != nil {
 		t.Errorf("Expected nil: %v", err)
 	}
-	output, err = ioutil.ReadFile(outputFile)
+	output, err = os.ReadFile(outputFile)
 	require.NoError(t, err)
 	expectedOutput = "DEL /proc/12345/ns/net podNamespace podName test_infra_container"
 	if string(output) != expectedOutput {
