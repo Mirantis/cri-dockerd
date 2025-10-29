@@ -140,7 +140,10 @@ jobs:
           packaging/static/**/**/**/*.zip
 
   mac:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [amd64, arm64]
+    runs-on: ${{ matrix.arch == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-latest' }}
     steps:
     - uses: actions/checkout@v3
 
@@ -155,13 +158,13 @@ jobs:
         go-version: ${{ env.GO_VERSION }}
 
     - name: Build
-      run: make cross-mac
+      run: make ARCH=${{ matrix.arch }} cross-mac
 
     - name: Upload
       if: ${{ github.event_name == 'release' }}
       uses: actions/upload-artifact@v4
       with:
-        name: cri-dockerd.darwin
+        name: cri-dockerd.darwin-${{ matrix.arch }}
         retention-days: 5
         path: |
           packaging/static/**/**/**/*.tgz
