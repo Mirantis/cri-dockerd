@@ -161,6 +161,13 @@ func (ds *dockerService) CreateContainer(
 	}
 	hc.Resources.Devices = devices
 
+	for _, cdiDevice := range config.CDIDevices {
+		hc.Resources.DeviceRequests = append(hc.Resources.DeviceRequests, container.DeviceRequest{
+			Driver:    "cdi",
+			DeviceIDs: []string{cdiDevice.Name},
+		})
+	}
+
 	var securityOpts []string
 	if runtime.GOOS == "linux" {
 		securityContext := config.GetLinux().GetSecurityContext()
