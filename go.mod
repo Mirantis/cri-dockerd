@@ -32,7 +32,6 @@ require (
 	k8s.io/component-base v0.29.15
 	k8s.io/component-helpers v0.29.15
 	k8s.io/cri-api v0.29.15
-	k8s.io/cri-api/v1alpha2 v0.29.15
 	k8s.io/kubelet v0.0.0
 	k8s.io/kubernetes v1.29.15
 	k8s.io/utils v0.0.0-20230726121419-3b25d923346b
@@ -165,7 +164,6 @@ replace (
 	k8s.io/component-helpers => k8s.io/component-helpers v0.29.15
 	k8s.io/controller-manager => k8s.io/controller-manager v0.29.15
 	k8s.io/cri-api => k8s.io/cri-api v0.30.1
-	k8s.io/cri-api/v1alpha2 => k8s.io/cri-api v0.25.16
 	k8s.io/csi-translation-lib => k8s.io/csi-translation-lib v0.29.15
 	k8s.io/kube-aggregator => k8s.io/kube-aggregator v0.29.15
 	k8s.io/kube-controller-manager => k8s.io/kube-controller-manager v0.29.15
