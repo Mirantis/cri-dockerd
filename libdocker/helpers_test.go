@@ -20,57 +20,57 @@ import (
 	"fmt"
 	"testing"
 
-	dockertypes "github.com/docker/docker/api/types"
+	dockerimagetypes "github.com/docker/docker/api/types/image"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestMatchImageTagOrSHA(t *testing.T) {
 	for i, testCase := range []struct {
-		Inspected dockertypes.ImageInspect
+		Inspected dockerimagetypes.InspectResponse
 		Image     string
 		Output    bool
 	}{
 		{
-			Inspected: dockertypes.ImageInspect{RepoTags: []string{"ubuntu:latest"}},
+			Inspected: dockerimagetypes.InspectResponse{RepoTags: []string{"ubuntu:latest"}},
 			Image:     "ubuntu",
 			Output:    true,
 		},
 		{
-			Inspected: dockertypes.ImageInspect{RepoTags: []string{"ubuntu:14.04"}},
+			Inspected: dockerimagetypes.InspectResponse{RepoTags: []string{"ubuntu:14.04"}},
 			Image:     "ubuntu:latest",
 			Output:    false,
 		},
 		{
-			Inspected: dockertypes.ImageInspect{RepoTags: []string{"colemickens/hyperkube-amd64:217.9beff63"}},
+			Inspected: dockerimagetypes.InspectResponse{RepoTags: []string{"colemickens/hyperkube-amd64:217.9beff63"}},
 			Image:     "colemickens/hyperkube-amd64:217.9beff63",
 			Output:    true,
 		},
 		{
-			Inspected: dockertypes.ImageInspect{RepoTags: []string{"colemickens/hyperkube-amd64:217.9beff63"}},
+			Inspected: dockerimagetypes.InspectResponse{RepoTags: []string{"colemickens/hyperkube-amd64:217.9beff63"}},
 			Image:     "docker.io/colemickens/hyperkube-amd64:217.9beff63",
 			Output:    true,
 		},
 		{
-			Inspected: dockertypes.ImageInspect{RepoTags: []string{"docker.io/kubernetes/pause:latest"}},
+			Inspected: dockerimagetypes.InspectResponse{RepoTags: []string{"docker.io/kubernetes/pause:latest"}},
 			Image:     "kubernetes/pause:latest",
 			Output:    true,
 		},
 		{
-			Inspected: dockertypes.ImageInspect{
+			Inspected: dockerimagetypes.InspectResponse{
 				ID: "sha256:2208f7a29005d226d1ee33a63e33af1f47af6156c740d7d23c7948e8d282d53d",
 			},
 			Image:  "myimage@sha256:2208f7a29005d226d1ee33a63e33af1f47af6156c740d7d23c7948e8d282d53d",
 			Output: true,
 		},
 		{
-			Inspected: dockertypes.ImageInspect{
+			Inspected: dockerimagetypes.InspectResponse{
 				ID: "sha256:2208f7a29005d226d1ee33a63e33af1f47af6156c740d7d23c7948e8d282d53d",
 			},
 			Image:  "myimage@sha256:2208f7a29005",
 			Output: false,
 		},
 		{
-			Inspected: dockertypes.ImageInspect{
+			Inspected: dockerimagetypes.InspectResponse{
 				ID: "sha256:2208f7a29005d226d1ee33a63e33af1f47af6156c740d7d23c7948e8d282d53d",
 			},
 			Image:  "myimage@sha256:2208",
@@ -78,7 +78,7 @@ func TestMatchImageTagOrSHA(t *testing.T) {
 		},
 		{
 			// mismatched ID is ignored
-			Inspected: dockertypes.ImageInspect{
+			Inspected: dockerimagetypes.InspectResponse{
 				ID: "sha256:2208f7a29005d226d1ee33a63e33af1f47af6156c740d7d23c7948e8d282d53d",
 			},
 			Image:  "myimage@sha256:0000f7a29005d226d1ee33a63e33af1f47af6156c740d7d23c7948e8d282d53d",
@@ -86,7 +86,7 @@ func TestMatchImageTagOrSHA(t *testing.T) {
 		},
 		{
 			// invalid digest is ignored
-			Inspected: dockertypes.ImageInspect{
+			Inspected: dockerimagetypes.InspectResponse{
 				ID: "sha256:unparseable",
 			},
 			Image:  "myimage@sha256:unparseable",
@@ -94,7 +94,7 @@ func TestMatchImageTagOrSHA(t *testing.T) {
 		},
 		{
 			// v1 schema images can be pulled in one format and returned in another
-			Inspected: dockertypes.ImageInspect{
+			Inspected: dockerimagetypes.InspectResponse{
 				ID:          "sha256:9bbdf247c91345f0789c10f50a57e36a667af1189687ad1de88a6243d05a2227",
 				RepoDigests: []string{"centos/ruby-23-centos7@sha256:940584acbbfb0347272112d2eb95574625c0c60b4e2fdadb139de5859cf754bf"},
 			},
@@ -102,7 +102,7 @@ func TestMatchImageTagOrSHA(t *testing.T) {
 			Output: true,
 		},
 		{
-			Inspected: dockertypes.ImageInspect{
+			Inspected: dockerimagetypes.InspectResponse{
 				ID:       "sha256:9bbdf247c91345f0789c10f50a57e36a667af1189687ad1de88a6243d05a2227",
 				RepoTags: []string{"docker.io/busybox:latest"},
 			},
@@ -111,7 +111,7 @@ func TestMatchImageTagOrSHA(t *testing.T) {
 		},
 		{
 			// RepoDigest match is required
-			Inspected: dockertypes.ImageInspect{
+			Inspected: dockerimagetypes.InspectResponse{
 				ID:          "",
 				RepoDigests: []string{"docker.io/centos/ruby-23-centos7@sha256:000084acbbfb0347272112d2eb95574625c0c60b4e2fdadb139de5859cf754bf"},
 			},
@@ -120,7 +120,7 @@ func TestMatchImageTagOrSHA(t *testing.T) {
 		},
 		{
 			// RepoDigest match is allowed
-			Inspected: dockertypes.ImageInspect{
+			Inspected: dockerimagetypes.InspectResponse{
 				ID:          "sha256:9bbdf247c91345f0789c10f50a57e36a667af1189687ad1de88a6243d05a2227",
 				RepoDigests: []string{"docker.io/centos/ruby-23-centos7@sha256:940584acbbfb0347272112d2eb95574625c0c60b4e2fdadb139de5859cf754bf"},
 			},
@@ -129,7 +129,7 @@ func TestMatchImageTagOrSHA(t *testing.T) {
 		},
 		{
 			// RepoDigest and ID are checked
-			Inspected: dockertypes.ImageInspect{
+			Inspected: dockerimagetypes.InspectResponse{
 				ID:          "sha256:940584acbbfb0347272112d2eb95574625c0c60b4e2fdadb139de5859cf754bf",
 				RepoDigests: []string{"docker.io/centos/ruby-23-centos7@sha256:9bbdf247c91345f0789c10f50a57e36a667af1189687ad1de88a6243d05a2227"},
 			},
@@ -138,7 +138,7 @@ func TestMatchImageTagOrSHA(t *testing.T) {
 		},
 		{
 			// unparseable RepoDigests are skipped
-			Inspected: dockertypes.ImageInspect{
+			Inspected: dockerimagetypes.InspectResponse{
 				ID: "sha256:9bbdf247c91345f0789c10f50a57e36a667af1189687ad1de88a6243d05a2227",
 				RepoDigests: []string{
 					"centos/ruby-23-centos7@sha256:unparseable",
@@ -150,7 +150,7 @@ func TestMatchImageTagOrSHA(t *testing.T) {
 		},
 		{
 			// unparseable RepoDigest is ignored
-			Inspected: dockertypes.ImageInspect{
+			Inspected: dockerimagetypes.InspectResponse{
 				ID:          "sha256:9bbdf247c91345f0789c10f50a57e36a667af1189687ad1de88a6243d05a2227",
 				RepoDigests: []string{"docker.io/centos/ruby-23-centos7@sha256:unparseable"},
 			},
@@ -159,7 +159,7 @@ func TestMatchImageTagOrSHA(t *testing.T) {
 		},
 		{
 			// unparseable image digest is ignored
-			Inspected: dockertypes.ImageInspect{
+			Inspected: dockerimagetypes.InspectResponse{
 				ID:          "sha256:9bbdf247c91345f0789c10f50a57e36a667af1189687ad1de88a6243d05a2227",
 				RepoDigests: []string{"docker.io/centos/ruby-23-centos7@sha256:unparseable"},
 			},
@@ -168,7 +168,7 @@ func TestMatchImageTagOrSHA(t *testing.T) {
 		},
 		{
 			// prefix match is rejected for ID and RepoDigest
-			Inspected: dockertypes.ImageInspect{
+			Inspected: dockerimagetypes.InspectResponse{
 				ID:          "sha256:unparseable",
 				RepoDigests: []string{"docker.io/centos/ruby-23-centos7@sha256:unparseable"},
 			},
@@ -177,7 +177,7 @@ func TestMatchImageTagOrSHA(t *testing.T) {
 		},
 		{
 			// possible SHA prefix match is rejected for ID and RepoDigest because it is not in the named format
-			Inspected: dockertypes.ImageInspect{
+			Inspected: dockerimagetypes.InspectResponse{
 				ID:          "sha256:0000f247c91345f0789c10f50a57e36a667af1189687ad1de88a6243d05a2227",
 				RepoDigests: []string{"docker.io/centos/ruby-23-centos7@sha256:0000f247c91345f0789c10f50a57e36a667af1189687ad1de88a6243d05a2227"},
 			},
@@ -197,38 +197,38 @@ func TestMatchImageTagOrSHA(t *testing.T) {
 
 func TestMatchImageIDOnly(t *testing.T) {
 	for i, testCase := range []struct {
-		Inspected dockertypes.ImageInspect
+		Inspected dockerimagetypes.InspectResponse
 		Image     string
 		Output    bool
 	}{
 		// shouldn't match names or tagged names
 		{
-			Inspected: dockertypes.ImageInspect{RepoTags: []string{"ubuntu:latest"}},
+			Inspected: dockerimagetypes.InspectResponse{RepoTags: []string{"ubuntu:latest"}},
 			Image:     "ubuntu",
 			Output:    false,
 		},
 		{
-			Inspected: dockertypes.ImageInspect{RepoTags: []string{"colemickens/hyperkube-amd64:217.9beff63"}},
+			Inspected: dockerimagetypes.InspectResponse{RepoTags: []string{"colemickens/hyperkube-amd64:217.9beff63"}},
 			Image:     "colemickens/hyperkube-amd64:217.9beff63",
 			Output:    false,
 		},
 		// should match name@digest refs if they refer to the image ID (but only the full ID)
 		{
-			Inspected: dockertypes.ImageInspect{
+			Inspected: dockerimagetypes.InspectResponse{
 				ID: "sha256:2208f7a29005d226d1ee33a63e33af1f47af6156c740d7d23c7948e8d282d53d",
 			},
 			Image:  "myimage@sha256:2208f7a29005d226d1ee33a63e33af1f47af6156c740d7d23c7948e8d282d53d",
 			Output: true,
 		},
 		{
-			Inspected: dockertypes.ImageInspect{
+			Inspected: dockerimagetypes.InspectResponse{
 				ID: "sha256:2208f7a29005d226d1ee33a63e33af1f47af6156c740d7d23c7948e8d282d53d",
 			},
 			Image:  "myimage@sha256:2208f7a29005",
 			Output: false,
 		},
 		{
-			Inspected: dockertypes.ImageInspect{
+			Inspected: dockerimagetypes.InspectResponse{
 				ID: "sha256:2208f7a29005d226d1ee33a63e33af1f47af6156c740d7d23c7948e8d282d53d",
 			},
 			Image:  "myimage@sha256:2208",
@@ -236,7 +236,7 @@ func TestMatchImageIDOnly(t *testing.T) {
 		},
 		// should match when the IDs are literally the same
 		{
-			Inspected: dockertypes.ImageInspect{
+			Inspected: dockerimagetypes.InspectResponse{
 				ID: "foobar",
 			},
 			Image:  "foobar",
@@ -244,7 +244,7 @@ func TestMatchImageIDOnly(t *testing.T) {
 		},
 		// shouldn't match mismatched IDs
 		{
-			Inspected: dockertypes.ImageInspect{
+			Inspected: dockerimagetypes.InspectResponse{
 				ID: "sha256:2208f7a29005d226d1ee33a63e33af1f47af6156c740d7d23c7948e8d282d53d",
 			},
 			Image:  "myimage@sha256:0000f7a29005d226d1ee33a63e33af1f47af6156c740d7d23c7948e8d282d53d",
@@ -252,7 +252,7 @@ func TestMatchImageIDOnly(t *testing.T) {
 		},
 		// shouldn't match invalid IDs or refs
 		{
-			Inspected: dockertypes.ImageInspect{
+			Inspected: dockerimagetypes.InspectResponse{
 				ID: "sha256:unparseable",
 			},
 			Image:  "myimage@sha256:unparseable",
@@ -260,7 +260,7 @@ func TestMatchImageIDOnly(t *testing.T) {
 		},
 		// shouldn't match against repo digests
 		{
-			Inspected: dockertypes.ImageInspect{
+			Inspected: dockerimagetypes.InspectResponse{
 				ID:          "sha256:9bbdf247c91345f0789c10f50a57e36a667af1189687ad1de88a6243d05a2227",
 				RepoDigests: []string{"centos/ruby-23-centos7@sha256:940584acbbfb0347272112d2eb95574625c0c60b4e2fdadb139de5859cf754bf"},
 			},

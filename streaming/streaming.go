@@ -26,7 +26,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/tools/remotecommand"
 
-	dockertypes "github.com/docker/docker/api/types"
 	dockercontainer "github.com/docker/docker/api/types/container"
 
 	"k8s.io/kubelet/pkg/cri/streaming"
@@ -44,7 +43,7 @@ type ExecHandler interface {
 	ExecInContainer(
 		ctx context.Context,
 		client libdocker.DockerClientInterface,
-		container *dockertypes.ContainerJSON,
+		container *dockercontainer.InspectResponse,
 		cmd []string,
 		stdin io.Reader,
 		stdout, stderr io.WriteCloser,

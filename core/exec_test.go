@@ -23,7 +23,6 @@ import (
 	"testing"
 	"time"
 
-	dockertypes "github.com/docker/docker/api/types"
 	dockercontainer "github.com/docker/docker/api/types/container"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
@@ -37,7 +36,7 @@ func TestExecInContainer(t *testing.T) {
 	testcases := []struct {
 		description        string
 		timeout            time.Duration
-		returnCreateExec1  *dockertypes.IDResponse
+		returnCreateExec1  *dockercontainer.ExecCreateResponse
 		returnCreateExec2  error
 		returnStartExec    error
 		returnInspectExec1 *dockercontainer.ExecInspect
@@ -46,7 +45,7 @@ func TestExecInContainer(t *testing.T) {
 	}{{
 		description:       "ExecInContainer succeeds",
 		timeout:           time.Minute,
-		returnCreateExec1: &dockertypes.IDResponse{ID: "12345678"},
+		returnCreateExec1: &dockercontainer.ExecCreateResponse{ID: "12345678"},
 		returnCreateExec2: nil,
 		returnStartExec:   nil,
 		returnInspectExec1: &dockercontainer.ExecInspect{
@@ -71,7 +70,7 @@ func TestExecInContainer(t *testing.T) {
 	}, {
 		description:        "StartExec returns an error",
 		timeout:            time.Minute,
-		returnCreateExec1:  &dockertypes.IDResponse{ID: "12345678"},
+		returnCreateExec1:  &dockercontainer.ExecCreateResponse{ID: "12345678"},
 		returnCreateExec2:  nil,
 		returnStartExec:    fmt.Errorf("error in StartExec()"),
 		returnInspectExec1: nil,
@@ -80,7 +79,7 @@ func TestExecInContainer(t *testing.T) {
 	}, {
 		description:        "InspectExec returns an error",
 		timeout:            time.Minute,
-		returnCreateExec1:  &dockertypes.IDResponse{ID: "12345678"},
+		returnCreateExec1:  &dockercontainer.ExecCreateResponse{ID: "12345678"},
 		returnCreateExec2:  nil,
 		returnStartExec:    nil,
 		returnInspectExec1: nil,
@@ -89,7 +88,7 @@ func TestExecInContainer(t *testing.T) {
 	}, {
 		description:       "ExecInContainer returns context DeadlineExceeded",
 		timeout:           1 * time.Second,
-		returnCreateExec1: &dockertypes.IDResponse{ID: "12345678"},
+		returnCreateExec1: &dockercontainer.ExecCreateResponse{ID: "12345678"},
 		returnCreateExec2: nil,
 		returnStartExec:   context.DeadlineExceeded,
 		returnInspectExec1: &dockercontainer.ExecInspect{
@@ -150,13 +149,13 @@ func TestExecInContainer(t *testing.T) {
 	}
 }
 
-func getFakeContainerJSON() *dockertypes.ContainerJSON {
-	return &dockertypes.ContainerJSON{
-		ContainerJSONBase: &dockertypes.ContainerJSONBase{
+func getFakeContainerJSON() *dockercontainer.InspectResponse {
+	return &dockercontainer.InspectResponse{
+		ContainerJSONBase: &dockercontainer.ContainerJSONBase{
 			ID:    "12345678",
 			Name:  "fake_name",
 			Image: "fake_image",
-			State: &dockertypes.ContainerState{
+			State: &dockercontainer.State{
 				Running:    false,
 				ExitCode:   0,
 				Pid:        100,
@@ -167,6 +166,6 @@ func getFakeContainerJSON() *dockertypes.ContainerJSON {
 			HostConfig: nil,
 		},
 		Config:          nil,
-		NetworkSettings: &dockertypes.NetworkSettings{},
+		NetworkSettings: &dockercontainer.NetworkSettings{},
 	}
 }

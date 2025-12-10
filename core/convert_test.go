@@ -19,7 +19,7 @@ package core
 import (
 	"testing"
 
-	dockertypes "github.com/docker/docker/api/types"
+	dockerimagetypes "github.com/docker/docker/api/types/image"
 	"github.com/stretchr/testify/assert"
 
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
@@ -45,19 +45,19 @@ func TestConvertDockerStatusToRuntimeAPIState(t *testing.T) {
 func TestConvertToPullableImageID(t *testing.T) {
 	testCases := []struct {
 		id       string
-		image    *dockertypes.ImageInspect
+		image    *dockerimagetypes.InspectResponse
 		expected string
 	}{
 		{
 			id: "image-1",
-			image: &dockertypes.ImageInspect{
+			image: &dockerimagetypes.InspectResponse{
 				RepoDigests: []string{"digest-1"},
 			},
 			expected: DockerPullableImageIDPrefix + "digest-1",
 		},
 		{
 			id: "image-2",
-			image: &dockertypes.ImageInspect{
+			image: &dockerimagetypes.InspectResponse{
 				RepoDigests: []string{},
 			},
 			expected: DockerImageIDPrefix + "image-2",

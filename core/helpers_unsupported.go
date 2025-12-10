@@ -23,8 +23,8 @@ import (
 	"fmt"
 
 	"github.com/blang/semver"
-	dockertypes "github.com/docker/docker/api/types"
 	dockerbackend "github.com/docker/docker/api/types/backend"
+	dockercontainer "github.com/docker/docker/api/types/container"
 	"github.com/sirupsen/logrus"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
@@ -61,7 +61,7 @@ func (ds *dockerService) determinePodIPBySandboxID(uid string) []string {
 	return nil
 }
 
-func getNetworkNamespace(c *dockertypes.ContainerJSON) (string, error) {
+func getNetworkNamespace(c *dockercontainer.InspectResponse) (string, error) {
 	return "", fmt.Errorf("unsupported platform")
 }
 

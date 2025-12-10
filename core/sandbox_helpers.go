@@ -28,7 +28,6 @@ import (
 	"k8s.io/kubernetes/pkg/credentialprovider"
 
 	"github.com/Mirantis/cri-dockerd/config"
-	dockertypes "github.com/docker/docker/api/types"
 	dockerbackend "github.com/docker/docker/api/types/backend"
 	dockercontainer "github.com/docker/docker/api/types/container"
 	dockerimage "github.com/docker/docker/api/types/image"
@@ -98,7 +97,7 @@ func (ds *dockerService) clearNetworkReady(podSandboxID string) {
 }
 
 // getIPsFromPlugin interrogates the network plugin for sandbox IPs.
-func (ds *dockerService) getIPsFromPlugin(sandbox *dockertypes.ContainerJSON) ([]string, error) {
+func (ds *dockerService) getIPsFromPlugin(sandbox *dockercontainer.InspectResponse) ([]string, error) {
 	metadata, err := parseSandboxName(sandbox.Name)
 	if err != nil {
 		return nil, err
@@ -131,7 +130,7 @@ func (ds *dockerService) getIPsFromPlugin(sandbox *dockertypes.ContainerJSON) ([
 // getIPs returns the ip given the output of `docker inspect` on a pod sandbox,
 // first interrogating any registered plugins, then simply trusting the ip
 // in the sandbox itself. We look for an ipv4 address before ipv6.
-func (ds *dockerService) getIPs(podSandboxID string, sandbox *dockertypes.ContainerJSON) []string {
+func (ds *dockerService) getIPs(podSandboxID string, sandbox *dockercontainer.InspectResponse) []string {
 	if sandbox.NetworkSettings == nil {
 		return nil
 	}
@@ -173,7 +172,7 @@ func (ds *dockerService) getIPs(podSandboxID string, sandbox *dockertypes.Contai
 // Returns the inspect container response, the sandbox metadata, and network namespace mode
 func (ds *dockerService) getPodSandboxDetails(
 	podSandboxID string,
-) (*dockertypes.ContainerJSON, *runtimeapi.PodSandboxMetadata, error) {
+) (*dockercontainer.InspectResponse, *runtimeapi.PodSandboxMetadata, error) {
 	resp, err := ds.client.InspectContainer(podSandboxID)
 	if err != nil {
 		return nil, nil, err
@@ -280,7 +279,7 @@ func (ds *dockerService) makeSandboxDockerConfig(
 
 // networkNamespaceMode returns the network runtimeapi.NamespaceMode for this container.
 // Supports: POD, NODE
-func networkNamespaceMode(container *dockertypes.ContainerJSON) runtimeapi.NamespaceMode {
+func networkNamespaceMode(container *dockercontainer.InspectResponse) runtimeapi.NamespaceMode {
 	if container != nil && container.HostConfig != nil &&
 		string(container.HostConfig.NetworkMode) == namespaceModeHost {
 		return runtimeapi.NamespaceMode_NODE
@@ -290,7 +289,7 @@ func networkNamespaceMode(container *dockertypes.ContainerJSON) runtimeapi.Names
 
 // pidNamespaceMode returns the PID runtimeapi.NamespaceMode for this container.
 // Supports: CONTAINER, NODE
-func pidNamespaceMode(container *dockertypes.ContainerJSON) runtimeapi.NamespaceMode {
+func pidNamespaceMode(container *dockercontainer.InspectResponse) runtimeapi.NamespaceMode {
 	if container != nil && container.HostConfig != nil &&
 		string(container.HostConfig.PidMode) == namespaceModeHost {
 		return runtimeapi.NamespaceMode_NODE
@@ -300,7 +299,7 @@ func pidNamespaceMode(container *dockertypes.ContainerJSON) runtimeapi.Namespace
 
 // ipcNamespaceMode returns the IPC runtimeapi.NamespaceMode for this container.
 // Supports: POD, NODE
-func ipcNamespaceMode(container *dockertypes.ContainerJSON) runtimeapi.NamespaceMode {
+func ipcNamespaceMode(container *dockercontainer.InspectResponse) runtimeapi.NamespaceMode {
 	if container != nil && container.HostConfig != nil &&
 		string(container.HostConfig.IpcMode) == namespaceModeHost {
 		return runtimeapi.NamespaceMode_NODE
