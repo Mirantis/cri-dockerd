@@ -220,6 +220,29 @@ func GenerateMountBindings(mounts []*v1.Mount, terminationMessagePath string, rt
 	}
 	result := make([]dockermount.Mount, 0, len(mounts))
 	for _, m := range mounts {
+		if imageSpec := m.GetImage(); imageSpec != nil {
+			if runtime.GOOS != "linux" {
+				return nil, fmt.Errorf("%w: image volumes are only supported on linux hosts", crierrors.ErrImageVolumeMountFailed)
+			}
+			if m.GetHostPath() != "" {
+				return nil, fmt.Errorf("%w: host_path must be empty for image mounts", crierrors.ErrImageVolumeMountFailed)
+			}
+			if !m.GetReadonly() {
+				return nil, fmt.Errorf("%w: image mounts must be read-only", crierrors.ErrImageVolumeMountFailed)
+			}
+			imageMount := dockermount.Mount{
+				Type:     dockermount.TypeImage,
+				Source:   imageSpec.GetImage(),
+				Target:   m.GetContainerPath(),
+				ReadOnly: true,
+			}
+			if subPath := m.GetImageSubPath(); subPath != "" {
+				imageMount.ImageOptions = &dockermount.ImageOptions{Subpath: filepath.Clean(subPath)}
+			}
+			result = append(result, imageMount)
+			continue
+		}
+
 		hostPath, containerPath := m.HostPath, m.ContainerPath
 		if runtime.GOOS == "windows" {
 			if isSingleFileMount(hostPath, containerPath, terminationMessagePath) {

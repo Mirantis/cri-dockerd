@@ -18,10 +18,14 @@ package libdocker
 
 import (
 	"fmt"
+	"runtime"
 	"testing"
 
 	dockerimagetypes "github.com/docker/docker/api/types/image"
+	dockermount "github.com/docker/docker/api/types/mount"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	v1 "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
 func TestMatchImageTagOrSHA(t *testing.T) {
@@ -277,4 +281,51 @@ func TestMatchImageIDOnly(t *testing.T) {
 		)
 	}
 
+}
+
+func TestGenerateMountBindingsImageVolume(t *testing.T) {
+	if runtime.GOOS != "linux" {
+		t.Skip("image mounts only supported on linux")
+	}
+
+	mounts := []*v1.Mount{
+		{
+			ContainerPath: "/image",
+			Readonly:      true,
+			Image: &v1.ImageSpec{
+				Image: "sha256:abcd",
+			},
+			ImageSubPath: "etc",
+		},
+	}
+
+	result, err := GenerateMountBindings(mounts, "", nil)
+	require.NoError(t, err)
+	require.Len(t, result, 1)
+
+	m := result[0]
+	assert.Equal(t, dockermount.TypeImage, m.Type)
+	assert.Equal(t, "sha256:abcd", m.Source)
+	assert.Equal(t, "/image", m.Target)
+	assert.True(t, m.ReadOnly)
+	require.NotNil(t, m.ImageOptions)
+	assert.Equal(t, "etc", m.ImageOptions.Subpath)
+}
+
+func TestGenerateMountBindingsImageVolumeRequiresReadOnly(t *testing.T) {
+	if runtime.GOOS != "linux" {
+		t.Skip("image mounts only supported on linux")
+	}
+
+	mounts := []*v1.Mount{
+		{
+			ContainerPath: "/image",
+			Image: &v1.ImageSpec{
+				Image: "sha256:abcd",
+			},
+		},
+	}
+
+	_, err := GenerateMountBindings(mounts, "", nil)
+	require.Error(t, err)
 }
