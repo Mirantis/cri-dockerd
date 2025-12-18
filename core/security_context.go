@@ -18,7 +18,7 @@ package core
 
 import (
 	"bytes"
-	"crypto/md5"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -316,8 +316,8 @@ func getSeccompDockerOpts(seccomp *runtimeapi.SecurityProfile, privileged bool) 
 	if err := json.Compact(b, file); err != nil {
 		return nil, err
 	}
-	// Rather than the full profile, just put the filename & md5sum in the event log.
-	msg := fmt.Sprintf("%s(md5:%x)", fname, md5.Sum(file))
+	// Rather than the full profile, just put the filename & digest in the event log.
+	msg := fmt.Sprintf("%s(sha256:%x)", fname, sha256.Sum256(file))
 
 	return []DockerOpt{{"seccomp", b.String(), msg}}, nil
 }
