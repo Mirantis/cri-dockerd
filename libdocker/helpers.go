@@ -27,7 +27,8 @@ import (
 	"github.com/docker/go-connections/nat"
 
 	dockerref "github.com/distribution/reference"
-	dockertypes "github.com/docker/docker/api/types"
+	dockercontainer "github.com/docker/docker/api/types/container"
+	dockerimagetypes "github.com/docker/docker/api/types/image"
 	dockermount "github.com/docker/docker/api/types/mount"
 	godigest "github.com/opencontainers/go-digest"
 	"github.com/sirupsen/logrus"
@@ -49,7 +50,7 @@ func ParseDockerTimestamp(s string) (time.Time, error) {
 // (config digests) and other digest-only references, but succeed on image names
 // (`foo`), tag references (`foo:bar`), and manifest digest references
 // (`foo@sha256:xyz`).
-func matchImageTagOrSHA(inspected dockertypes.ImageInspect, image string) bool {
+func matchImageTagOrSHA(inspected dockerimagetypes.InspectResponse, image string) bool {
 	// The image string follows the grammar specified here
 	// https://github.com/distribution/reference/blob/master/reference.go#L4
 	named, err := dockerref.ParseNormalizedNamed(image)
@@ -146,7 +147,7 @@ func matchImageTagOrSHA(inspected dockertypes.ImageInspect, image string) bool {
 
 // matchImageIDOnly checks that the given image specifier is a digest-only
 // reference, and that it matches the given image.
-func matchImageIDOnly(inspected dockertypes.ImageInspect, image string) bool {
+func matchImageIDOnly(inspected dockerimagetypes.InspectResponse, image string) bool {
 	// If the image ref is literally equal to the inspected image's ID,
 	// just return true here (this might be the case for Docker 1.9,
 	// where we won't have a digest for the ID)
@@ -186,7 +187,7 @@ func matchImageIDOnly(inspected dockertypes.ImageInspect, image string) bool {
 func CheckContainerStatus(
 	client DockerClientInterface,
 	containerID string,
-) (*dockertypes.ContainerJSON, error) {
+) (*dockercontainer.InspectResponse, error) {
 	container, err := client.InspectContainer(containerID)
 	if err != nil {
 		return nil, err
@@ -219,6 +220,29 @@ func GenerateMountBindings(mounts []*v1.Mount, terminationMessagePath string, rt
 	}
 	result := make([]dockermount.Mount, 0, len(mounts))
 	for _, m := range mounts {
+		if imageSpec := m.GetImage(); imageSpec != nil {
+			if runtime.GOOS != "linux" {
+				return nil, fmt.Errorf("%w: image volumes are only supported on linux hosts", crierrors.ErrImageVolumeMountFailed)
+			}
+			if m.GetHostPath() != "" {
+				return nil, fmt.Errorf("%w: host_path must be empty for image mounts", crierrors.ErrImageVolumeMountFailed)
+			}
+			if !m.GetReadonly() {
+				return nil, fmt.Errorf("%w: image mounts must be read-only", crierrors.ErrImageVolumeMountFailed)
+			}
+			imageMount := dockermount.Mount{
+				Type:     dockermount.TypeImage,
+				Source:   imageSpec.GetImage(),
+				Target:   m.GetContainerPath(),
+				ReadOnly: true,
+			}
+			if subPath := m.GetImageSubPath(); subPath != "" {
+				imageMount.ImageOptions = &dockermount.ImageOptions{Subpath: filepath.Clean(subPath)}
+			}
+			result = append(result, imageMount)
+			continue
+		}
+
 		hostPath, containerPath := m.HostPath, m.ContainerPath
 		if runtime.GOOS == "windows" {
 			if isSingleFileMount(hostPath, containerPath, terminationMessagePath) {

@@ -71,10 +71,10 @@ func (mr *MockDockerClientInterfaceMockRecorder) CreateContainer(arg0 interface{
 }
 
 // CreateExec mocks base method.
-func (m *MockDockerClientInterface) CreateExec(arg0 string, arg1 container.ExecOptions) (*types.IDResponse, error) {
+func (m *MockDockerClientInterface) CreateExec(arg0 string, arg1 container.ExecOptions) (*container.ExecCreateResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateExec", arg0, arg1)
-	ret0, _ := ret[0].(*types.IDResponse)
+	ret0, _ := ret[0].(*container.ExecCreateResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -131,10 +131,10 @@ func (mr *MockDockerClientInterfaceMockRecorder) Info() *gomock.Call {
 }
 
 // InspectContainer mocks base method.
-func (m *MockDockerClientInterface) InspectContainer(id string) (*types.ContainerJSON, error) {
+func (m *MockDockerClientInterface) InspectContainer(id string) (*container.InspectResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "InspectContainer", id)
-	ret0, _ := ret[0].(*types.ContainerJSON)
+	ret0, _ := ret[0].(*container.InspectResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -146,10 +146,10 @@ func (mr *MockDockerClientInterfaceMockRecorder) InspectContainer(id interface{}
 }
 
 // InspectContainerWithSize mocks base method.
-func (m *MockDockerClientInterface) InspectContainerWithSize(id string) (*types.ContainerJSON, error) {
+func (m *MockDockerClientInterface) InspectContainerWithSize(id string) (*container.InspectResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "InspectContainerWithSize", id)
-	ret0, _ := ret[0].(*types.ContainerJSON)
+	ret0, _ := ret[0].(*container.InspectResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -176,10 +176,10 @@ func (mr *MockDockerClientInterfaceMockRecorder) InspectExec(id interface{}) *go
 }
 
 // InspectImageByID mocks base method.
-func (m *MockDockerClientInterface) InspectImageByID(imageID string) (*types.ImageInspect, error) {
+func (m *MockDockerClientInterface) InspectImageByID(imageID string) (*image.InspectResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "InspectImageByID", imageID)
-	ret0, _ := ret[0].(*types.ImageInspect)
+	ret0, _ := ret[0].(*image.InspectResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -191,10 +191,10 @@ func (mr *MockDockerClientInterfaceMockRecorder) InspectImageByID(imageID interf
 }
 
 // InspectImageByRef mocks base method.
-func (m *MockDockerClientInterface) InspectImageByRef(imageRef string) (*types.ImageInspect, error) {
+func (m *MockDockerClientInterface) InspectImageByRef(imageRef string) (*image.InspectResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "InspectImageByRef", imageRef)
-	ret0, _ := ret[0].(*types.ImageInspect)
+	ret0, _ := ret[0].(*image.InspectResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -206,10 +206,10 @@ func (mr *MockDockerClientInterfaceMockRecorder) InspectImageByRef(imageRef inte
 }
 
 // ListContainers mocks base method.
-func (m *MockDockerClientInterface) ListContainers(options container.ListOptions) ([]types.Container, error) {
+func (m *MockDockerClientInterface) ListContainers(options container.ListOptions) ([]container.Summary, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListContainers", options)
-	ret0, _ := ret[0].([]types.Container)
+	ret0, _ := ret[0].([]container.Summary)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

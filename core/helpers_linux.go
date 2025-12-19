@@ -23,7 +23,6 @@ import (
 	"fmt"
 
 	"github.com/blang/semver"
-	dockertypes "github.com/docker/docker/api/types"
 	dockerbackend "github.com/docker/docker/api/types/backend"
 	dockercontainer "github.com/docker/docker/api/types/container"
 	"github.com/sirupsen/logrus"
@@ -89,7 +88,7 @@ func (ds *dockerService) determinePodIPBySandboxID(uid string) []string {
 	return nil
 }
 
-func getNetworkNamespace(c *dockertypes.ContainerJSON) (string, error) {
+func getNetworkNamespace(c *dockercontainer.InspectResponse) (string, error) {
 	if c.State.Pid == 0 {
 		// Docker reports pid 0 for an exited container.
 		return "", fmt.Errorf("cannot find network namespace for the terminated container %q", c.ID)

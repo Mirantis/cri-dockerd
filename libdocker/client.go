@@ -47,9 +47,9 @@ const (
 
 // DockerClientInterface is an abstract interface for testability.  It abstracts the interface of docker client.
 type DockerClientInterface interface {
-	ListContainers(options dockercontainer.ListOptions) ([]dockertypes.Container, error)
-	InspectContainer(id string) (*dockertypes.ContainerJSON, error)
-	InspectContainerWithSize(id string) (*dockertypes.ContainerJSON, error)
+	ListContainers(options dockercontainer.ListOptions) ([]dockercontainer.Summary, error)
+	InspectContainer(id string) (*dockercontainer.InspectResponse, error)
+	InspectContainerWithSize(id string) (*dockercontainer.InspectResponse, error)
 	CreateContainer(
 		dockerbackend.ContainerCreateConfig,
 	) (*dockercontainer.CreateResponse, error)
@@ -57,8 +57,8 @@ type DockerClientInterface interface {
 	StopContainer(id string, timeout time.Duration) error
 	UpdateContainerResources(id string, updateConfig dockercontainer.UpdateConfig) error
 	RemoveContainer(id string, opts dockercontainer.RemoveOptions) error
-	InspectImageByRef(imageRef string) (*dockertypes.ImageInspect, error)
-	InspectImageByID(imageID string) (*dockertypes.ImageInspect, error)
+	InspectImageByRef(imageRef string) (*dockerimagetypes.InspectResponse, error)
+	InspectImageByID(imageID string) (*dockerimagetypes.InspectResponse, error)
 	ListImages(opts dockerimagetypes.ListOptions) ([]dockerimagetypes.Summary, error)
 	PullImage(image string, auth dockerregistry.AuthConfig, opts dockerimagetypes.PullOptions) error
 	RemoveImage(imageStr string, opts dockerimagetypes.RemoveOptions) ([]dockerimagetypes.DeleteResponse, error)
@@ -66,7 +66,7 @@ type DockerClientInterface interface {
 	Logs(string, dockercontainer.LogsOptions, StreamOptions) error
 	Version() (*dockertypes.Version, error)
 	Info() (*dockersystem.Info, error)
-	CreateExec(string, dockercontainer.ExecOptions) (*dockertypes.IDResponse, error)
+	CreateExec(string, dockercontainer.ExecOptions) (*dockercontainer.ExecCreateResponse, error)
 	StartExec(string, dockercontainer.ExecStartOptions, StreamOptions) error
 	InspectExec(id string) (*dockercontainer.ExecInspect, error)
 	AttachToContainer(string, dockercontainer.AttachOptions, StreamOptions) error

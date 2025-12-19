@@ -30,7 +30,6 @@ import (
 	"golang.org/x/sys/windows/registry"
 
 	"github.com/blang/semver"
-	dockertypes "github.com/docker/docker/api/types"
 	dockerbackend "github.com/docker/docker/api/types/backend"
 	dockercontainer "github.com/docker/docker/api/types/container"
 	dockerfilters "github.com/docker/docker/api/types/filters"
@@ -138,7 +137,7 @@ func (ds *dockerService) determinePodIPBySandboxID(sandboxID string) []string {
 	return nil
 }
 
-func getNetworkNamespace(c *dockertypes.ContainerJSON) (string, error) {
+func getNetworkNamespace(c *dockercontainer.InspectResponse) (string, error) {
 	// Currently in windows there is no identifier exposed for network namespace
 	// Like docker, the referenced container id is used to figure out the network namespace id internally by the platform
 	// so returning the docker networkMode (which holds container:<ref containerid> for network namespace here

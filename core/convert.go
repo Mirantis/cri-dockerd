@@ -22,7 +22,6 @@ import (
 	"strings"
 	"time"
 
-	dockertypes "github.com/docker/docker/api/types"
 	dockercontainer "github.com/docker/docker/api/types/container"
 	dockerimagetypes "github.com/docker/docker/api/types/image"
 
@@ -51,7 +50,7 @@ func imageToRuntimeAPIImage(image *dockerimagetypes.Summary, pinned bool) (*runt
 	}, nil
 }
 
-func imageInspectToRuntimeAPIImage(image *dockertypes.ImageInspect, pinned bool) (*runtimeapi.Image, error) {
+func imageInspectToRuntimeAPIImage(image *dockerimagetypes.InspectResponse, pinned bool) (*runtimeapi.Image, error) {
 	if image == nil || image.Config == nil {
 		return nil, fmt.Errorf("unable to convert a nil pointer to a runtime API image")
 	}
@@ -77,7 +76,7 @@ type verboseImageInfo struct {
 	ImageSpec imagespec.Image   `json:"imageSpec"`
 }
 
-func imageInspectToRuntimeAPIImageInfo(image *dockertypes.ImageInspect, history []dockerimagetypes.HistoryResponseItem) (map[string]string, error) {
+func imageInspectToRuntimeAPIImageInfo(image *dockerimagetypes.InspectResponse, history []dockerimagetypes.HistoryResponseItem) (map[string]string, error) {
 	info := make(map[string]string)
 
 	createdAt, err := libdocker.ParseDockerTimestamp(image.Created)
@@ -117,7 +116,7 @@ type verboseContainerInfo struct {
 	Pid       int    `json:"pid"`
 }
 
-func containerInspectToRuntimeAPIContainerInfo(container *dockertypes.ContainerJSON) (map[string]string, error) {
+func containerInspectToRuntimeAPIContainerInfo(container *dockercontainer.InspectResponse) (map[string]string, error) {
 	info := make(map[string]string)
 
 	cti := &verboseContainerInfo{
@@ -153,7 +152,7 @@ func toRuntimeAPIConfig(config *dockercontainer.Config) imagespec.ImageConfig {
 	}
 }
 
-func toRuntimeAPIRootFS(rootfs dockertypes.RootFS) imagespec.RootFS {
+func toRuntimeAPIRootFS(rootfs dockerimagetypes.RootFS) imagespec.RootFS {
 	digests := []digest.Digest{}
 	for _, l := range rootfs.Layers {
 		digest, _ := digest.Parse(l)
@@ -183,7 +182,7 @@ func toRuntimeAPIHistory(history []dockerimagetypes.HistoryResponseItem) []image
 	return result
 }
 
-func toPullableImageID(id string, image *dockertypes.ImageInspect) string {
+func toPullableImageID(id string, image *dockerimagetypes.InspectResponse) string {
 	// Default to the image ID, but if RepoDigests is not empty, use
 	// the first digest instead.
 	imageID := DockerImageIDPrefix + id
@@ -193,7 +192,7 @@ func toPullableImageID(id string, image *dockertypes.ImageInspect) string {
 	return imageID
 }
 
-func toRuntimeAPIContainer(c *dockertypes.Container) (*runtimeapi.Container, error) {
+func toRuntimeAPIContainer(c *dockercontainer.Summary) (*runtimeapi.Container, error) {
 	state := toRuntimeAPIContainerState(c.Status)
 	if len(c.Names) == 0 {
 		return nil, fmt.Errorf("unexpected empty container name: %+v", c)
@@ -204,7 +203,7 @@ func toRuntimeAPIContainer(c *dockertypes.Container) (*runtimeapi.Container, err
 	}
 	labels, annotations := extractLabels(c.Labels)
 	sandboxID := c.Labels[sandboxIDLabelKey]
-	// The timestamp in dockertypes.Container is in seconds.
+	// The timestamp in dockercontainer.Summary is in seconds.
 	createdAt := c.Created * int64(time.Second)
 	return &runtimeapi.Container{
 		Id:           c.ID,
@@ -235,7 +234,7 @@ func toDockerContainerStatus(state runtimeapi.ContainerState) string {
 }
 
 func toRuntimeAPIContainerState(state string) runtimeapi.ContainerState {
-	// Parse the state string in dockertypes.Container. This could break when
+	// Parse the state string in dockercontainer.Summary. This could break when
 	// we upgrade docker.
 	switch {
 	case strings.HasPrefix(state, libdocker.StatusRunningPrefix):
@@ -250,7 +249,7 @@ func toRuntimeAPIContainerState(state string) runtimeapi.ContainerState {
 }
 
 func toRuntimeAPISandboxState(state string) runtimeapi.PodSandboxState {
-	// Parse the state string in dockertypes.Container. This could break when
+	// Parse the state string in dockercontainer.Summary. This could break when
 	// we upgrade docker.
 	switch {
 	case strings.HasPrefix(state, libdocker.StatusRunningPrefix):
@@ -260,7 +259,7 @@ func toRuntimeAPISandboxState(state string) runtimeapi.PodSandboxState {
 	}
 }
 
-func containerToRuntimeAPISandbox(c *dockertypes.Container) (*runtimeapi.PodSandbox, error) {
+func containerToRuntimeAPISandbox(c *dockercontainer.Summary) (*runtimeapi.PodSandbox, error) {
 	state := toRuntimeAPISandboxState(c.Status)
 	if len(c.Names) == 0 {
 		return nil, fmt.Errorf("unexpected empty sandbox name: %+v", c)
@@ -270,7 +269,7 @@ func containerToRuntimeAPISandbox(c *dockertypes.Container) (*runtimeapi.PodSand
 		return nil, err
 	}
 	labels, annotations := extractLabels(c.Labels)
-	// The timestamp in dockertypes.Container is in seconds.
+	// The timestamp in dockercontainer.Summary is in seconds.
 	createdAt := c.Created * int64(time.Second)
 	return &runtimeapi.PodSandbox{
 		Id:          c.ID,

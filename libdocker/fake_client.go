@@ -53,10 +53,10 @@ func NewCalledDetail(name string, arguments []interface{}) CalledDetail {
 type FakeDockerClient struct {
 	sync.Mutex
 	Clock                clock.Clock
-	RunningContainerList []dockertypes.Container
-	ExitedContainerList  []dockertypes.Container
-	ContainerMap         map[string]*dockertypes.ContainerJSON
-	ImageInspects        map[string]*dockertypes.ImageInspect
+	RunningContainerList []dockercontainer.Summary
+	ExitedContainerList  []dockercontainer.Summary
+	ContainerMap         map[string]*dockercontainer.InspectResponse
+	ImageInspects        map[string]*dockerimagetypes.InspectResponse
 	Images               []dockerimagetypes.Summary
 	ImageIDsNeedingAuth  map[string]dockerregistry.AuthConfig
 	Errors               map[string]error
@@ -100,12 +100,12 @@ func NewFakeDockerClient() *FakeDockerClient {
 			APIVersion: strings.TrimSuffix(MinimumDockerAPIVersion, ".0"),
 		},
 		Errors:       make(map[string]error),
-		ContainerMap: make(map[string]*dockertypes.ContainerJSON),
+		ContainerMap: make(map[string]*dockercontainer.InspectResponse),
 		Clock:        clock.RealClock{},
 		// default this to true, so that we trace calls, image pulls and container lifecycle
 		EnableTrace:         true,
 		ExecInspect:         &dockercontainer.ExecInspect{},
-		ImageInspects:       make(map[string]*dockertypes.ImageInspect),
+		ImageInspects:       make(map[string]*dockerimagetypes.InspectResponse),
 		ImageIDsNeedingAuth: make(map[string]dockerregistry.AuthConfig),
 		RandGenerator:       rand.New(rand.NewSource(time.Now().UnixNano())),
 		Information: dockersystem.Info{
@@ -231,7 +231,7 @@ type FakeContainer struct {
 }
 
 // convertFakeContainer converts the fake container to real container
-func convertFakeContainer(f *FakeContainer) *dockertypes.ContainerJSON {
+func convertFakeContainer(f *FakeContainer) *dockercontainer.InspectResponse {
 	if f.Config == nil {
 		f.Config = &dockercontainer.Config{}
 	}
@@ -239,12 +239,12 @@ func convertFakeContainer(f *FakeContainer) *dockertypes.ContainerJSON {
 		f.HostConfig = &dockercontainer.HostConfig{}
 	}
 	fakeRWSize := int64(40)
-	return &dockertypes.ContainerJSON{
-		ContainerJSONBase: &dockertypes.ContainerJSONBase{
+	return &dockercontainer.InspectResponse{
+		ContainerJSONBase: &dockercontainer.ContainerJSONBase{
 			ID:    f.ID,
 			Name:  f.Name,
 			Image: f.Config.Image,
-			State: &dockertypes.ContainerState{
+			State: &dockercontainer.State{
 				Running:    f.Running,
 				ExitCode:   f.ExitCode,
 				Pid:        f.Pid,
@@ -256,7 +256,7 @@ func convertFakeContainer(f *FakeContainer) *dockertypes.ContainerJSON {
 			SizeRw:     &fakeRWSize,
 		},
 		Config:          f.Config,
-		NetworkSettings: &dockertypes.NetworkSettings{},
+		NetworkSettings: &dockercontainer.NetworkSettings{},
 	}
 }
 
@@ -264,14 +264,14 @@ func (f *FakeDockerClient) SetFakeContainers(containers []*FakeContainer) {
 	f.Lock()
 	defer f.Unlock()
 	// Reset the lists and the map.
-	f.ContainerMap = map[string]*dockertypes.ContainerJSON{}
-	f.RunningContainerList = []dockertypes.Container{}
-	f.ExitedContainerList = []dockertypes.Container{}
+	f.ContainerMap = map[string]*dockercontainer.InspectResponse{}
+	f.RunningContainerList = []dockercontainer.Summary{}
+	f.ExitedContainerList = []dockercontainer.Summary{}
 
 	for i := range containers {
 		c := containers[i]
 		f.ContainerMap[c.ID] = convertFakeContainer(c)
-		container := dockertypes.Container{
+		container := dockercontainer.Summary{
 			Names: []string{c.Name},
 			ID:    c.ID,
 		}
@@ -324,12 +324,12 @@ func (f *FakeDockerClient) popError(op string) error {
 // It adds an entry "list" to the internal method call record.
 func (f *FakeDockerClient) ListContainers(
 	options dockercontainer.ListOptions,
-) ([]dockertypes.Container, error) {
+) ([]dockercontainer.Summary, error) {
 	f.Lock()
 	defer f.Unlock()
 	f.appendCalled(CalledDetail{name: "list"})
 	err := f.popError("list")
-	containerList := append([]dockertypes.Container{}, f.RunningContainerList...)
+	containerList := append([]dockercontainer.Summary{}, f.RunningContainerList...)
 	if options.All {
 		// Although the container is not sorted, but the container with the same name should be in order,
 		// that is enough for us now.
@@ -338,7 +338,7 @@ func (f *FakeDockerClient) ListContainers(
 	// Filters containers with id, only support 1 id.
 	idFilters := options.Filters.Get("id")
 	if len(idFilters) != 0 {
-		var filtered []dockertypes.Container
+		var filtered []dockercontainer.Summary
 		for _, container := range containerList {
 			for _, idFilter := range idFilters {
 				if container.ID == idFilter {
@@ -352,7 +352,7 @@ func (f *FakeDockerClient) ListContainers(
 	// Filters containers with status, only support 1 status.
 	statusFilters := options.Filters.Get("status")
 	if len(statusFilters) == 1 {
-		var filtered []dockertypes.Container
+		var filtered []dockercontainer.Summary
 		for _, container := range containerList {
 			for _, statusFilter := range statusFilters {
 				if toDockerContainerStatus(container.Status) == statusFilter {
@@ -366,7 +366,7 @@ func (f *FakeDockerClient) ListContainers(
 	// Filters containers with label filter.
 	labelFilters := options.Filters.Get("label")
 	if len(labelFilters) != 0 {
-		var filtered []dockertypes.Container
+		var filtered []dockercontainer.Summary
 		for _, container := range containerList {
 			match := true
 			for _, labelFilter := range labelFilters {
@@ -403,7 +403,7 @@ func toDockerContainerStatus(state string) string {
 
 // InspectContainer is a test-spy implementation of DockerClientInterface.InspectContainer.
 // It adds an entry "inspect" to the internal method call record.
-func (f *FakeDockerClient) InspectContainer(id string) (*dockertypes.ContainerJSON, error) {
+func (f *FakeDockerClient) InspectContainer(id string) (*dockercontainer.InspectResponse, error) {
 	f.Lock()
 	defer f.Unlock()
 	f.appendCalled(CalledDetail{name: "inspect_container"})
@@ -420,7 +420,7 @@ func (f *FakeDockerClient) InspectContainer(id string) (*dockertypes.ContainerJS
 
 // InspectContainerWithSize is a test-spy implementation of DockerClientInterface.InspectContainerWithSize.
 // It adds an entry "inspect" to the internal method call record.
-func (f *FakeDockerClient) InspectContainerWithSize(id string) (*dockertypes.ContainerJSON, error) {
+func (f *FakeDockerClient) InspectContainerWithSize(id string) (*dockercontainer.InspectResponse, error) {
 	f.Lock()
 	defer f.Unlock()
 	f.appendCalled(CalledDetail{name: "inspect_container_withsize"})
@@ -437,7 +437,7 @@ func (f *FakeDockerClient) InspectContainerWithSize(id string) (*dockertypes.Con
 
 // InspectImageByRef is a test-spy implementation of DockerClientInterface.InspectImageByRef.
 // It adds an entry "inspect" to the internal method call record.
-func (f *FakeDockerClient) InspectImageByRef(name string) (*dockertypes.ImageInspect, error) {
+func (f *FakeDockerClient) InspectImageByRef(name string) (*dockerimagetypes.InspectResponse, error) {
 	f.Lock()
 	defer f.Unlock()
 	f.appendCalled(CalledDetail{name: "inspect_image"})
@@ -452,7 +452,7 @@ func (f *FakeDockerClient) InspectImageByRef(name string) (*dockertypes.ImageIns
 
 // InspectImageByID is a test-spy implementation of DockerClientInterface.InspectImageByID.
 // It adds an entry "inspect" to the internal method call record.
-func (f *FakeDockerClient) InspectImageByID(name string) (*dockertypes.ImageInspect, error) {
+func (f *FakeDockerClient) InspectImageByID(name string) (*dockerimagetypes.InspectResponse, error) {
 	f.Lock()
 	defer f.Unlock()
 	f.appendCalled(CalledDetail{name: "inspect_image"})
@@ -505,7 +505,7 @@ func (f *FakeDockerClient) CreateContainer(
 	f.appendContainerTrace("Created", id)
 	timestamp := f.Clock.Now()
 	// The newest container should be in front, because we assume so in GetPodStatus()
-	f.RunningContainerList = append([]dockertypes.Container{
+	f.RunningContainerList = append([]dockercontainer.Summary{
 		{
 			ID:      id,
 			Names:   []string{name},
@@ -582,12 +582,12 @@ func (f *FakeDockerClient) StopContainer(id string, timeout time.Duration) error
 	f.appendContainerTrace("Stopped", id)
 	// Container status should be Updated before container moved to ExitedContainerList
 	f.updateContainerStatus(id, StatusExitedPrefix)
-	var newList []dockertypes.Container
+	var newList []dockercontainer.Summary
 	for _, container := range f.RunningContainerList {
 		if container.ID == id {
 			// The newest exited container should be in front. Because we assume so in GetPodStatus()
 			f.ExitedContainerList = append(
-				[]dockertypes.Container{container},
+				[]dockercontainer.Summary{container},
 				f.ExitedContainerList...)
 			continue
 		}
@@ -717,12 +717,12 @@ func (f *FakeDockerClient) Info() (*dockersystem.Info, error) {
 func (f *FakeDockerClient) CreateExec(
 	id string,
 	opts dockercontainer.ExecOptions,
-) (*dockertypes.IDResponse, error) {
+) (*dockercontainer.ExecCreateResponse, error) {
 	f.Lock()
 	defer f.Unlock()
 	f.execCmd = opts.Cmd
 	f.appendCalled(CalledDetail{name: "create_exec"})
-	return &dockertypes.IDResponse{ID: "12345678"}, nil
+	return &dockercontainer.ExecCreateResponse{ID: "12345678"}, nil
 }
 
 func (f *FakeDockerClient) StartExec(
@@ -804,11 +804,11 @@ func (f *FakeDockerClient) ResetImages() {
 	f.Lock()
 	defer f.Unlock()
 	f.Images = []dockerimagetypes.Summary{}
-	f.ImageInspects = make(map[string]*dockertypes.ImageInspect)
+	f.ImageInspects = make(map[string]*dockerimagetypes.InspectResponse)
 	f.ImageIDsNeedingAuth = make(map[string]dockerregistry.AuthConfig)
 }
 
-func (f *FakeDockerClient) InjectImageInspects(inspects []dockertypes.ImageInspect) {
+func (f *FakeDockerClient) InjectImageInspects(inspects []dockerimagetypes.InspectResponse) {
 	f.Lock()
 	defer f.Unlock()
 	for i := range inspects {
@@ -840,8 +840,8 @@ func (f *FakeDockerClient) ResizeContainerTTY(id string, height, width uint) err
 	return nil
 }
 
-func createImageInspectFromRef(ref string) *dockertypes.ImageInspect {
-	return &dockertypes.ImageInspect{
+func createImageInspectFromRef(ref string) *dockerimagetypes.InspectResponse {
+	return &dockerimagetypes.InspectResponse{
 		ID:       ref,
 		RepoTags: []string{ref},
 		// Image size is required to be non-zero for CRI integration.
@@ -851,8 +851,8 @@ func createImageInspectFromRef(ref string) *dockertypes.ImageInspect {
 	}
 }
 
-func createImageInspectFromImage(image dockerimagetypes.Summary) *dockertypes.ImageInspect {
-	return &dockertypes.ImageInspect{
+func createImageInspectFromImage(image dockerimagetypes.Summary) *dockerimagetypes.InspectResponse {
+	return &dockerimagetypes.InspectResponse{
 		ID:       image.ID,
 		RepoTags: image.RepoTags,
 		// Image size is required to be non-zero for CRI integration.
@@ -862,7 +862,7 @@ func createImageInspectFromImage(image dockerimagetypes.Summary) *dockertypes.Im
 	}
 }
 
-func createImageFromImageInspect(inspect dockertypes.ImageInspect) *dockerimagetypes.Summary {
+func createImageFromImageInspect(inspect dockerimagetypes.InspectResponse) *dockerimagetypes.Summary {
 	return &dockerimagetypes.Summary{
 		ID:       inspect.ID,
 		RepoTags: inspect.RepoTags,
