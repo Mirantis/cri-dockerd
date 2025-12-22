@@ -27,7 +27,7 @@ import (
 
 	"github.com/Mirantis/cri-dockerd/store"
 
-	"github.com/blang/semver"
+	"github.com/blang/semver/v4"
 	dockertypes "github.com/docker/docker/api/types"
 	dockersystem "github.com/docker/docker/api/types/system"
 	"github.com/golang/mock/gomock"
