@@ -101,7 +101,7 @@ func newKubeDockerClient(
 
 func (d *kubeDockerClient) ListContainers(
 	options dockercontainer.ListOptions,
-) ([]dockertypes.Container, error) {
+) ([]dockercontainer.Summary, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), d.timeout)
 	defer cancel()
 	containers, err := d.client.ContainerList(ctx, options)
@@ -114,7 +114,7 @@ func (d *kubeDockerClient) ListContainers(
 	return containers, nil
 }
 
-func (d *kubeDockerClient) InspectContainer(id string) (*dockertypes.ContainerJSON, error) {
+func (d *kubeDockerClient) InspectContainer(id string) (*dockercontainer.InspectResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), d.timeout)
 	defer cancel()
 	containerJSON, err := d.client.ContainerInspect(ctx, id)
@@ -128,7 +128,7 @@ func (d *kubeDockerClient) InspectContainer(id string) (*dockertypes.ContainerJS
 }
 
 // InspectContainerWithSize is currently only used for Windows container stats
-func (d *kubeDockerClient) InspectContainerWithSize(id string) (*dockertypes.ContainerJSON, error) {
+func (d *kubeDockerClient) InspectContainerWithSize(id string) (*dockercontainer.InspectResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), d.timeout)
 	defer cancel()
 	// Inspects the container including the fields SizeRw and SizeRootFs.
@@ -219,10 +219,10 @@ func (d *kubeDockerClient) UpdateContainerResources(
 	return err
 }
 
-func (d *kubeDockerClient) inspectImageRaw(ref string) (*dockertypes.ImageInspect, error) {
+func (d *kubeDockerClient) inspectImageRaw(ref string) (*dockerimagetypes.InspectResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), d.timeout)
 	defer cancel()
-	resp, _, err := d.client.ImageInspectWithRaw(ctx, ref)
+	resp, err := d.client.ImageInspect(ctx, ref)
 	if ctxErr := contextError(ctx); ctxErr != nil {
 		return nil, ctxErr
 	}
@@ -236,7 +236,7 @@ func (d *kubeDockerClient) inspectImageRaw(ref string) (*dockertypes.ImageInspec
 	return &resp, nil
 }
 
-func (d *kubeDockerClient) InspectImageByID(imageID string) (*dockertypes.ImageInspect, error) {
+func (d *kubeDockerClient) InspectImageByID(imageID string) (*dockerimagetypes.InspectResponse, error) {
 	resp, err := d.inspectImageRaw(imageID)
 	if err != nil {
 		return nil, err
@@ -248,7 +248,7 @@ func (d *kubeDockerClient) InspectImageByID(imageID string) (*dockertypes.ImageI
 	return resp, nil
 }
 
-func (d *kubeDockerClient) InspectImageByRef(imageRef string) (*dockertypes.ImageInspect, error) {
+func (d *kubeDockerClient) InspectImageByRef(imageRef string) (*dockerimagetypes.InspectResponse, error) {
 	resp, err := d.inspectImageRaw(imageRef)
 	if err != nil {
 		return nil, err
@@ -509,7 +509,7 @@ func (d *kubeDockerClient) Info() (*dockersystem.Info, error) {
 func (d *kubeDockerClient) CreateExec(
 	id string,
 	opts dockercontainer.ExecOptions,
-) (*dockertypes.IDResponse, error) {
+) (*dockercontainer.ExecCreateResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), d.timeout)
 	defer cancel()
 	resp, err := d.client.ContainerExecCreate(ctx, id, opts)

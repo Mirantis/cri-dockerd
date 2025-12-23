@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"testing"
 
-	dockertypes "github.com/docker/docker/api/types"
 	dockerimage "github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/stretchr/testify/assert"
@@ -33,11 +32,11 @@ import (
 
 func TestRemoveImage(t *testing.T) {
 	tests := map[string]struct {
-		image         dockertypes.ImageInspect
+		image         dockerimage.InspectResponse
 		calledDetails []libdocker.CalledDetail
 	}{
 		"single tag": {
-			dockertypes.ImageInspect{ID: "1111", RepoTags: []string{"foo"}},
+			dockerimage.InspectResponse{ID: "1111", RepoTags: []string{"foo"}},
 			[]libdocker.CalledDetail{
 				libdocker.NewCalledDetail("inspect_image", nil),
 				libdocker.NewCalledDetail(
@@ -51,7 +50,7 @@ func TestRemoveImage(t *testing.T) {
 			},
 		},
 		"multiple tags": {
-			dockertypes.ImageInspect{ID: "2222", RepoTags: []string{"foo", "bar"}},
+			dockerimage.InspectResponse{ID: "2222", RepoTags: []string{"foo", "bar"}},
 			[]libdocker.CalledDetail{
 				libdocker.NewCalledDetail("inspect_image", nil),
 				libdocker.NewCalledDetail(
@@ -69,7 +68,7 @@ func TestRemoveImage(t *testing.T) {
 			},
 		},
 		"single tag multiple repo digests": {
-			dockertypes.ImageInspect{
+			dockerimage.InspectResponse{
 				ID:          "3333",
 				RepoTags:    []string{"foo"},
 				RepoDigests: []string{"foo@3333", "example.com/foo@3333"},
@@ -98,7 +97,7 @@ func TestRemoveImage(t *testing.T) {
 			},
 		},
 		"no tags multiple repo digests": {
-			dockertypes.ImageInspect{
+			dockerimage.InspectResponse{
 				ID:          "4444",
 				RepoTags:    []string{},
 				RepoDigests: []string{"foo@4444", "example.com/foo@4444"},
@@ -127,7 +126,7 @@ func TestRemoveImage(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			ds, fakeDocker, _ := newTestDockerService()
-			fakeDocker.InjectImageInspects([]dockertypes.ImageInspect{test.image})
+			fakeDocker.InjectImageInspects([]dockerimage.InspectResponse{test.image})
 			ds.RemoveImage(
 				getTestCTX(),
 				&runtimeapi.RemoveImageRequest{Image: &runtimeapi.ImageSpec{Image: test.image.ID}},

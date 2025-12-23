@@ -32,7 +32,7 @@ func (ds *dockerService) getContainerStats(container *runtimeapi.Container) (*ru
 		return nil, err
 	}
 
-	dockerStats := statsJSON.Stats
+	dockerStats := statsJSON
 	timestamp := time.Now().UnixNano()
 	containerStats := &runtimeapi.ContainerStats{
 		Attributes: &runtimeapi.ContainerAttributes{

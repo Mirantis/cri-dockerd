@@ -22,7 +22,6 @@ import (
 	"io"
 	"time"
 
-	dockertypes "github.com/docker/docker/api/types"
 	"k8s.io/client-go/tools/remotecommand"
 
 	dockercontainer "github.com/docker/docker/api/types/container"
@@ -77,7 +76,7 @@ type NativeExecHandler struct{}
 func (*NativeExecHandler) ExecInContainer(
 	ctx context.Context,
 	client libdocker.DockerClientInterface,
-	container *dockertypes.ContainerJSON,
+	container *dockercontainer.InspectResponse,
 	cmd []string,
 	stdin io.Reader,
 	stdout, stderr io.WriteCloser,
