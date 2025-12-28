@@ -60,11 +60,11 @@ cri-dockerd is a lightweight implementation of the CRI specification which talks
 %setup -q -c -n src -a 0
 
 %build
-cp %{_topdir}/SOURCES/LICENSE /root/rpmbuild/BUILD/src/LICENSE
+cp %{_topdir}/SOURCES/LICENSE LICENSE
 export CRI_DOCKER_GITCOMMIT=%{_gitcommit}
 mkdir -p /go/src/github.com/Mirantis
-ln -s /root/rpmbuild/BUILD/src/app /go/src/github.com/Mirantis/cri-dockerd
-cd /root/rpmbuild/BUILD/src/app
+ln -s $PWD/app /go/src/github.com/Mirantis/cri-dockerd
+cd app
 GOPROXY="https://proxy.golang.org" GO111MODULE=on go build -ldflags "%{_buildldflags}"
 
 %check
