@@ -19,6 +19,9 @@ package core
 import (
 	"context"
 	"fmt"
+
+	dockermounttypes "github.com/docker/docker/api/types/mount"
+
 	"github.com/Mirantis/cri-dockerd/libdocker"
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/cri-api/pkg/apis/runtime/v1"
@@ -61,11 +64,21 @@ func (ds *dockerService) ContainerStatus(
 	for i := range r.Mounts {
 		m := r.Mounts[i]
 		readonly := !m.RW
+		var propagation v1.MountPropagation
+		switch m.Propagation {
+		case dockermounttypes.PropagationRPrivate:
+			propagation = v1.MountPropagation_PROPAGATION_PRIVATE
+		case dockermounttypes.PropagationRShared:
+			propagation = v1.MountPropagation_PROPAGATION_BIDIRECTIONAL
+		case dockermounttypes.PropagationRSlave:
+			propagation = v1.MountPropagation_PROPAGATION_HOST_TO_CONTAINER
+		}
 		mounts = append(mounts, &v1.Mount{
 			HostPath:      m.Source,
 			ContainerPath: m.Destination,
 			Readonly:      readonly,
 			// Note: Can't set SeLinuxRelabel
+			Propagation: propagation,
 		})
 	}
 	// Interpret container states.
