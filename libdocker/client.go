@@ -17,6 +17,8 @@ limitations under the License.
 package libdocker
 
 import (
+	"io"
+	"net/http"
 	"os"
 	"time"
 
@@ -77,25 +79,15 @@ type DockerClientInterface interface {
 
 // Get a *dockerapi.Client, either using the endpoint passed in, or using
 // DOCKER_HOST, DOCKER_TLS_VERIFY, and DOCKER_CERT path per their spec
-func getDockerClient(dockerEndpoint string, enableDebugLogging bool) (*dockerapi.Client, error) {
-	opts := []dockerapi.Opt{
-		dockerapi.WithVersion(""),
-	}
-	
+func getDockerClient(dockerEndpoint string) (*dockerapi.Client, error) {
 	if len(dockerEndpoint) > 0 {
 		logrus.Infof("Connecting to docker on the Endpoint %s", dockerEndpoint)
-		opts = append(opts, dockerapi.WithHost(dockerEndpoint))
-	} else {
-		opts = append(opts, dockerapi.FromEnv)
+		return dockerapi.NewClientWithOpts(
+			dockerapi.WithHost(dockerEndpoint),
+			dockerapi.WithVersion(""),
+		)
 	}
-	
-	// Add logging HTTP client if debug logging is enabled
-	if enableDebugLogging {
-		httpClient := newHTTPClientWithLogging(nil)
-		opts = append(opts, dockerapi.WithHTTPClient(httpClient))
-	}
-	
-	return dockerapi.NewClientWithOpts(opts...)
+	return dockerapi.NewClientWithOpts(dockerapi.FromEnv)
 }
 
 // ConnectToDockerOrDie creates docker client connecting to docker daemon.
@@ -107,14 +99,61 @@ func getDockerClient(dockerEndpoint string, enableDebugLogging bool) (*dockerapi
 func ConnectToDockerOrDie(
 	dockerEndpoint string,
 	requestTimeout, imagePullProgressDeadline time.Duration,
-	enableDebugLogging bool,
+	debug bool,
 ) DockerClientInterface {
-	client, err := getDockerClient(dockerEndpoint, enableDebugLogging)
+	client, err := getDockerClient(dockerEndpoint)
 	if err != nil {
 		logrus.Errorf("Couldn't connect to docker: %v", err)
 		os.Exit(1)
 
 	}
+	if debug {
+		logrus.Info("Enabling transport logging for docker client")
+		client.HTTPClient().Transport = newDebugTransport(client.HTTPClient().Transport)
+	}
 	logrus.Infof("Start docker client with request timeout %s", requestTimeout)
 	return newKubeDockerClient(client, requestTimeout, imagePullProgressDeadline)
+}
+
+func newDebugTransport(baseTransport http.RoundTripper) http.RoundTripper {
+	return &debugTransport{base: baseTransport}
+}
+
+type debugTransport struct {
+	base http.RoundTripper
+}
+
+func (t *debugTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	req.Body = &interceptor{ReadCloser: req.Body, body: []byte{}, complete: func(body []byte) {
+		logrus.Debugf("Docker Request: %s %s: %s", req.Method, req.URL.String(), string(body))
+	}}
+	resp, err := t.base.RoundTrip(req)
+	if err != nil {
+		logrus.Debugf("Docker Response Error: %v", err)
+	} else {
+		logrus.Debugf("Docker Response: %s", resp.Status)
+	}
+	return resp, err
+}
+
+type interceptor struct {
+	io.ReadCloser
+	body     []byte
+	complete func(body []byte)
+}
+
+func (p *interceptor) Read(b []byte) (int, error) {
+	n, err := p.ReadCloser.Read(b)
+	if n > 0 {
+		p.body = append(p.body, b[:n]...)
+	}
+	return n, err
+}
+
+func (p *interceptor) Close() error {
+	err := p.ReadCloser.Close()
+	if p.complete != nil {
+		p.complete(p.body)
+	}
+	return err
 }
