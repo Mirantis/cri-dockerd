@@ -152,6 +152,7 @@ func RunCriDockerd(f *options.DockerCRIFlags, stopCh <-chan struct{}) error {
 		DockerEndpoint:            r.DockerEndpoint,
 		RuntimeRequestTimeout:     r.RuntimeRequestTimeout.Duration,
 		ImagePullProgressDeadline: r.ImagePullProgressDeadline.Duration,
+		EnableDebugLogging:        logrus.GetLevel() >= logrus.DebugLevel,
 	}
 
 	// Initialize network plugin settings.
