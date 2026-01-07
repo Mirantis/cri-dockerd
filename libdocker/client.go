@@ -17,9 +17,6 @@ limitations under the License.
 package libdocker
 
 import (
-	"fmt"
-	"io"
-	"net/http"
 	"os"
 	"time"
 
@@ -93,9 +90,7 @@ func getDockerClient(dockerEndpoint string) (*dockerapi.Client, error) {
 	}
 
 	if logrus.GetLevel() >= logrus.DebugLevel {
-		opts = append(opts, dockerapi.WithHTTPClient(&http.Client{
-			Transport: newDebugTransport(http.DefaultTransport),
-		}))
+		opts = append(opts, withDebugTransport())
 	}
 
 	return dockerapi.NewClientWithOpts(opts...)
@@ -119,57 +114,4 @@ func ConnectToDockerOrDie(
 	}
 	logrus.Infof("Start docker client with request timeout %s", requestTimeout)
 	return newKubeDockerClient(client, requestTimeout, imagePullProgressDeadline)
-}
-
-func newDebugTransport(baseTransport http.RoundTripper) http.RoundTripper {
-	return &debugTransport{base: baseTransport}
-}
-
-type debugTransport struct {
-	base http.RoundTripper
-}
-
-func (t *debugTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	req.Body = &interceptor{
-		ReadCloser: req.Body,
-		body:       []byte{},
-		complete: func(body []byte) {
-			logrus.Debugf("(dockerapi) %s %s: %s", req.Method, req.URL.String(), string(body))
-		},
-	}
-	resp, err := t.base.RoundTrip(req)
-	logrus.Debugf("(dockerapi) %s %s: %s", req.Method, req.URL.String(), func() string {
-		if err != nil {
-			return fmt.Sprintf("error: %v", err)
-		}
-		return resp.Status
-	}())
-	return resp, err
-}
-
-type interceptor struct {
-	io.ReadCloser
-	body     []byte
-	complete func(body []byte)
-}
-
-func (p *interceptor) Read(b []byte) (int, error) {
-	if p.ReadCloser == nil {
-		return 0, io.EOF
-	}
-	n, err := p.ReadCloser.Read(b)
-	if n > 0 {
-		p.body = append(p.body, b[:n]...)
-	}
-	return n, err
-}
-
-func (p *interceptor) Close() error {
-	if p.complete != nil {
-		p.complete(p.body)
-	}
-	if p.ReadCloser == nil {
-		return nil
-	}
-	return p.ReadCloser.Close()
 }
