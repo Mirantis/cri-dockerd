@@ -48,20 +48,31 @@ type debugTransport struct {
 
 func (t *debugTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	endpoint := formatEndpoint(req)
-	req.Body = &interceptor{
-		ReadCloser: req.Body,
-		body:       []byte{},
-		complete: func(body []byte) {
-			logrus.Debugf("(dockerapi) %s %s: %s", req.Method, endpoint, string(body))
-		},
-	}
+
+	// Capture request body
+	bodyCapture := &interceptor{ReadCloser: req.Body, body: []byte{}}
+	req.Body = bodyCapture
+
+	// Execute request
 	resp, err := t.base.RoundTrip(req)
-	logrus.Debugf("(dockerapi) %s %s: %s", req.Method, endpoint, func() string {
-		if err != nil {
-			return fmt.Sprintf("error: %v", err)
-		}
-		return resp.Status
-	}())
+
+	// Format request body
+	reqBody := string(bodyCapture.body)
+	if reqBody == "" {
+		reqBody = "(empty)"
+	}
+
+	// Format response
+	var respStatus string
+	if err != nil {
+		respStatus = fmt.Sprintf("error: %v", err)
+	} else {
+		respStatus = resp.Status
+	}
+
+	// Single debug statement with full request/response
+	logrus.Debugf("(dockerapi) %s %s: %s => %s", req.Method, endpoint, reqBody, respStatus)
+
 	return resp, err
 }
 
@@ -75,8 +86,7 @@ func formatEndpoint(req *http.Request) string {
 
 type interceptor struct {
 	io.ReadCloser
-	body     []byte
-	complete func(body []byte)
+	body []byte
 }
 
 func (p *interceptor) Read(b []byte) (int, error) {
@@ -91,9 +101,6 @@ func (p *interceptor) Read(b []byte) (int, error) {
 }
 
 func (p *interceptor) Close() error {
-	if p.complete != nil {
-		p.complete(p.body)
-	}
 	if p.ReadCloser == nil {
 		return nil
 	}
