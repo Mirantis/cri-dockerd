@@ -26,8 +26,8 @@ import (
 )
 
 const (
-	// Maximum size of response body to log (1KB)
-	maxResponseBodyLogSize = 1024
+	// Maximum size of body to log (1KB)
+	maxBodyLogSize = 1024
 )
 
 // sensitiveHeaders contains headers that should be redacted in logs
@@ -58,19 +58,17 @@ func (lrt *loggingRoundTripper) RoundTrip(req *http.Request) (*http.Response, er
 	logrus.Debugf("Docker HTTP Request: %s %s", req.Method, req.URL.String())
 	
 	// Log request headers (with sensitive data redacted)
-	if logrus.GetLevel() >= logrus.DebugLevel {
-		for key, values := range req.Header {
-			lowerKey := strings.ToLower(key)
-			if sensitiveHeaders[lowerKey] {
-				logrus.Debugf("  %s: [REDACTED]", key)
-			} else {
-				logrus.Debugf("  %s: %s", key, strings.Join(values, ", "))
-			}
+	for key, values := range req.Header {
+		lowerKey := strings.ToLower(key)
+		if sensitiveHeaders[lowerKey] {
+			logrus.Debugf("  %s: [REDACTED]", key)
+		} else {
+			logrus.Debugf("  %s: %s", key, strings.Join(values, ", "))
 		}
 	}
 
 	// Log request body for non-streaming requests (if present and small enough)
-	if req.Body != nil && req.ContentLength > 0 && req.ContentLength < maxResponseBodyLogSize {
+	if req.Body != nil && req.ContentLength > 0 && req.ContentLength < maxBodyLogSize {
 		bodyBytes, err := io.ReadAll(req.Body)
 		if err == nil {
 			// Restore the body for the actual request
@@ -92,10 +90,8 @@ func (lrt *loggingRoundTripper) RoundTrip(req *http.Request) (*http.Response, er
 	logrus.Debugf("Docker HTTP Response: %d %s", resp.StatusCode, resp.Status)
 	
 	// Log response headers
-	if logrus.GetLevel() >= logrus.DebugLevel {
-		for key, values := range resp.Header {
-			logrus.Debugf("  %s: %s", key, strings.Join(values, ", "))
-		}
+	for key, values := range resp.Header {
+		logrus.Debugf("  %s: %s", key, strings.Join(values, ", "))
 	}
 
 	// Log response body (truncated if too large)
@@ -108,9 +104,9 @@ func (lrt *loggingRoundTripper) RoundTrip(req *http.Request) (*http.Response, er
 			// Log the body (truncated if necessary)
 			if len(bodyBytes) > 0 {
 				logSize := len(bodyBytes)
-				if logSize > maxResponseBodyLogSize {
+				if logSize > maxBodyLogSize {
 					logrus.Debugf("  Response Body (%d bytes, truncated to %d): %s...", 
-						len(bodyBytes), maxResponseBodyLogSize, string(bodyBytes[:maxResponseBodyLogSize]))
+						len(bodyBytes), maxBodyLogSize, string(bodyBytes[:maxBodyLogSize]))
 				} else {
 					logrus.Debugf("  Response Body (%d bytes): %s", len(bodyBytes), string(bodyBytes))
 				}
