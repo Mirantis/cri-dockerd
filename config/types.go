@@ -65,9 +65,6 @@ type ClientConfig struct {
 	// Configuration for fake docker client
 	EnableSleep       bool
 	WithTraceDisabled bool
-	
-	// EnableDebugLogging enables HTTP request/response logging at debug level
-	EnableDebugLogging bool
 }
 
 // NewDockerClientFromConfig create a docker client from given configure
@@ -79,7 +76,6 @@ func NewDockerClientFromConfig(config *ClientConfig) libdocker.DockerClientInter
 			config.DockerEndpoint,
 			config.RuntimeRequestTimeout,
 			config.ImagePullProgressDeadline,
-			config.EnableDebugLogging,
 		)
 		return client
 	}

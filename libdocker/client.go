@@ -17,6 +17,7 @@ limitations under the License.
 package libdocker
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -80,14 +81,24 @@ type DockerClientInterface interface {
 // Get a *dockerapi.Client, either using the endpoint passed in, or using
 // DOCKER_HOST, DOCKER_TLS_VERIFY, and DOCKER_CERT path per their spec
 func getDockerClient(dockerEndpoint string) (*dockerapi.Client, error) {
+	opts := []dockerapi.Opt{}
+
 	if len(dockerEndpoint) > 0 {
 		logrus.Infof("Connecting to docker on the Endpoint %s", dockerEndpoint)
-		return dockerapi.NewClientWithOpts(
-			dockerapi.WithHost(dockerEndpoint),
-			dockerapi.WithVersion(""),
-		)
+		opts = append(opts, dockerapi.WithHost(dockerEndpoint))
+		opts = append(opts, dockerapi.WithVersion(""))
+	} else {
+		logrus.Info("Connecting to docker using environment configuration")
+		opts = append(opts, dockerapi.FromEnv)
 	}
-	return dockerapi.NewClientWithOpts(dockerapi.FromEnv)
+
+	if logrus.GetLevel() >= logrus.DebugLevel {
+		opts = append(opts, dockerapi.WithHTTPClient(&http.Client{
+			Transport: newDebugTransport(http.DefaultTransport),
+		}))
+	}
+
+	return dockerapi.NewClientWithOpts(opts...)
 }
 
 // ConnectToDockerOrDie creates docker client connecting to docker daemon.
@@ -99,17 +110,12 @@ func getDockerClient(dockerEndpoint string) (*dockerapi.Client, error) {
 func ConnectToDockerOrDie(
 	dockerEndpoint string,
 	requestTimeout, imagePullProgressDeadline time.Duration,
-	debug bool,
 ) DockerClientInterface {
 	client, err := getDockerClient(dockerEndpoint)
 	if err != nil {
 		logrus.Errorf("Couldn't connect to docker: %v", err)
 		os.Exit(1)
 
-	}
-	if debug {
-		logrus.Info("Enabling transport logging for docker client")
-		client.HTTPClient().Transport = newDebugTransport(client.HTTPClient().Transport)
 	}
 	logrus.Infof("Start docker client with request timeout %s", requestTimeout)
 	return newKubeDockerClient(client, requestTimeout, imagePullProgressDeadline)
@@ -124,15 +130,20 @@ type debugTransport struct {
 }
 
 func (t *debugTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	req.Body = &interceptor{ReadCloser: req.Body, body: []byte{}, complete: func(body []byte) {
-		logrus.Debugf("Docker Request: %s %s: %s", req.Method, req.URL.String(), string(body))
-	}}
-	resp, err := t.base.RoundTrip(req)
-	if err != nil {
-		logrus.Debugf("Docker Response Error: %v", err)
-	} else {
-		logrus.Debugf("Docker Response: %s", resp.Status)
+	req.Body = &interceptor{
+		ReadCloser: req.Body,
+		body:       []byte{},
+		complete: func(body []byte) {
+			logrus.Debugf("(dockerapi) %s %s: %s", req.Method, req.URL.String(), string(body))
+		},
 	}
+	resp, err := t.base.RoundTrip(req)
+	logrus.Debugf("(dockerapi) %s %s: %s", req.Method, req.URL.String(), func() string {
+		if err != nil {
+			return fmt.Sprintf("error: %v", err)
+		}
+		return resp.Status
+	}())
 	return resp, err
 }
 
@@ -143,6 +154,9 @@ type interceptor struct {
 }
 
 func (p *interceptor) Read(b []byte) (int, error) {
+	if p.ReadCloser == nil {
+		return 0, io.EOF
+	}
 	n, err := p.ReadCloser.Read(b)
 	if n > 0 {
 		p.body = append(p.body, b[:n]...)
@@ -151,9 +165,11 @@ func (p *interceptor) Read(b []byte) (int, error) {
 }
 
 func (p *interceptor) Close() error {
-	err := p.ReadCloser.Close()
 	if p.complete != nil {
 		p.complete(p.body)
 	}
-	return err
+	if p.ReadCloser == nil {
+		return nil
+	}
+	return p.ReadCloser.Close()
 }
