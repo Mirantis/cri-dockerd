@@ -78,14 +78,22 @@ type DockerClientInterface interface {
 // Get a *dockerapi.Client, either using the endpoint passed in, or using
 // DOCKER_HOST, DOCKER_TLS_VERIFY, and DOCKER_CERT path per their spec
 func getDockerClient(dockerEndpoint string) (*dockerapi.Client, error) {
+	opts := []dockerapi.Opt{}
+
 	if len(dockerEndpoint) > 0 {
 		logrus.Infof("Connecting to docker on the Endpoint %s", dockerEndpoint)
-		return dockerapi.NewClientWithOpts(
-			dockerapi.WithHost(dockerEndpoint),
-			dockerapi.WithVersion(""),
-		)
+		opts = append(opts, dockerapi.WithHost(dockerEndpoint))
+		opts = append(opts, dockerapi.WithVersion(""))
+	} else {
+		logrus.Info("Connecting to docker using environment configuration")
+		opts = append(opts, dockerapi.FromEnv)
 	}
-	return dockerapi.NewClientWithOpts(dockerapi.FromEnv)
+
+	if logrus.GetLevel() >= logrus.DebugLevel {
+		opts = append(opts, withDebugTransport())
+	}
+
+	return dockerapi.NewClientWithOpts(opts...)
 }
 
 // ConnectToDockerOrDie creates docker client connecting to docker daemon.
