@@ -36,7 +36,7 @@ func WriteCloserWrapper(w io.Writer) io.WriteCloser {
 	return &writeCloserWrapper{w}
 }
 
-// LimitWriter is a copy of the standard library ioutils.LimitReader,
+// LimitWriter is a copy of the standard library io.LimitReader,
 // applied to the writer interface.
 // LimitWriter returns a Writer that writes to w
 // but stops with EOF after n bytes.

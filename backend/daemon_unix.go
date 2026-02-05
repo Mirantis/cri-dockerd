@@ -1,8 +1,10 @@
+//go:build !windows
 // +build !windows
 
 package backend
 
 import (
+	"errors"
 	"net"
 	"os"
 	"os/signal"
@@ -10,7 +12,6 @@ import (
 
 	"github.com/coreos/go-systemd/v22/activation"
 	"github.com/coreos/go-systemd/v22/daemon"
-	"github.com/pkg/errors"
 )
 
 func listenFD(addr string) (net.Listener, error) {

@@ -3,7 +3,7 @@ include ../common.mk
 APP_DIR:=$(realpath $(CURDIR)/../../)
 GITCOMMIT?=$(shell cd $(APP_DIR) && git rev-parse --short HEAD)
 GO_BASE_IMAGE=golang
-GO_IMAGE=$(GO_BASE_IMAGE):$(GO_VERSION)-bullseye
+GO_IMAGE=$(GO_BASE_IMAGE):$(GO_VERSION)-bookworm
 DEB_VERSION=$(shell ./gen-deb-ver $(APP_DIR) "$(VERSION)")
 CHOWN:=docker run --rm -v $(CURDIR):/v -w /v alpine chown
 EPOCH?=0

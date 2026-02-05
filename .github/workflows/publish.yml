@@ -12,7 +12,8 @@ jobs:
           name: cri-dockerd.ubuntu
       - uses: actions/download-artifact@v4
         with:
-          name: cri-dockerd.deb
+          pattern: cri-dockerd.deb-*
+          merge-multiple: true
       - uses: actions/download-artifact@v4
         with:
           name: cri-dockerd.rpm
@@ -24,7 +25,8 @@ jobs:
           name: cri-dockerd.win
       - uses: actions/download-artifact@v4
         with:
-          name: cri-dockerd.darwin
+          pattern: cri-dockerd.darwin-*
+          merge-multiple: true
       - name: Push binaries
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
