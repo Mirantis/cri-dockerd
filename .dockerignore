@@ -1,0 +1,28 @@
+# Git
+.git
+.github
+.gitignore
+
+# Build artifacts
+build/
+packaging/deb/
+packaging/rpm/
+packaging/windows/
+
+# Documentation
+docs/
+
+# IDE & editor
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Markdown (not needed in image)
+*.md
+LICENSE
+
