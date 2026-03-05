@@ -122,7 +122,7 @@ func NewDockerCRICommand(stopCh <-chan struct{}) *cobra.Command {
 	cleanFlagSet.BoolP("help", "h", false, fmt.Sprintf("Help for %s", cmd.Name()))
 	cleanFlagSet.Bool("version", false, "Prints the version of cri-dockerd")
 	cleanFlagSet.Bool("buildinfo", false, "Prints the build information about cri-dockerd")
-	cleanFlagSet.String("log-level", "info", "The log level for cri-docker")
+	cleanFlagSet.String("log-level", "info", "The log level for cri-docker (panic, fatal, error, warn, info, debug, trace). Note: 'debug' and 'trace' levels enable Docker API logging")
 
 	// ugly, but necessary, because Cobra's default UsageFunc and HelpFunc pollute the flagset with global flags
 	const usageFmt = "Usage:\n  %s\n\nFlags:\n%s"
