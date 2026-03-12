@@ -36,14 +36,14 @@ func (ds *dockerService) getContainerStats(container *runtimeapi.Container) (*ru
 		// That will typically happen with init-containers in Exited state. Docker still knows about them but the HCS does not.
 		// As we don't want to block stats retrieval for other containers, we only log errors.
 		if !hcsshim.IsNotExist(err) && !hcsshim.IsAlreadyStopped(err) {
-			logrus.Info("Error opening container for ID: %d (stats will be missing): %v", containerID, err)
+			logrus.Infof("Error opening container for ID: %s (stats will be missing): %v", containerID, err)
 		}
 		return nil, nil
 	}
 	defer func() {
 		closeErr := hcsshimContainer.Close()
 		if closeErr != nil {
-			logrus.Errorf("Error closing container %d: %v", containerID, err)
+			logrus.Errorf("Error closing container %s: %v", containerID, err)
 		}
 	}()
 
@@ -56,8 +56,8 @@ func (ds *dockerService) getContainerStats(container *runtimeapi.Container) (*ru
 			// These hcs errors do not have helpers exposed in public package so need to query for the known codes
 			// https://github.com/microsoft/hcsshim/blob/master/internal/hcs/errors.go
 			// PR to expose helpers in hcsshim: https://github.com/microsoft/hcsshim/pull/933
-			logrus.Info(
-				"Container %dis not in a state that stats can be accessed. This occurs when the container is created but not started: %v",
+			logrus.Infof(
+				"Container %s is not in a state that stats can be accessed. This occurs when the container is created but not started: %v",
 				containerID,
 				err,
 			)
