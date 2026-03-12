@@ -155,12 +155,12 @@ func (ds *dockerService) PullImage(
 		return nil, filterHTTPError(err, image.Image)
 	}
 
-	imageRef, err := getImageRef(ds.client, image.Image)
+	imageID, err := getImageID(ds.client, image.Image)
 	if err != nil {
 		return nil, err
 	}
 
-	return &runtimeapi.PullImageResponse{ImageRef: imageRef}, nil
+	return &runtimeapi.PullImageResponse{ImageRef: imageID}, nil
 }
 
 // RemoveImage removes the image.
@@ -202,19 +202,14 @@ func (ds *dockerService) RemoveImage(
 	return &runtimeapi.RemoveImageResponse{}, nil
 }
 
-// getImageRef returns the image digest if exists, or else returns the image ID.
-func getImageRef(client libdocker.DockerClientInterface, image string) (string, error) {
+// getImageID returns the image ID.
+func getImageID(client libdocker.DockerClientInterface, image string) (string, error) {
 	img, err := client.InspectImageByRef(image)
 	if err != nil {
 		return "", err
 	}
 	if img == nil {
 		return "", fmt.Errorf("unable to inspect image %s", image)
-	}
-
-	// Returns the digest if it exist.
-	if len(img.RepoDigests) > 0 {
-		return img.RepoDigests[0], nil
 	}
 
 	return img.ID, nil
