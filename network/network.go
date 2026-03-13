@@ -16,11 +16,26 @@ limitations under the License.
 
 package network
 
+import (
+	"os"
+	"strconv"
+	"time"
+)
+
 const DefaultInterfaceName = "eth0"
 
 // CNITimeoutSec is set to be slightly less than 240sec/4mins, which is the default backend runtime request timeout.
-const CNITimeoutSec = 220
+var CNITimeoutSec = time.Duration(220)
 
 // UseDefaultMTU is a marker value that indicates the plugin should determine its own MTU
 // It is the zero value, so a non-initialized value will mean "UseDefault"
 const UseDefaultMTU = 0
+
+func init() {
+	cniTimeoutSecStr := os.Getenv("CNI_TIMEOUT_SEC")
+	cniTimeoutSec, _ := strconv.ParseInt(cniTimeoutSecStr, 10, 64)
+	if cniTimeoutSec > 0 {
+		CNITimeoutSec = time.Duration(cniTimeoutSec)
+	}
+
+}
