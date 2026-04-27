@@ -18,6 +18,7 @@ package core
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 
 	dockertypes "github.com/docker/docker/api/types"
@@ -138,17 +139,19 @@ func TestRemoveImage(t *testing.T) {
 	}
 }
 
-func TestPullWithJSONError(t *testing.T) {
+func TestPullImage(t *testing.T) {
 	ds, fakeDocker, _ := newTestDockerService()
 	tests := map[string]struct {
 		image         *runtimeapi.ImageSpec
 		err           error
 		expectedError string
+		expectImage   bool
 	}{
 		"Json error": {
 			&runtimeapi.ImageSpec{Image: "ubuntu"},
 			&jsonmessage.JSONError{Code: 50, Message: "Json error"},
 			"Json error",
+			false,
 		},
 		"Bad gateway": {
 			&runtimeapi.ImageSpec{Image: "ubuntu"},
@@ -157,15 +160,42 @@ func TestPullWithJSONError(t *testing.T) {
 				Message: "<!doctype html>\n<html class=\"no-js\" lang=\"\">\n    <head>\n  </head>\n    <body>\n   <h1>Oops, there was an error!</h1>\n        <p>We have been contacted of this error, feel free to check out <a href=\"http://status.docker.com/\">status.docker.com</a>\n           to see if there is a bigger issue.</p>\n\n    </body>\n</html>",
 			},
 			"RegistryUnavailable",
+			false,
+		},
+		"Successful Pull": {
+			&runtimeapi.ImageSpec{Image: "ubuntu"},
+			nil,
+			"",
+			true,
 		},
 	}
 	for key, test := range tests {
-		fakeDocker.InjectError("pull", test.err)
-		_, err := ds.PullImage(
+		if test.err != nil {
+			fakeDocker.InjectError("pull", test.err)
+		}
+
+		gotResp, gotErr := ds.PullImage(
 			getTestCTX(),
 			&runtimeapi.PullImageRequest{Image: test.image, Auth: &runtimeapi.AuthConfig{}},
 		)
-		require.Error(t, err, fmt.Sprintf("TestCase [%s]", key))
-		assert.Contains(t, err.Error(), test.expectedError)
+		if (len(test.expectedError) > 0) != (gotErr != nil) {
+			t.Fatalf("expected err %q but got %v", test.expectedError, gotErr)
+		}
+
+		if len(test.expectedError) > 0 {
+			require.Error(t, gotErr, fmt.Sprintf("TestCase [%s]", key))
+			assert.Contains(t, gotErr.Error(), test.expectedError)
+		}
+
+		if test.expectImage {
+			expectedResp := &runtimeapi.PullImageResponse{
+				ImageRef: libdocker.FakePullImageIDMapping(test.image.Image),
+			}
+
+			if !reflect.DeepEqual(gotResp, expectedResp) {
+				t.Errorf("expected pull response %v, got %v", expectedResp, gotResp)
+			}
+		}
+
 	}
 }

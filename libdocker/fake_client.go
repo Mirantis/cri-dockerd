@@ -17,6 +17,7 @@ limitations under the License.
 package libdocker
 
 import (
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"hash/fnv"
@@ -842,7 +843,7 @@ func (f *FakeDockerClient) ResizeContainerTTY(id string, height, width uint) err
 
 func createImageInspectFromRef(ref string) *dockertypes.ImageInspect {
 	return &dockertypes.ImageInspect{
-		ID:       ref,
+		ID:       FakePullImageIDMapping(ref),
 		RepoTags: []string{ref},
 		// Image size is required to be non-zero for CRI integration.
 		VirtualSize: fakeImageSize,
@@ -926,4 +927,10 @@ func (f *FakeDockerClient) GetContainerStats(id string) (*dockercontainer.StatsR
 		return nil, fmt.Errorf("container %q not found", id)
 	}
 	return stats, nil
+}
+
+// FakePullImageIDMapping is used by the fake docker client to map an image ref
+// to image ID during PullImage operation
+func FakePullImageIDMapping(imageRef string) string {
+	return fmt.Sprintf("sha256:%x", sha256.Sum256([]byte(imageRef)))
 }
