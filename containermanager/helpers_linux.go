@@ -40,7 +40,7 @@ func isProcessRunningInHost(pid int) (bool, error) {
 	logrus.Debugf("init pid ns is %q", initPidNs)
 	processPidNs, err := os.Readlink(fmt.Sprintf("/proc/%d/ns/pid", pid))
 	if err != nil {
-		return false, fmt.Errorf("failed to find pid namespace of process %q", pid)
+		return false, fmt.Errorf("failed to find pid namespace of process %d", pid)
 	}
 	logrus.Debugf("Pid %d pid ns is %q", pid, processPidNs)
 	return initPidNs == processPidNs, nil
