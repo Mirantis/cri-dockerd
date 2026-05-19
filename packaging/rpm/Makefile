@@ -42,8 +42,9 @@ RUN?=$(RPMBUILD) rpmbuild-$@/$(ARCH) $(RPMBUILD_FLAGS)
 SOURCE_FILES=app.tgz cri-docker.service cri-docker.socket LICENSE
 SOURCES=$(addprefix rpmbuild/SOURCES/, $(SOURCE_FILES))
 
-FEDORA_RELEASES := fedora-36 fedora-35
+FEDORA_RELEASES := fedora-40 fedora-41
 CENTOS_RELEASES :=
+ALMALINUX_RELEASES := almalinux-8 almalinux-9
 
 .PHONY: help
 help: ## show make targets
@@ -55,16 +56,19 @@ clean: ## remove build artifacts
 	$(RM) -r rpmbuild/
 
 .PHONY: rpm
-rpm: fedora centos ## build all rpm packages
+rpm: fedora centos almalinux ## build all rpm packages
 
 .PHONY: fedora
 fedora: $(FEDORA_RELEASES) ## build all fedora rpm packages
 
 .PHONY: centos
-centos: $(CENTOS_RELEASES) ## build all centos rpm packages
+centos: $(CENTOS_RELEASES) ## build all centos stream rpm packages
 
-.PHONY: $(FEDORA_RELEASES) $(CENTOS_RELEASES)
-$(FEDORA_RELEASES) $(CENTOS_RELEASES): $(SOURCES)
+.PHONY: almalinux
+almalinux: $(ALMALINUX_RELEASES) ## build all almalinux rpm packages
+
+.PHONY: $(FEDORA_RELEASES) $(CENTOS_RELEASES) $(ALMALINUX_RELEASES)
+$(FEDORA_RELEASES) $(CENTOS_RELEASES) $(ALMALINUX_RELEASES): $(SOURCES)
 	@echo "${APP_DIR}"
 	@echo "${VERSION}"
 	@echo "$(shell ./gen-rpm-ver $(APP_DIR) $(VERSION))"
