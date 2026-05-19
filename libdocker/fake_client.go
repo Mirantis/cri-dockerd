@@ -17,6 +17,8 @@ limitations under the License.
 package libdocker
 
 import (
+	"crypto/sha256"
+	"crypto/sha512"
 	"encoding/json"
 	"fmt"
 	"hash/fnv"
@@ -696,6 +698,10 @@ func (f *FakeDockerClient) PullImage(
 		authJson, _ := json.Marshal(auth)
 		inspect := createImageInspectFromRef(image)
 		f.ImageInspects[image] = inspect
+		f.ImageInspects[inspect.ID] = inspect
+		for _, repoDigest := range inspect.RepoDigests {
+			f.ImageInspects[repoDigest] = inspect
+		}
 		f.appendPulled(fmt.Sprintf("%s using %s", image, string(authJson)))
 		f.Images = append(f.Images, *createImageFromImageInspect(*inspect))
 		f.ImagesPulled = append(f.ImagesPulled, image)
@@ -842,8 +848,9 @@ func (f *FakeDockerClient) ResizeContainerTTY(id string, height, width uint) err
 
 func createImageInspectFromRef(ref string) *dockertypes.ImageInspect {
 	return &dockertypes.ImageInspect{
-		ID:       ref,
-		RepoTags: []string{ref},
+		ID:          FakePullImageIDMapping(ref),
+		RepoTags:    []string{ref},
+		RepoDigests: []string{fakePullImageDigestMapping(ref)},
 		// Image size is required to be non-zero for CRI integration.
 		VirtualSize: fakeImageSize,
 		Size:        fakeImageSize,
@@ -853,8 +860,9 @@ func createImageInspectFromRef(ref string) *dockertypes.ImageInspect {
 
 func createImageInspectFromImage(image dockerimagetypes.Summary) *dockertypes.ImageInspect {
 	return &dockertypes.ImageInspect{
-		ID:       image.ID,
-		RepoTags: image.RepoTags,
+		ID:          image.ID,
+		RepoTags:    image.RepoTags,
+		RepoDigests: image.RepoDigests,
 		// Image size is required to be non-zero for CRI integration.
 		VirtualSize: fakeImageSize,
 		Size:        fakeImageSize,
@@ -864,8 +872,9 @@ func createImageInspectFromImage(image dockerimagetypes.Summary) *dockertypes.Im
 
 func createImageFromImageInspect(inspect dockertypes.ImageInspect) *dockerimagetypes.Summary {
 	return &dockerimagetypes.Summary{
-		ID:       inspect.ID,
-		RepoTags: inspect.RepoTags,
+		ID:          inspect.ID,
+		RepoTags:    inspect.RepoTags,
+		RepoDigests: inspect.RepoDigests,
 		// Image size is required to be non-zero for CRI integration.
 		VirtualSize: fakeImageSize,
 		Size:        fakeImageSize,
@@ -926,4 +935,18 @@ func (f *FakeDockerClient) GetContainerStats(id string) (*dockercontainer.StatsR
 		return nil, fmt.Errorf("container %q not found", id)
 	}
 	return stats, nil
+}
+
+// FakePullImageIDMapping is used by the fake docker client to map an image ref
+// to image ID during PullImage operation
+func FakePullImageIDMapping(imageRef string) string {
+	return fmt.Sprintf("sha256:%x", sha256.Sum256([]byte(imageRef)))
+}
+
+func fakePullImageDigestMapping(imageName string) string {
+	noDigestImageName, _, found := strings.Cut(imageName, "@")
+	if found {
+		return imageName
+	}
+	return fmt.Sprintf("%s@sha512:%x", noDigestImageName, sha512.Sum512([]byte(imageName)))
 }
