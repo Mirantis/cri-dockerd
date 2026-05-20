@@ -9,7 +9,8 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: cri-dockerd.ubuntu
+          pattern: cri-dockerd.linux-*
+          merge-multiple: true
       - uses: actions/download-artifact@v4
         with:
           pattern: cri-dockerd.deb-*
