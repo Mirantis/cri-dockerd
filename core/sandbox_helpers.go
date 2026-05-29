@@ -234,15 +234,21 @@ func (ds *dockerService) makeSandboxDockerConfig(
 	c *runtimeapi.PodSandboxConfig,
 	image string,
 ) (*dockerbackend.ContainerCreateConfig, error) {
-	// Merge annotations and labels because docker supports only labels.
+	// TODO: Docker supports annotations for now, so labels and annotations might be separated
+	//       in the future. Keeping them merged is just for backward compatibility.
 	labels := makeLabels(c.GetLabels(), c.GetAnnotations())
 	// Apply a label to distinguish sandboxes from regular containers.
 	labels[containerTypeLabelKey] = containerTypeLabelSandbox
 	// Apply a container name label for infra container. This is used in summary v1.
 	labels[config.KubernetesContainerNameLabel] = sandboxContainerName
 
+	// Set sandbox annotations.
+	annotations := c.GetAnnotations()
+	annotations[containerTypeLabelKey] = containerTypeLabelSandbox
+
 	hc := &dockercontainer.HostConfig{
-		IpcMode: dockercontainer.IpcMode("shareable"),
+		IpcMode:     dockercontainer.IpcMode("shareable"),
+		Annotations: annotations,
 	}
 	createConfig := &dockerbackend.ContainerCreateConfig{
 		Name: makeSandboxName(c),
