@@ -19,6 +19,7 @@ package network
 import (
 	"fmt"
 	"net"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -216,6 +217,10 @@ func (plugin *NoopNetworkPlugin) Init(
 	// correctly.  Other plugins are responsible for setting this correctly
 	// depending on whether or not they connect containers to Linux bridges
 	// or use some other mechanism (ie, SDN vswitch).
+
+	if runtime.GOOS != "linux" {
+		return nil
+	}
 
 	// Ensure the netfilter module is loaded on kernel >= 3.18; previously
 	// it was built-in.
