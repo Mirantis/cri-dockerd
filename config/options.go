@@ -38,6 +38,16 @@ type ContainerRuntimeOptions struct {
 	// PodSandboxImage is the image whose network/ipc namespaces
 	// containers in each pod will use.
 	PodSandboxImage string
+	// PinnedImages lists image references that are reported to the kubelet as
+	// pinned, which excludes them from kubelet image garbage collection. An
+	// entry may be a full reference ("repo:tag" or "repo@digest"), a bare
+	// repository, which pins every tag of it, or a prefix ending in "*".
+	PinnedImages []string
+	// PinnedImageLabels lists image label selectors, in "key" or "key=value"
+	// form. Any image carrying a matching label is reported to the kubelet as
+	// pinned. This pins a whole set of images without enumerating it, which
+	// matters for images that are side-loaded rather than pulled.
+	PinnedImageLabels []string
 	// DockerEndpoint is the path to the docker endpoint to communicate with.
 	DockerEndpoint string
 	// If no pulling progress is made before the deadline imagePullProgressDeadline,
@@ -105,6 +115,18 @@ func (s *ContainerRuntimeOptions) AddFlags(fs *pflag.FlagSet) {
 		"pod-infra-container-image",
 		s.PodSandboxImage,
 		"The image whose network/ipc namespaces containers in each pod will use",
+	)
+	fs.StringSliceVar(
+		&s.PinnedImages,
+		"pinned-images",
+		s.PinnedImages,
+		"A comma-separated list of images that are never removed by kubelet image garbage collection. An entry may be a full reference, a repository (pinning all of its tags), or a prefix ending in '*'. The pod infra container image is always pinned. May be repeated.",
+	)
+	fs.StringSliceVar(
+		&s.PinnedImageLabels,
+		"pinned-image-labels",
+		s.PinnedImageLabels,
+		"A comma-separated list of image label selectors, in 'key' or 'key=value' form. Images carrying a matching label are never removed by kubelet image garbage collection. May be repeated.",
 	)
 	fs.StringVar(
 		&s.DockerEndpoint,
