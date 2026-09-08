@@ -56,6 +56,20 @@ func isPinned(image string, tags []string) bool {
 	return pinned
 }
 
+// isImagePinned reports whether an image must be reported to the kubelet as
+// pinned, which excludes it from kubelet image garbage collection. The pod
+// sandbox image is always pinned; --pinned-images and --pinned-image-labels
+// pin additional ones.
+func (ds *dockerService) isImagePinned(
+	repoTags, repoDigests []string,
+	labels map[string]string,
+) bool {
+	if isPinned(ds.sandboxImage(), repoTags) {
+		return true
+	}
+	return ds.pinnedImages.matches(repoTags, repoDigests, labels)
+}
+
 // ListImages lists existing images.
 func (ds *dockerService) ListImages(
 	_ context.Context,
@@ -74,11 +88,9 @@ func (ds *dockerService) ListImages(
 	if err != nil {
 		return nil, err
 	}
-	image := ds.sandboxImage()
-
 	result := make([]*runtimeapi.Image, 0, len(images))
 	for _, i := range images {
-		pinned := isPinned(image, i.RepoTags)
+		pinned := ds.isImagePinned(i.RepoTags, i.RepoDigests, i.Labels)
 		apiImage, err := imageToRuntimeAPIImage(&i, pinned)
 		if err != nil {
 			logrus.Infof("Failed to convert docker API image %v to runtime API image: %v", i, err)
@@ -110,7 +122,12 @@ func (ds *dockerService) ImageStatus(
 		}
 	}
 
-	pinned := isPinned(ds.sandboxImage(), imageInspect.RepoTags)
+	var labels map[string]string
+	if imageInspect.Config != nil {
+		labels = imageInspect.Config.Labels
+	}
+
+	pinned := ds.isImagePinned(imageInspect.RepoTags, imageInspect.RepoDigests, labels)
 	imageStatus, err := imageInspectToRuntimeAPIImage(imageInspect, pinned)
 	if err != nil {
 		return nil, err
