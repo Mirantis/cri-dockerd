@@ -118,6 +118,8 @@ var internalLabelKeys = []string{containerTypeLabelKey, containerLogPathLabelKey
 func NewDockerService(
 	clientConfig *config.ClientConfig,
 	podSandboxImage string,
+	pinnedImages []string,
+	pinnedImageLabels []string,
 	streamingConfig *streaming.Config,
 	pluginSettings *config.NetworkPluginSettings,
 	cgroupsName string,
@@ -140,6 +142,7 @@ func NewDockerService(
 		client:          c,
 		os:              config.RealOS{},
 		podSandboxImage: podSandboxImage,
+		pinnedImages:    newPinnedImageMatcher(pinnedImages, pinnedImageLabels),
 		streamingRuntime: &streaming.StreamingRuntime{
 			Client:      client,
 			ExecHandler: &NativeExecHandler{},
@@ -149,6 +152,13 @@ func NewDockerService(
 		networkReady:          make(map[string]bool),
 		containerCleanupInfos: make(map[string]*containerCleanupInfo),
 		containerStatsCache:   newContainerStatsCache(),
+	}
+
+	if !ds.pinnedImages.isEmpty() {
+		logrus.Infof(
+			"Images matching references %v or labels %v are pinned and will not be garbage collected by the kubelet",
+			pinnedImages, pinnedImageLabels,
+		)
 	}
 
 	// check docker version compatibility.
@@ -249,9 +259,12 @@ type dockerService struct {
 	// This handles unimplemented methods unless cri-dockerd overrides them
 	runtimeapi.UnimplementedRuntimeServiceServer
 
-	client           libdocker.DockerClientInterface
-	os               config.OSInterface
-	podSandboxImage  string
+	client          libdocker.DockerClientInterface
+	os              config.OSInterface
+	podSandboxImage string
+	// pinnedImages selects the images reported to the kubelet as pinned, on
+	// top of the pod sandbox image which is always pinned.
+	pinnedImages     *pinnedImageMatcher
 	streamingRuntime *streaming.StreamingRuntime
 	streamingServer  streaming.Server
 

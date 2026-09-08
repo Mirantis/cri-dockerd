@@ -197,6 +197,8 @@ func RunCriDockerd(f *options.DockerCRIFlags, stopCh <-chan struct{}) error {
 	ds, err := core.NewDockerService(
 		dockerClientConfig,
 		r.PodSandboxImage,
+		r.PinnedImages,
+		r.PinnedImageLabels,
 		streamingConfig,
 		&pluginSettings,
 		f.RuntimeCgroups,
