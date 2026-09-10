@@ -30,7 +30,6 @@ import (
 
 	"net"
 	"net/netip"
-	"net/url"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -184,8 +183,6 @@ func RunCriDockerd(f *options.DockerCRIFlags, stopCh <-chan struct{}) error {
 
 	// Initialize streaming configuration. (Not using TLS now)
 	streamingConfig := &streaming.Config{
-		// Use a relative redirect (no scheme or host).
-		BaseURL:                         &url.URL{Path: "/cri/"},
 		Addr:                            resolvedAddr,
 		StreamIdleTimeout:               r.StreamingConnectionIdleTimeout.Duration,
 		StreamCreationTimeout:           streaming.DefaultConfig.StreamCreationTimeout,
