@@ -23,6 +23,14 @@ ifeq ($(BUILDARCH),armv7l)
         BUILDARCH=armv7
 endif
 
+# systemd unit files shipped inside the Linux tarballs (see issue #249), so a
+# manual install does not have to fetch them from the source tree separately.
+SYSTEMD_DIR:=$(CURDIR)/../systemd
+SYSTEMD_UNITS:=cri-docker.service cri-docker.socket
+define copy-systemd-units
+	$(foreach unit,$(SYSTEMD_UNITS),install -m 0644 $(SYSTEMD_DIR)/$(unit) $(1)/$(unit);)
+endef
+
 ARCH ?= $(BUILDARCH)
 ifeq ($(ARCH),aarch64)
         override ARCH=arm64
@@ -51,6 +59,7 @@ static-linux:
 	mkdir -p build/linux/cri-dockerd
 	cd $(APP_DIR) && env CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GOARCH=$(ARCH) go build -trimpath ${CRI_DOCKERD_LDFLAGS} -o cri-dockerd
 	mv $(APP_DIR)/cri-dockerd build/linux/cri-dockerd/cri-dockerd
+	$(call copy-systemd-units,build/linux/cri-dockerd)
 	tar -C build/linux -c -z -f build/linux/cri-dockerd-$(VERSION).amd64.tgz cri-dockerd
 
 .PHONY: hash_files
@@ -80,4 +89,5 @@ cross-arm: ## create tgz with linux arm64 client only
 	mkdir -p build/arm/cri-dockerd
 	cd $(APP_DIR) && env CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GOARCH=arm64 go build -trimpath ${CRI_DOCKERD_LDFLAGS} -o cri-dockerd-arm64
 	mv $(APP_DIR)/cri-dockerd-arm64 build/arm/cri-dockerd/cri-dockerd
+	$(call copy-systemd-units,build/arm/cri-dockerd)
 	tar -C build/arm -c -z -f build/arm/cri-dockerd-$(VERSION).arm64.tgz cri-dockerd

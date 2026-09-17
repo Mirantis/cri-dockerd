@@ -31,12 +31,14 @@ install -o root -g root -m 0755 cri-dockerd /usr/local/bin/cri-dockerd
 
 #### Setup the systemd service
 
-Setup the systemd service and socket to start `cri-dockerd`. Download the systemd service and socket files from the `packaging/systemd` directory.
+Setup the systemd service and socket to start `cri-dockerd`. The `cri-docker.service` and `cri-docker.socket` unit files are included in the Linux `.tgz` archives next to the binary. If you are installing an older release whose archive does not contain them, download them from the `packaging/systemd` directory instead:
 
 ```shell
 wget https://raw.githubusercontent.com/Mirantis/cri-dockerd/master/packaging/systemd/cri-docker.service
 wget https://raw.githubusercontent.com/Mirantis/cri-dockerd/master/packaging/systemd/cri-docker.socket
 ```
+
+Install the unit files from the extracted directory:
 
 ```shell
 install cri-docker.service /etc/systemd/system
