@@ -41,7 +41,7 @@ import (
 	"github.com/Mirantis/cri-dockerd/store"
 	"github.com/Mirantis/cri-dockerd/streaming"
 	"github.com/Mirantis/cri-dockerd/utils"
-	"github.com/blang/semver"
+	"github.com/blang/semver/v4"
 	dockertypes "github.com/docker/docker/api/types"
 	dockersystem "github.com/docker/docker/api/types/system"
 	ociruntimefeatures "github.com/opencontainers/runtime-spec/specs-go/features"

@@ -29,7 +29,7 @@ import (
 
 	"golang.org/x/sys/windows/registry"
 
-	"github.com/blang/semver"
+	"github.com/blang/semver/v4"
 	dockertypes "github.com/docker/docker/api/types"
 	dockerbackend "github.com/docker/docker/api/types/backend"
 	dockercontainer "github.com/docker/docker/api/types/container"
