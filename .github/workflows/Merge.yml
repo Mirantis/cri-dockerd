@@ -20,3 +20,10 @@ jobs:
     if: ${{ always() && contains(join(needs.*.result, ','), 'success') }}
     needs: [build, vet, unit-test]
     uses: ./.github/workflows/integration.yml
+  docker:
+    if: ${{ always() && contains(join(needs.*.result, ','), 'success') }}
+    needs: [build, vet, unit-test]
+    uses: ./.github/workflows/docker.yml
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}

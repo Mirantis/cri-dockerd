@@ -1,0 +1,18 @@
+# syntax=docker/dockerfile:1
+
+# Dockerfile for running unit tests in CI
+ARG GO_VERSION=1.24.9
+FROM golang:${GO_VERSION}-bookworm
+
+WORKDIR /go/src/github.com/Mirantis/cri-dockerd
+
+# Cache Go modules
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy source
+COPY . .
+
+# Default command: run all unit tests
+CMD ["go", "test", "-v", "./..."]
+
