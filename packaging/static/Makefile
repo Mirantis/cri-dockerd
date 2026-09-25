@@ -51,7 +51,7 @@ static-linux:
 	mkdir -p build/linux/cri-dockerd
 	cd $(APP_DIR) && env CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GOARCH=$(ARCH) go build -trimpath ${CRI_DOCKERD_LDFLAGS} -o cri-dockerd
 	mv $(APP_DIR)/cri-dockerd build/linux/cri-dockerd/cri-dockerd
-	tar -C build/linux -c -z -f build/linux/cri-dockerd-$(VERSION).amd64.tgz cri-dockerd
+	tar -C build/linux -c -z -f build/linux/cri-dockerd-$(VERSION).$(ARCH).tgz cri-dockerd
 
 .PHONY: hash_files
 hash_files:
