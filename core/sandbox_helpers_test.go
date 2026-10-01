@@ -389,7 +389,8 @@ func TestSetUpPodFailure(t *testing.T) {
 	assert.Equal(t, runtimeapi.PodSandboxState_SANDBOX_NOTREADY, sandbox.State)
 }
 
-// TestRuntimeHandler checks that the sandbox with RuntimeHandler
+// TestRuntimeHandler checks that the sandbox records RuntimeHandler and that
+// containers created in that sandbox inherit HostConfig.Runtime.
 func TestRuntimeHandler(t *testing.T) {
 	ds, _, _ := newTestDockerService()
 	name, namespace := "foo", "bar"
@@ -450,6 +451,31 @@ func TestRuntimeHandler(t *testing.T) {
 		)
 		require.NoError(t, err)
 		assert.Equal(t, rtHandlerTestCases[i].expectRuntimehandler, statusResp.Status.GetRuntimeHandler())
+
+		// CreateContainer copies Runtime from the sandbox inspect result.
+		containerConfig := makeContainerConfig(
+			configs[i],
+			fmt.Sprintf("ctr%d", i),
+			"busybox",
+			0,
+			nil,
+			nil,
+		)
+		createResp, err := ds.CreateContainer(getTestCTX(), &runtimeapi.CreateContainerRequest{
+			PodSandboxId:  runResp.PodSandboxId,
+			Config:        containerConfig,
+			SandboxConfig: configs[i],
+		})
+		require.NoError(t, err)
+
+		sandboxInfo, err := ds.client.InspectContainer(runResp.PodSandboxId)
+		require.NoError(t, err)
+		containerInfo, err := ds.client.InspectContainer(createResp.ContainerId)
+		require.NoError(t, err)
+		require.NotNil(t, sandboxInfo.HostConfig)
+		require.NotNil(t, containerInfo.HostConfig)
+		assert.Equal(t, rtHandlerTestCases[i].expectRuntimehandler, sandboxInfo.HostConfig.Runtime)
+		assert.Equal(t, sandboxInfo.HostConfig.Runtime, containerInfo.HostConfig.Runtime)
 	}
 
 }
