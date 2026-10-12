@@ -8,6 +8,9 @@ FROM ${GO_IMAGE} AS golang
 FROM ${BUILD_IMAGE}
 
 ARG DEBIAN_FRONTEND=noninteractive
+# Debian 11 (bullseye) reached end of LTS; its packages moved to archive.debian.org
+RUN sed -i -e 's|deb.debian.org|archive.debian.org|g' /etc/apt/sources.list \
+    && echo 'Acquire::Check-Valid-Until "false";' > /etc/apt/apt.conf.d/99archive
 RUN apt-get update && apt-get install -y curl devscripts equivs git
 
 ENV GOPROXY=direct
