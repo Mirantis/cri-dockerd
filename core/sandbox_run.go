@@ -20,6 +20,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+
 	"github.com/Mirantis/cri-dockerd/config"
 	"github.com/Mirantis/cri-dockerd/utils/errors"
 	v1 "k8s.io/cri-api/pkg/apis/runtime/v1"
@@ -51,9 +52,6 @@ func (ds *dockerService) RunPodSandbox(
 	}
 
 	// Step 2: Create the sandbox container.
-	if r.GetRuntimeHandler() != "" && r.GetRuntimeHandler() != runtimeName {
-		return nil, fmt.Errorf("RuntimeHandler %q not supported", r.GetRuntimeHandler())
-	}
 	createConfig, err := ds.makeSandboxDockerConfig(containerConfig, image)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -62,6 +60,15 @@ func (ds *dockerService) RunPodSandbox(
 			err,
 		)
 	}
+	// k8s RuntimeClass.handler=docker will use docker's default runtime
+	runtimeHandler := r.GetRuntimeHandler()
+	if runtimeHandler != "" && runtimeHandler != runtimeName {
+		err = ds.IsRuntimeConfigured(runtimeHandler)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get sandbox runtime: %v", err)
+		}
+		createConfig.HostConfig.Runtime = runtimeHandler
+	}
 	createResp, err := ds.client.CreateContainer(*createConfig)
 	if err != nil {
 		createResp, err = recoverFromCreationConflictIfNeeded(ds.client, *createConfig, err)
@@ -69,7 +76,7 @@ func (ds *dockerService) RunPodSandbox(
 
 	if err != nil || createResp == nil {
 		return nil, fmt.Errorf(
-			"failed to create a sandbox for pod %q: %v",
+			"failed to create a sandbox for pod %q: %w",
 			containerConfig.Metadata.Name,
 			err,
 		)

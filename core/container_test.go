@@ -67,9 +67,15 @@ func TestConcurrentlyCreateAndDeleteContainers(t *testing.T) {
 	podName, namespace := "foo", "bar"
 	containerName, image := "sidecar", "logger"
 
+	type podInfo struct {
+		ContainerId string
+		SandboxID   string
+	}
+
 	const count = 20
 	configs := make([]*runtimeapi.ContainerConfig, 0, count)
 	sConfigs := make([]*runtimeapi.PodSandboxConfig, 0, count)
+
 	for i := 0; i < count; i++ {
 		s := makeSandboxConfig(fmt.Sprintf("%s%d", podName, i),
 			fmt.Sprintf("%s%d", namespace, i), fmt.Sprintf("%d", i), 0)
@@ -80,8 +86,8 @@ func TestConcurrentlyCreateAndDeleteContainers(t *testing.T) {
 		configs = append(configs, c)
 	}
 
-	containerIDs := make(
-		chan string,
+	podInfos := make(
+		chan podInfo,
 		len(configs),
 	) // make channel non-blocking to simulate concurrent containers creation
 
@@ -94,39 +100,64 @@ func TestConcurrentlyCreateAndDeleteContainers(t *testing.T) {
 
 	go func() {
 		creationWg.Wait()
-		close(containerIDs)
+		close(podInfos)
 	}()
 	for i := range configs {
 		go func(i int) {
 			defer creationWg.Done()
-			// We don't care about the sandbox id; pass a bogus one.
-			sandboxID := fmt.Sprintf("sandboxid%d", i)
+
+			runSandboxResp, err := ds.RunPodSandbox(getTestCTX(), &runtimeapi.RunPodSandboxRequest{
+				Config: sConfigs[i],
+			})
+			if err != nil {
+				t.Errorf("RunPodSandbox: %v", err)
+				return
+			}
+
 			req := &runtimeapi.CreateContainerRequest{
-				PodSandboxId:  sandboxID,
+				PodSandboxId:  runSandboxResp.PodSandboxId,
 				Config:        configs[i],
 				SandboxConfig: sConfigs[i],
 			}
+
 			createResp, err := ds.CreateContainer(getTestCTX(), req)
 			if err != nil {
 				t.Errorf("CreateContainer: %v", err)
 				return
 			}
-			containerIDs <- createResp.ContainerId
+			podInfos <- podInfo{
+				ContainerId: createResp.ContainerId,
+				SandboxID:   runSandboxResp.PodSandboxId,
+			}
 		}(i)
 	}
 
-	for containerID := range containerIDs {
+	for pod := range podInfos {
 		deletionWg.Add(1)
-		go func(id string) {
+		go func(i podInfo) {
 			defer deletionWg.Done()
 			_, err := ds.RemoveContainer(
 				getTestCTX(),
-				&runtimeapi.RemoveContainerRequest{ContainerId: id},
+				&runtimeapi.RemoveContainerRequest{ContainerId: i.ContainerId},
 			)
 			if err != nil {
 				t.Errorf("RemoveContainer: %v", err)
 			}
-		}(containerID)
+			_, err = ds.StopPodSandbox(
+				getTestCTX(),
+				&runtimeapi.StopPodSandboxRequest{PodSandboxId: i.SandboxID},
+			)
+			if err != nil {
+				t.Errorf("StopPodSandbox: %v", err)
+			}
+			_, err = ds.RemovePodSandbox(
+				getTestCTX(),
+				&runtimeapi.RemovePodSandboxRequest{PodSandboxId: i.SandboxID},
+			)
+			if err != nil {
+				t.Errorf("RemovePodSandbox: %v", err)
+			}
+		}(pod)
 	}
 	deletionWg.Wait()
 }
@@ -155,10 +186,15 @@ func TestListContainers(t *testing.T) {
 	state := runtimeapi.ContainerState_CONTAINER_RUNNING
 	var createdAt int64 = fakeClock.Now().UnixNano()
 	for i := range configs {
-		// We don't care about the sandbox id; pass a bogus one.
-		sandboxID := fmt.Sprintf("sandboxid%d", i)
+		runSandboxResp, err := ds.RunPodSandbox(getTestCTX(), &runtimeapi.RunPodSandboxRequest{
+			Config: sConfigs[i],
+		})
+		if err != nil {
+			t.Errorf("RunPodSandbox: %v", err)
+			return
+		}
 		req := &runtimeapi.CreateContainerRequest{
-			PodSandboxId:  sandboxID,
+			PodSandboxId:  runSandboxResp.PodSandboxId,
 			Config:        configs[i],
 			SandboxConfig: sConfigs[i],
 		}
@@ -174,7 +210,7 @@ func TestListContainers(t *testing.T) {
 		expected = append([]*runtimeapi.Container{{
 			Metadata:     configs[i].Metadata,
 			Id:           id,
-			PodSandboxId: sandboxID,
+			PodSandboxId: runSandboxResp.PodSandboxId,
 			State:        state,
 			CreatedAt:    createdAt,
 			Image:        configs[i].Image,
@@ -226,12 +262,20 @@ func TestContainerStatus(t *testing.T) {
 
 	fDocker.InjectImages([]dockertypes.ImageSummary{{ID: imageName}})
 
+	runSandboxResp, err := ds.RunPodSandbox(getTestCTX(), &runtimeapi.RunPodSandboxRequest{
+		Config: sConfig,
+	})
+	if err != nil {
+		t.Errorf("RunPodSandbox: %v", err)
+		return
+	}
+
 	// Create the container.
 	fClock.SetTime(time.Now().Add(-1 * time.Hour))
 	expected.CreatedAt = fClock.Now().UnixNano()
 
 	req := &runtimeapi.CreateContainerRequest{
-		PodSandboxId:  sandboxID,
+		PodSandboxId:  runSandboxResp.PodSandboxId,
 		Config:        config,
 		SandboxConfig: sConfig,
 	}
@@ -243,7 +287,7 @@ func TestContainerStatus(t *testing.T) {
 	c, err := fDocker.InspectContainer(id)
 	require.NoError(t, err)
 	assert.Equal(t, c.Config.Labels[containerTypeLabelKey], containerTypeLabelContainer)
-	assert.Equal(t, c.Config.Labels[sandboxIDLabelKey], sandboxID)
+	assert.Equal(t, c.Config.Labels[sandboxIDLabelKey], runSandboxResp.PodSandboxId)
 
 	// Set the id manually since we don't know the id until it's created.
 	expected.Id = id
@@ -309,8 +353,16 @@ func TestContainerLogPath(t *testing.T) {
 	config := makeContainerConfig(sConfig, "pause", "iamimage", 0, nil, nil)
 	config.LogPath = containerLogPath
 
+	runSandboxResp, err := ds.RunPodSandbox(getTestCTX(), &runtimeapi.RunPodSandboxRequest{
+		Config: sConfig,
+	})
+	if err != nil {
+		t.Errorf("RunPodSandbox: %v", err)
+		return
+	}
+
 	req := &runtimeapi.CreateContainerRequest{
-		PodSandboxId:  sandboxID,
+		PodSandboxId:  runSandboxResp.PodSandboxId,
 		Config:        config,
 		SandboxConfig: sConfig,
 	}
@@ -371,6 +423,8 @@ func TestContainerCreationConflict(t *testing.T) {
 	noContainerError := fmt.Errorf("Error response from daemon: No such container: %s", containerID)
 	randomError := fmt.Errorf("random error")
 
+	// sandBox run called "inspect_image", "pull", "create", "start", "inspect_container",
+	sandBoxCalls := []string{"inspect_image", "pull", "create", "start", "inspect_container"}
 	for desc, test := range map[string]struct {
 		createError  error
 		removeError  error
@@ -378,35 +432,44 @@ func TestContainerCreationConflict(t *testing.T) {
 		expectCalls  []string
 		expectFields int
 	}{
+		// sandBox run called "inspect_image", "pull", "create", "start", "inspect_container",
 		"no create error": {
-			expectCalls:  []string{"create"},
+			expectCalls:  append(sandBoxCalls, []string{"create"}...),
 			expectFields: 6,
 		},
 		"random create error": {
 			createError: randomError,
 			expectError: randomError,
-			expectCalls: []string{"create"},
+			expectCalls: append(sandBoxCalls, []string{"create"}...),
 		},
 		"conflict create error with successful remove": {
 			createError: conflictError,
 			expectError: conflictError,
-			expectCalls: []string{"create", "remove"},
+			expectCalls: append(sandBoxCalls, []string{"create", "remove"}...),
 		},
 		"conflict create error with random remove error": {
 			createError: conflictError,
 			removeError: randomError,
 			expectError: conflictError,
-			expectCalls: []string{"create", "remove"},
+			expectCalls: append(sandBoxCalls, []string{"create", "remove"}...),
 		},
 		"conflict create error with no such container remove error": {
 			createError:  conflictError,
 			removeError:  noContainerError,
-			expectCalls:  []string{"create", "remove", "create"},
+			expectCalls:  append(sandBoxCalls, []string{"create", "remove", "create"}...),
 			expectFields: 7,
 		},
 	} {
 		t.Logf("TestCase: %s", desc)
 		ds, fDocker, _ := newTestDockerService()
+
+		runSandboxResp, err := ds.RunPodSandbox(getTestCTX(), &runtimeapi.RunPodSandboxRequest{
+			Config: sConfig,
+		})
+		if err != nil {
+			require.EqualError(t, err, test.expectError.Error())
+			continue
+		}
 
 		if test.createError != nil {
 			fDocker.InjectError("create", test.createError)
@@ -416,7 +479,7 @@ func TestContainerCreationConflict(t *testing.T) {
 		}
 
 		req := &runtimeapi.CreateContainerRequest{
-			PodSandboxId:  sandboxID,
+			PodSandboxId:  runSandboxResp.PodSandboxId,
 			Config:        config,
 			SandboxConfig: sConfig,
 		}

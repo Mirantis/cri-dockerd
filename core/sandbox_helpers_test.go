@@ -388,3 +388,94 @@ func TestSetUpPodFailure(t *testing.T) {
 	assert.NotNil(t, sandbox)
 	assert.Equal(t, runtimeapi.PodSandboxState_SANDBOX_NOTREADY, sandbox.State)
 }
+
+// TestRuntimeHandler checks that the sandbox records RuntimeHandler and that
+// containers created in that sandbox inherit HostConfig.Runtime.
+func TestRuntimeHandler(t *testing.T) {
+	ds, _, _ := newTestDockerService()
+	name, namespace := "foo", "bar"
+	var configs []*runtimeapi.PodSandboxConfig
+
+	rtHandlerTestCases := []struct {
+		Runtimehandler       string
+		expectRuntimehandler string
+		expectError          error
+	}{
+		{
+			Runtimehandler:       "",
+			expectRuntimehandler: "",
+			expectError:          nil,
+		},
+		{
+			Runtimehandler:       "docker",
+			expectRuntimehandler: "",
+			expectError:          nil,
+		},
+		{
+			Runtimehandler:       "runc",
+			expectRuntimehandler: "runc",
+			expectError:          nil,
+		},
+		{
+			Runtimehandler:       "error_runtime",
+			expectRuntimehandler: "",
+			expectError:          fmt.Errorf("failed to get sandbox runtime: no runtime for %q is configured", "error_runtime"),
+		},
+	}
+
+	for i := 0; i < len(rtHandlerTestCases); i++ {
+		c := makeSandboxConfigWithLabelsAndAnnotations(fmt.Sprintf("%s%d", name, i),
+			fmt.Sprintf("%s%d", namespace, i), fmt.Sprintf("%d", i), 0,
+			map[string]string{"label": fmt.Sprintf("foo%d", i)},
+			map[string]string{"annotation": fmt.Sprintf("bar%d", i)},
+		)
+		configs = append(configs, c)
+	}
+
+	for i := range configs {
+		runResp, err := ds.RunPodSandbox(
+			getTestCTX(),
+			&runtimeapi.RunPodSandboxRequest{
+				Config:         configs[i],
+				RuntimeHandler: rtHandlerTestCases[i].Runtimehandler,
+			},
+		)
+		if rtHandlerTestCases[i].expectError != nil {
+			assert.EqualError(t, err, rtHandlerTestCases[i].expectError.Error())
+			continue
+		}
+		require.NoError(t, err)
+
+		statusResp, err := ds.PodSandboxStatus(getTestCTX(), &runtimeapi.PodSandboxStatusRequest{
+			PodSandboxId: runResp.PodSandboxId},
+		)
+		require.NoError(t, err)
+		assert.Equal(t, rtHandlerTestCases[i].expectRuntimehandler, statusResp.Status.GetRuntimeHandler())
+
+		// CreateContainer copies Runtime from the sandbox inspect result.
+		containerConfig := makeContainerConfig(
+			configs[i],
+			fmt.Sprintf("ctr%d", i),
+			"busybox",
+			0,
+			nil,
+			nil,
+		)
+		createResp, err := ds.CreateContainer(getTestCTX(), &runtimeapi.CreateContainerRequest{
+			PodSandboxId:  runResp.PodSandboxId,
+			Config:        containerConfig,
+			SandboxConfig: configs[i],
+		})
+		require.NoError(t, err)
+
+		sandboxInfo, err := ds.client.InspectContainer(runResp.PodSandboxId)
+		require.NoError(t, err)
+		containerInfo, err := ds.client.InspectContainer(createResp.ContainerId)
+		require.NoError(t, err)
+		require.NotNil(t, sandboxInfo.HostConfig)
+		require.NotNil(t, containerInfo.HostConfig)
+		assert.Equal(t, rtHandlerTestCases[i].expectRuntimehandler, sandboxInfo.HostConfig.Runtime)
+		assert.Equal(t, sandboxInfo.HostConfig.Runtime, containerInfo.HostConfig.Runtime)
+	}
+
+}

@@ -292,6 +292,8 @@ type dockerService struct {
 	// methods for more info).
 	containerCleanupInfos map[string]*containerCleanupInfo
 	cleanupInfosLock      sync.RWMutex
+
+	// runtimeInfoLock sync.RWMutex
 }
 
 // Version returns the runtime name, runtime version and runtime API version
